@@ -17,12 +17,15 @@
 
 ## 黑客松易拉宝
 
-当前评审版：`序安_Process_Sentinel_黑客松易拉宝_v01_ZH_REVIEW.pdf`。
+当前评审版：`序安_Process_Sentinel_黑客松易拉宝_v03_ZH_CMYK_REVIEW.pdf`。
 
 - 成品尺寸：800 mm × 1800 mm，单页。
-- XeLaTeX 构建；文字、线条、图标、异常曲线和二维码保持矢量，PDF 不含嵌入栅格图像。
-- 二维码指向 `https://huagong.finlaw.cloud/demo`，已从最终渲染图回读并复核公网 HTTP 200。
-- 配套逐字稿：`../docs/submission/序安黑客松易拉宝讲解逐字稿_v01_REVIEW.md`，可供普通观众讲解时直接照读。
+- XeLaTeX 构建；文字、线条、信息图和二维码保持矢量。通用工业氛围图与现行 Logo 为独立 CMYK 位图资产，不把整张易拉宝栅格化。
+- 顶部使用产品仓库现行眼形过程环标志；v02 的临时盾牌和纵向遮罩条不再使用。
+- 二维码指向 `https://huagong.finlaw.cloud/demo`，2026-08-28 复核公网 HTTP 200。
+- 配套逐字稿：`../docs/submission/序安黑客松易拉宝讲解逐字稿_v03_REVIEW.md`，可供普通观众讲解时直接照读。
+- 品牌应用审计：`../docs/submission/序安品牌标志应用审计_v01_REVIEW.md`。现行 Logo 尚未全量应用到路演 PPTX 和产品手册，不能声称已经全部统一。
+- v02 与 v01 保留为历史 REVIEW，不覆盖、不作为当前印刷候选。
 
 唯一 LaTeX 源、来源台账与印刷 QA 位于：
 
