@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 import pytest
-from process_copilot_api.db import AnomalyEventRow, Database, column_names, table_names
+from process_copilot_api.db import (
+    AnomalyEventRow,
+    Database,
+    IdempotencyRow,
+    column_names,
+    table_names,
+)
 from process_copilot_api.migrations import upgrade_database
 from sqlalchemy import text
 
@@ -41,6 +47,14 @@ def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
                 state="open",
                 anomaly_score=0.8,
                 detail={},
+            )
+        )
+        session.add(
+            IdempotencyRow(
+                id="migration:request-1",
+                fingerprint="0" * 64,
+                response={},
+                status_code=201,
             )
         )
 

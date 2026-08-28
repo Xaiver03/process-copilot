@@ -169,6 +169,7 @@ class IdempotencyRow(Base):
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     response: Mapped[dict[str, Any]] = mapped_column(JSON)
     status_code: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[Any] = mapped_column(DateTime, nullable=False, default=_utcnow)
 
 
 def table_names(engine: Any) -> set[str]:
