@@ -20,8 +20,8 @@ from pydantic import BaseModel
 from .db import OperatorRow
 from .schemas import ContractModel
 
-Role = Literal["operator", "shift_lead"]
-ROLE_ORDER: dict[str, int] = {"operator": 1, "shift_lead": 2}
+Role = Literal["operator", "shift_lead", "admin"]
+ROLE_ORDER: dict[str, int] = {"operator": 1, "shift_lead": 2, "admin": 3}
 
 DEFAULT_OPERATORS: list[dict[str, str]] = [
     {
@@ -41,6 +41,12 @@ DEFAULT_OPERATORS: list[dict[str, str]] = [
         "password": "demo-eng-2026",
         "role": "shift_lead",
         "display_name": "工艺工程师",
+    },
+    {
+        "username": "system-admin",
+        "password": "demo-admin-2026",
+        "role": "admin",
+        "display_name": "系统管理员",
     },
 ]
 

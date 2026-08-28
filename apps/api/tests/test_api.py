@@ -73,6 +73,22 @@ def test_login_issues_token_and_me_reports_role(client: TestClient):
     assert anonymous.json()["code"] == "missing_token"
 
 
+def test_admin_demo_account_exists_without_registration(client: TestClient):
+    token = login_token(client, "system-admin", "demo-admin-2026")
+    me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert me.status_code == 200
+    assert me.json() == {
+        "username": "system-admin",
+        "role": "admin",
+        "displayName": "系统管理员",
+    }
+    assert client.post(
+        "/api/v1/auth/register",
+        json={"username": "new-user", "password": "not-allowed"},
+    ).status_code == 404
+
+
 def test_decision_requires_authentication_and_role(client: TestClient):
     run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
     event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
