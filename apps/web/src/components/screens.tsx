@@ -229,13 +229,13 @@ export function ReplayScreen() {
           {busy ? <Clock aria-hidden="true" /> : <Play aria-hidden="true" weight="fill" />}<span>{busy ? "创建回放中" : "开始回放"}</span>
         </button>
         <button className="control-button" type="button" disabled={!journey || busy || replayCompleted} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
-        <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
+        <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy || replayCompleted} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
         <div className="sample-readout"><span>{replayCompleted ? "回放已完成" : journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong data-testid="current-sample">{displaySample}</strong><small>/ {totalSamples}</small></div>
       </section>
       {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`}>
         <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
         <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
-        <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl>
+        {telemetry.length > 0 ? <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl> : <p className="simulation-disclosure">当前场景尚未配置仿真变量，不展示其他故障的替代数据。</p>}
         <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p>
       </section> : null}
       <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} evidenceVariables={replaySignals.map(({ id, name }) => ({ id, name }))} />

@@ -163,5 +163,6 @@ describe("回放控制", () => {
     await waitFor(() => expect(screen.getByTestId("current-sample")).toHaveTextContent("960"), { timeout: 1200 });
     expect(screen.getByText("回放已完成")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "暂停回放" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "回放倍速" })).toBeDisabled();
   });
 });

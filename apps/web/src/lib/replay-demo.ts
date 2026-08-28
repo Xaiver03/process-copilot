@@ -23,7 +23,7 @@ const signalProfiles: Record<number, ReplaySignalDefinition[]> = {
   ],
   6: [
     { id: "XMEAS(1)", name: "A 进料流量", unit: "kscmh", base: 0.25, amplitude: 0.002, driftRate: -0.0012 },
-    { id: "XMV(3)", name: "A 进料阀开度", unit: "%", base: 22.1, amplitude: 0.16, driftRate: 0.035 },
+    { id: "XMV(3)", name: "A 进料流量（物流 1）", unit: "%", base: 22.1, amplitude: 0.16, driftRate: 0.035 },
     { id: "XMEAS(20)", name: "压缩机功率", unit: "kW", base: 341, amplitude: 0.45, driftRate: -0.028 },
   ],
   13: [
@@ -34,7 +34,7 @@ const signalProfiles: Record<number, ReplaySignalDefinition[]> = {
 };
 
 export function getReplaySignalDefinitions(faultId: number): ReplaySignalDefinition[] {
-  return signalProfiles[faultId] ?? signalProfiles[4];
+  return signalProfiles[faultId] ?? [];
 }
 
 export function normalizeReplaySpeed(speed: number): 1 | 5 | 10 | 20 {

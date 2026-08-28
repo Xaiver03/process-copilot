@@ -12,9 +12,10 @@ export function answerEventQuestion(event: EventDetail, question: string): strin
   const normalized = question.trim();
 
   if (/传感器|仪表|测点/.test(normalized)) {
-    const directionLabels = event.evidence.map((item) => `${item.variableId}${item.direction === "up" ? "上升" : "下降"}`);
+    const directionText = { up: "上升", down: "下降", mixed: "波动方向混合" } as const;
+    const directionLabels = event.evidence.map((item) => `${item.variableId}${directionText[item.direction]}`);
     const directionSet = new Set(event.evidence.map((item) => item.direction));
-    const directionSummary = directionSet.size === 1
+    const directionSummary = directionSet.size === 1 && !directionSet.has("mixed")
       ? `变化方向一致（${directionLabels.join("、")}）`
       : `变化方向并不相同（${directionLabels.join("、")}）`;
     return `当前证据不足以完全排除传感器故障。之所以暂不把它排在首位，是因为 ${evidence.join("、")} 在同一时间窗内共同变化，${directionSummary}，并非只有一个测点跳变。当前首要假设是“${candidate}”，仍需现场核对仪表状态后才能确认。`;
