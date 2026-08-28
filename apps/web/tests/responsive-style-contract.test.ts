@@ -29,4 +29,11 @@ describe("工业驾驶舱响应式样式契约", () => {
     expect(css).toMatch(/\.page-stack\s*\{[^}]*1680px/);
     expect(css).toMatch(/\.app-workspace main\s*\{[^}]*clamp\(/);
   });
+
+  it("事件研判使用统一十二栏 AI 工作区并在平板收为单列", () => {
+    expect(css).toMatch(/\.ai-workbench\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(12,/);
+    expect(css).toMatch(/\.ai-stepper\s*\{[^}]*display:\s*grid/);
+    expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*?\.ai-workbench\s*\{[^}]*grid-template-columns:\s*1fr/);
+    expect(css).not.toMatch(/\.event-detail-page[\s\S]*?\.investigation-grid/);
+  });
 });
