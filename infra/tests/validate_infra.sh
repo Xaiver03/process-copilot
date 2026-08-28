@@ -42,6 +42,13 @@ for service in caddy web api worker postgres; do
   fi
 done
 
+worker_config="$(sed -n '/^  worker:/,/^  [^ ]/p' <<<"$compose_config")"
+if ! grep -q 'process_copilot_api.worker' <<<"$worker_config" \
+  || ! grep -q -- '--check' <<<"$worker_config"; then
+  printf 'worker healthcheck must verify model, database and online heartbeat readiness\n' >&2
+  exit 1
+fi
+
 if ! grep -q 'MODEL_ARTIFACT_DIR: /app/data/processed/models' <<<"$compose_config"; then
   printf 'MODEL_ARTIFACT_DIR must point inside processed artifacts\n' >&2
   exit 1
