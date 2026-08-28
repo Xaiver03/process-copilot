@@ -19,6 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .auth import (
+    ROLE_ORDER,
     LoginRequestModel,
     LoginResponse,
     authenticate,
@@ -566,7 +567,10 @@ def create_app(
         operator: Annotated[Any, Depends(require_role("operator"))],
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
     ) -> Any:
-        if body.decision in {"confirm", "reject"} and operator.role != "shift_lead":
+        if (
+            body.decision in {"confirm", "reject"}
+            and ROLE_ORDER[operator.role] < ROLE_ORDER["shift_lead"]
+        ):
             raise APIError(
                 403,
                 "role_forbidden",

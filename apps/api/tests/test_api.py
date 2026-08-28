@@ -114,6 +114,15 @@ def test_decision_requires_authentication_and_role(client: TestClient):
     assert escalated.status_code == 201
     assert escalated.json()["operatorRole"] == "operator"
 
+    admin_token = login_token(client, "system-admin", "demo-admin-2026")
+    admin_confirmed = client.post(
+        url,
+        json={"decision": "confirm", "note": "管理员复核确认"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert admin_confirmed.status_code == 201
+    assert admin_confirmed.json()["operatorRole"] == "admin"
+
 
 def test_health_and_readiness_expose_trace_id(client: TestClient):
     health = client.get("/healthz", headers={"X-Trace-ID": "trace-health"})
