@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 from typing import Literal
 
 import numpy as np
@@ -8,6 +9,14 @@ from numpy.typing import NDArray
 from sklearn.decomposition import PCA
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
+
+
+def _is_positive_integer(value: object) -> bool:
+    return isinstance(value, Integral) and not isinstance(value, bool) and value >= 1
+
+
+def _is_non_negative_integer(value: object) -> bool:
+    return isinstance(value, Integral) and not isinstance(value, bool) and value >= 0
 
 
 @dataclass(frozen=True)
@@ -23,25 +32,41 @@ class AlarmDecision:
     state: Literal["normal", "pending", "open", "recovering"]
     transition: Literal["opened", "closed"] | None
     event_start_sample: int | None
+    opened_sample: int | None
 
 
 @dataclass(frozen=True)
 class DataQualityResult:
     valid: bool
-    reasons: tuple[Literal["feature_count", "non_finite"], ...]
+    reasons: tuple[
+        Literal["feature_count", "non_finite", "sample_gap", "unparseable"],
+        ...,
+    ]
 
 
 class SampleQualityGate:
     def __init__(self, *, expected_features: int) -> None:
+        if not _is_positive_integer(expected_features):
+            raise ValueError("expected_features must be a positive integer")
         self.expected_features = expected_features
 
-    def check(self, values: NDArray[np.float64]) -> DataQualityResult:
-        sample = np.asarray(values, dtype=np.float64)
+    def coerce(
+        self,
+        values: object,
+    ) -> tuple[DataQualityResult, NDArray[np.float64] | None]:
+        try:
+            sample = np.asarray(values, dtype=np.float64)
+        except (OverflowError, TypeError, ValueError):
+            return DataQualityResult(False, ("unparseable",)), None
         if sample.ndim != 1 or len(sample) != self.expected_features:
-            return DataQualityResult(False, ("feature_count",))
+            return DataQualityResult(False, ("feature_count",)), None
         if not np.isfinite(sample).all():
-            return DataQualityResult(False, ("non_finite",))
-        return DataQualityResult(True, ())
+            return DataQualityResult(False, ("non_finite",)), None
+        return DataQualityResult(True, ()), sample
+
+    def check(self, values: object) -> DataQualityResult:
+        quality, _ = self.coerce(values)
+        return quality
 
 
 class AlarmStateMachine:
@@ -53,10 +78,14 @@ class AlarmStateMachine:
         enter_consecutive: int,
         exit_consecutive: int,
     ) -> None:
+        if not np.isfinite(enter_threshold) or not np.isfinite(exit_threshold):
+            raise ValueError("alarm thresholds must be finite")
         if enter_threshold <= exit_threshold:
             raise ValueError("enter_threshold must be strictly greater than exit_threshold")
-        if enter_consecutive < 1 or exit_consecutive < 1:
-            raise ValueError("consecutive counters must be at least 1")
+        if not _is_positive_integer(enter_consecutive) or not _is_positive_integer(
+            exit_consecutive
+        ):
+            raise ValueError("consecutive counters must be positive integers")
         self.enter_threshold = enter_threshold
         self.exit_threshold = exit_threshold
         self.enter_consecutive = enter_consecutive
@@ -70,14 +99,18 @@ class AlarmStateMachine:
         self._exit_count = 0
         if self.state in {"open", "recovering"}:
             self.state = "open"
-            return AlarmDecision(self.state, None, self._event_start_sample)
+            return AlarmDecision(self.state, None, self._event_start_sample, None)
 
         self.state = "normal"
         self._enter_count = 0
         self._event_start_sample = None
-        return AlarmDecision(self.state, None, None)
+        return AlarmDecision(self.state, None, None, None)
 
     def update(self, anomaly_score: float, sample_index: int) -> AlarmDecision:
+        if not np.isfinite(anomaly_score):
+            raise ValueError("anomaly_score must be finite")
+        if not _is_non_negative_integer(sample_index):
+            raise ValueError("sample_index must be a non-negative integer")
         if self.state in {"open", "recovering"}:
             if anomaly_score <= self.exit_threshold:
                 self._exit_count += 1
@@ -86,13 +119,13 @@ class AlarmStateMachine:
                     self._enter_count = 0
                     self._exit_count = 0
                     self._event_start_sample = None
-                    return AlarmDecision(self.state, "closed", None)
+                    return AlarmDecision(self.state, "closed", None, None)
                 self.state = "recovering"
-                return AlarmDecision(self.state, None, self._event_start_sample)
+                return AlarmDecision(self.state, None, self._event_start_sample, None)
 
             self._exit_count = 0
             self.state = "open"
-            return AlarmDecision(self.state, None, self._event_start_sample)
+            return AlarmDecision(self.state, None, self._event_start_sample, None)
 
         if anomaly_score >= self.enter_threshold:
             if self._enter_count == 0:
@@ -100,14 +133,19 @@ class AlarmStateMachine:
             self._enter_count += 1
             if self._enter_count >= self.enter_consecutive:
                 self.state = "open"
-                return AlarmDecision(self.state, "opened", self._event_start_sample)
+                return AlarmDecision(
+                    self.state,
+                    "opened",
+                    self._event_start_sample,
+                    sample_index,
+                )
             self.state = "pending"
-            return AlarmDecision(self.state, None, self._event_start_sample)
+            return AlarmDecision(self.state, None, self._event_start_sample, None)
 
         self._enter_count = 0
         self._event_start_sample = None
         self.state = "normal"
-        return AlarmDecision(self.state, None, None)
+        return AlarmDecision(self.state, None, None, None)
 
 
 @dataclass(frozen=True)
@@ -132,10 +170,12 @@ class Episode:
         if self.end_sample < self.start_sample:
             raise ValueError("end_sample must not be earlier than start_sample")
 
+
 @dataclass(frozen=True)
 class EventMetrics:
     matched_events: int
     false_alarm_events: int
+    duplicate_alarm_events: int
     precision: float
     recall: float
     detection_delays: tuple[int, ...]
@@ -147,33 +187,80 @@ def evaluate_alarm_episodes(
     truth: list[Episode],
     *,
     observation_samples: int,
+    early_detection_tolerance_samples: int = 0,
 ) -> EventMetrics:
     if observation_samples < 1:
         raise ValueError("observation_samples must be at least 1")
-    used_predictions: set[int] = set()
-    delays: list[int] = []
-    for truth_episode in sorted(truth, key=lambda episode: episode.start_sample):
-        matches = [
-            (index, predicted_episode)
-            for index, predicted_episode in enumerate(predicted)
-            if index not in used_predictions
-            and predicted_episode.start_sample <= truth_episode.end_sample
-            and predicted_episode.end_sample >= truth_episode.start_sample
-        ]
-        if not matches:
-            continue
-        prediction_index, prediction = min(
-            matches,
-            key=lambda item: item[1].start_sample,
-        )
-        used_predictions.add(prediction_index)
-        delays.append(prediction.start_sample - truth_episode.start_sample)
+    if early_detection_tolerance_samples < 0:
+        raise ValueError("early_detection_tolerance_samples must be non-negative")
+    if any(
+        episode.end_sample >= observation_samples
+        for episode in [*predicted, *truth]
+    ):
+        raise ValueError("episodes must stay inside the observation range")
 
-    matched_events = len(used_predictions)
-    false_alarm_events = len(predicted) - matched_events
+    def qualifies(prediction: Episode, truth_episode: Episode) -> bool:
+        earliest_start = truth_episode.start_sample - early_detection_tolerance_samples
+        return (
+            prediction.start_sample >= earliest_start
+            and prediction.start_sample <= truth_episode.end_sample
+            and prediction.end_sample >= truth_episode.start_sample
+        )
+
+    ordered_truth = sorted(truth, key=lambda episode: episode.start_sample)
+    candidates = [
+        [
+            prediction_index
+            for prediction_index, prediction in sorted(
+                enumerate(predicted),
+                key=lambda item: (
+                    item[1].start_sample,
+                    item[1].end_sample,
+                    item[0],
+                ),
+            )
+            if qualifies(prediction, truth_episode)
+        ]
+        for truth_episode in ordered_truth
+    ]
+    eligible_predictions = {
+        prediction_index
+        for truth_candidates in candidates
+        for prediction_index in truth_candidates
+    }
+    prediction_to_truth: dict[int, int] = {}
+
+    def assign(truth_index: int, visited_predictions: set[int]) -> bool:
+        for prediction_index in candidates[truth_index]:
+            if prediction_index in visited_predictions:
+                continue
+            visited_predictions.add(prediction_index)
+            previous_truth = prediction_to_truth.get(prediction_index)
+            if previous_truth is None or assign(previous_truth, visited_predictions):
+                prediction_to_truth[prediction_index] = truth_index
+                return True
+        return False
+
+    for truth_index in range(len(ordered_truth)):
+        assign(truth_index, set())
+
+    truth_to_prediction = {
+        truth_index: prediction_index
+        for prediction_index, truth_index in prediction_to_truth.items()
+    }
+    delays = [
+        predicted[truth_to_prediction[truth_index]].start_sample
+        - truth_episode.start_sample
+        for truth_index, truth_episode in enumerate(ordered_truth)
+        if truth_index in truth_to_prediction
+    ]
+    matched_events = len(prediction_to_truth)
+    false_alarm_events = len(predicted) - len(eligible_predictions)
+    duplicate_alarm_events = len(eligible_predictions) - matched_events
     return EventMetrics(
         matched_events=matched_events,
         false_alarm_events=false_alarm_events,
+        duplicate_alarm_events=duplicate_alarm_events,
         precision=matched_events / len(predicted) if predicted else 1.0,
         recall=matched_events / len(truth) if truth else 1.0,
         detection_delays=tuple(delays),
@@ -192,7 +279,16 @@ class OnlinePCAMonitor:
         enter_consecutive: int = 3,
         exit_consecutive: int = 5,
         top_contributor_count: int = 3,
+        expected_sample_step: int = 1,
     ) -> None:
+        if not _is_positive_integer(top_contributor_count) or not (
+            top_contributor_count <= expected_features
+        ):
+            raise ValueError(
+                "top_contributor_count must be between 1 and expected_features"
+            )
+        if not _is_positive_integer(expected_sample_step):
+            raise ValueError("expected_sample_step must be a positive integer")
         self.detector = detector
         self.quality_gate = SampleQualityGate(expected_features=expected_features)
         self.alarm_state_machine = AlarmStateMachine(
@@ -202,19 +298,36 @@ class OnlinePCAMonitor:
             exit_consecutive=exit_consecutive,
         )
         self.top_contributor_count = top_contributor_count
+        self.expected_sample_step = expected_sample_step
         self._last_sample_index: int | None = None
 
     def process(
         self,
-        values: NDArray[np.float64],
+        values: object,
         *,
         sample_index: int,
     ) -> OnlineSampleAssessment:
+        if not _is_non_negative_integer(sample_index):
+            raise ValueError("sample_index must be a non-negative integer")
         if self._last_sample_index is not None and sample_index <= self._last_sample_index:
             raise ValueError("sample_index must be strictly increasing")
+        has_gap = (
+            self._last_sample_index is not None
+            and sample_index != self._last_sample_index + self.expected_sample_step
+        )
         self._last_sample_index = sample_index
-        sample = np.asarray(values, dtype=np.float64)
-        quality = self.quality_gate.check(sample)
+        if has_gap:
+            quality = DataQualityResult(False, ("sample_gap",))
+            return OnlineSampleAssessment(
+                sample_index=sample_index,
+                quality=quality,
+                t2=None,
+                spe=None,
+                anomaly_score=None,
+                top_contributor_indices=(),
+                alarm=self.alarm_state_machine.invalidate(),
+            )
+        quality, sample = self.quality_gate.coerce(values)
         if not quality.valid:
             return OnlineSampleAssessment(
                 sample_index=sample_index,
@@ -226,6 +339,7 @@ class OnlinePCAMonitor:
                 alarm=self.alarm_state_machine.invalidate(),
             )
 
+        assert sample is not None
         scores = self.detector.score(sample)
         anomaly_score = float(scores.anomaly_score[0])
         top_indices = self.detector.top_contributor_indices(
