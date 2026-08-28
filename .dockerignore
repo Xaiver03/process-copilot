@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+**/.venv
+**/node_modules
+**/.next
+**/coverage
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.py[cod]
+apps/api/process_copilot.db
+docs
+design-system

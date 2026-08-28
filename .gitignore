@@ -1,0 +1,25 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# JavaScript
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Local runtime state
+apps/api/process_copilot.db
+*.sqlite
+*.sqlite3
+
+# System files
+.DS_Store

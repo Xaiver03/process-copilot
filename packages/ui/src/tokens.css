@@ -1,0 +1,28 @@
+:root {
+  --wuno-surface-canvas: #f7fbfe;
+  --wuno-surface-panel: #ffffff;
+  --wuno-surface-elevated: #fdfeff;
+  --wuno-primary-700: #24839b;
+  --wuno-primary-500: #3996ae;
+  --wuno-accent-500: #13c2c2;
+  --wuno-text-primary: #102a3a;
+  --wuno-text-secondary: #627987;
+  --wuno-border-subtle: #dceaf5;
+  --wuno-status-success: #27ae84;
+  --wuno-status-warning: #f2a93b;
+  --wuno-status-error: #de5b6d;
+  --process-normal: var(--wuno-status-success);
+  --process-drift: var(--wuno-status-warning);
+  --process-alarm: var(--wuno-status-error);
+  --data-live: var(--wuno-status-success);
+  --data-delayed: var(--wuno-status-warning);
+  --data-offline: var(--wuno-status-error);
+  --evidence-selected: var(--wuno-primary-700);
+  --evidence-baseline: var(--wuno-text-secondary);
+  --control-read-only: var(--wuno-primary-500);
+  --control-human-confirmed: var(--wuno-status-success);
+  --chart-grid: var(--wuno-border-subtle);
+  --chart-event-window: color-mix(in srgb, var(--wuno-status-warning) 14%, transparent);
+  --font-sans: "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}

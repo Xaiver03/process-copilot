@@ -1,0 +1,432 @@
+openapi: 3.1.0
+info:
+  title: Wuno Process Copilot API
+  version: 0.1.0
+  description: >-
+    Public hackathon demo API for Tennessee Eastman Process simulation data.
+    Replay controls and human decisions only affect isolated demo sessions; this
+    contract is not an authenticated production control-plane API.
+  license:
+    name: Proprietary application; dataset retains its upstream license
+    url: https://github.com/camaramm/tennessee-eastman-profBraatz/blob/master/LICENSE
+security: []
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      summary: Check process liveness
+      operationId: healthcheck
+      responses:
+        "200":
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "400":
+          $ref: "#/components/responses/Problem"
+  /readyz:
+    get:
+      summary: Check application readiness
+      operationId: readiness
+      responses:
+        "200":
+          description: Dependencies and demo data are ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+  /api/v1/scenarios:
+    get:
+      summary: List immutable demo scenarios
+      operationId: listScenarios
+      responses:
+        "200":
+          description: Available immutable demo scenarios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scenario"
+        "400":
+          $ref: "#/components/responses/Problem"
+  /api/v1/runs:
+    post:
+      summary: Create a replay run
+      operationId: createRun
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunRequest"
+      responses:
+        "201":
+          description: Replay run created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayRun"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+  /api/v1/runs/{runId}:
+    get:
+      summary: Get current replay state
+      operationId: getRun
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Current replay state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayRun"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/v1/runs/{runId}/control:
+    post:
+      summary: Control replay state
+      operationId: controlRun
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunControlRequest"
+      responses:
+        "200":
+          description: Updated replay state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayRun"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/runs/{runId}/stream:
+    get:
+      summary: Stream replay telemetry and events
+      operationId: streamRun
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SSE stream with telemetry, anomaly and heartbeat events.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/Problem"
+        "400":
+          $ref: "#/components/responses/Problem"
+  /api/v1/runs/{runId}/events:
+    get:
+      summary: List events for a replay run
+      operationId: listRunEvents
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Events detected for the run.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnomalyEvent"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/v1/events/{eventId}:
+    get:
+      summary: Get event diagnosis and evidence
+      operationId: getEvent
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Diagnosis, evidence and recommendation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventDetail"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/v1/events/{eventId}/decision:
+    post:
+      summary: Record a human decision
+      operationId: decideEvent
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionRequest"
+      responses:
+        "201":
+          description: Human decision and immutable record created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionRecord"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/records/{recordId}:
+    get:
+      summary: Get an auditable decision record
+      operationId: getRecord
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Auditable event decision record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionRecord"
+        "404":
+          $ref: "#/components/responses/Problem"
+components:
+  parameters:
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 128
+  responses:
+    Problem:
+      description: Request could not be completed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          enum: [ok, degraded]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+    Scenario:
+      type: object
+      required: [id, name, faultId, sampleCount, faultOnsetSample, sourceLabel]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description:
+          type: [string, "null"]
+        faultId: {type: integer, minimum: 0, maximum: 21}
+        sampleCount: {type: integer, minimum: 1}
+        faultOnsetSample: {type: integer, minimum: 0}
+        sourceLabel:
+          const: Tennessee Eastman Process public simulation
+    CreateRunRequest:
+      type: object
+      required: [scenarioId]
+      properties:
+        scenarioId: {type: string}
+        speed: {type: number, enum: [1, 5, 10, 20], default: 10}
+    ReplayRun:
+      type: object
+      required: [id, scenarioId, state, speed, currentSample, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        scenarioId: {type: string}
+        state: {enum: [ready, playing, paused, completed, failed]}
+        speed: {type: number}
+        currentSample: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+    RunControlRequest:
+      type: object
+      required: [action]
+      properties:
+        action: {enum: [play, pause, restart, seek]}
+        sampleIndex: {type: integer, minimum: 0}
+        speed: {type: number, enum: [1, 5, 10, 20]}
+    AnomalyEvent:
+      type: object
+      required: [id, runId, sampleIndex, severity, state, anomalyScore]
+      properties:
+        id: {type: string, format: uuid}
+        runId: {type: string, format: uuid}
+        sampleIndex: {type: integer}
+        severity: {enum: [warning, critical]}
+        state: {enum: [open, confirmed, rejected, escalated]}
+        anomalyScore: {type: number}
+    FaultCandidate:
+      type: object
+      required: [faultId, label, probability]
+      properties:
+        faultId: {type: integer, minimum: 0, maximum: 21}
+        label: {type: string}
+        probability: {type: number, minimum: 0, maximum: 1}
+    EvidenceItem:
+      type: object
+      required: [variableId, variableName, unit, contribution, direction, summary, values]
+      properties:
+        variableId:
+          type: string
+          pattern: '^(XMEAS|XMV)\([0-9]+\)$'
+        variableName: {type: string}
+        unit: {type: string}
+        contribution: {type: number, minimum: 0}
+        direction: {enum: [up, down, mixed]}
+        summary: {type: string}
+        values:
+          type: array
+          items: {type: number}
+    Recommendation:
+      type: object
+      required: [mode, risk, checks, actions, safetyBoundary]
+      properties:
+        mode: {enum: [template, llm_enhanced, degraded]}
+        risk: {type: string}
+        checks:
+          type: array
+          items: {type: string}
+        actions:
+          type: array
+          items: {type: string}
+        safetyBoundary:
+          const: Read-only advice. No automatic control write-back.
+    EventDetail:
+      allOf:
+        - $ref: "#/components/schemas/AnomalyEvent"
+        - type: object
+          required:
+            - detectionSample
+            - diagnosisSample
+            - diagnosisDelaySamples
+            - diagnosisState
+            - diagnosisAnomalyScore
+            - anomalyLatched
+            - initialCandidates
+            - candidates
+            - evidence
+            - recommendation
+            - modelVersion
+            - dataSourceDisclosure
+          properties:
+            detectionSample:
+              type: integer
+              minimum: 0
+              description: First sample where the anomaly event was latched.
+            diagnosisSample:
+              type: integer
+              minimum: 0
+              description: Sample used for the latest delayed candidate and evidence refresh.
+            diagnosisDelaySamples:
+              type: integer
+              const: 20
+              description: Pre-registered, label-independent delay after anomaly detection.
+            diagnosisState:
+              enum: [pending, provisional, updated]
+            diagnosisAnomalyScore:
+              type: number
+            anomalyLatched:
+              type: boolean
+              const: true
+            initialCandidates:
+              type: array
+              maxItems: 3
+              items:
+                $ref: "#/components/schemas/FaultCandidate"
+            candidates:
+              type: array
+              maxItems: 3
+              items:
+                $ref: "#/components/schemas/FaultCandidate"
+            evidence:
+              type: array
+              minItems: 3
+              maxItems: 3
+              items:
+                $ref: "#/components/schemas/EvidenceItem"
+            recommendation:
+              $ref: "#/components/schemas/Recommendation"
+            modelVersion: {type: string}
+            dataSourceDisclosure:
+              const: Public simulation data, not real Guizhou plant data.
+    DecisionRequest:
+      type: object
+      required: [decision, operatorName, note]
+      properties:
+        decision: {enum: [confirm, reject, escalate]}
+        operatorName: {type: string, minLength: 1, maxLength: 80}
+        note: {type: string, maxLength: 1000}
+    DecisionRecord:
+      type: object
+      required: [id, eventId, decision, operatorName, note, createdAt, modelVersion, traceId]
+      properties:
+        id: {type: string, format: uuid}
+        eventId: {type: string, format: uuid}
+        decision: {enum: [confirm, reject, escalate]}
+        operatorName: {type: string}
+        note: {type: string}
+        createdAt: {type: string, format: date-time}
+        modelVersion: {type: string}
+        traceId: {type: string}
+    Problem:
+      type: object
+      required: [code, message, traceId]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        details: {type: object, additionalProperties: true}
+        traceId: {type: string}

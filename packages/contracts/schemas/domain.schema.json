@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wuno.ai/process-copilot/domain.schema.json",
+  "title": "Process Copilot Domain Contract",
+  "$defs": {
+    "Scenario": {
+      "type": "object",
+      "required": ["id", "name", "faultId", "sampleCount", "faultOnsetSample", "sourceLabel"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": ["string", "null"]},
+        "faultId": {"type": "integer", "minimum": 0, "maximum": 21},
+        "sampleCount": {"type": "integer", "minimum": 1},
+        "faultOnsetSample": {"type": "integer", "minimum": 0},
+        "sourceLabel": {"const": "Tennessee Eastman Process public simulation"}
+      },
+      "additionalProperties": false
+    },
+    "FaultCandidate": {
+      "type": "object",
+      "required": ["faultId", "label", "probability"],
+      "properties": {
+        "faultId": {"type": "integer", "minimum": 0, "maximum": 21},
+        "label": {"type": "string"},
+        "probability": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "EvidenceItem": {
+      "type": "object",
+      "required": ["variableId", "variableName", "unit", "contribution", "direction", "summary", "values"],
+      "properties": {
+        "variableId": {"type": "string", "pattern": "^(XMEAS|XMV)\\([0-9]+\\)$"},
+        "variableName": {"type": "string"},
+        "unit": {"type": "string"},
+        "contribution": {"type": "number", "minimum": 0},
+        "direction": {"enum": ["up", "down", "mixed"]},
+        "summary": {"type": "string"},
+        "values": {
+          "type": "array",
+          "items": {"type": "number"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "Recommendation": {
+      "type": "object",
+      "required": ["mode", "risk", "checks", "actions", "safetyBoundary"],
+      "properties": {
+        "mode": {"enum": ["template", "llm_enhanced", "degraded"]},
+        "risk": {"type": "string"},
+        "checks": {"type": "array", "items": {"type": "string"}},
+        "actions": {"type": "array", "items": {"type": "string"}},
+        "safetyBoundary": {"const": "Read-only advice. No automatic control write-back."}
+      },
+      "additionalProperties": false
+    },
+    "EventDetail": {
+      "type": "object",
+      "required": [
+        "id", "runId", "sampleIndex", "severity", "state", "anomalyScore",
+        "detectionSample", "diagnosisSample", "diagnosisDelaySamples",
+        "diagnosisState", "diagnosisAnomalyScore", "anomalyLatched",
+        "initialCandidates", "candidates", "evidence", "recommendation",
+        "modelVersion", "dataSourceDisclosure"
+      ],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "runId": {"type": "string", "format": "uuid"},
+        "sampleIndex": {"type": "integer", "minimum": 0},
+        "severity": {"enum": ["warning", "critical"]},
+        "state": {"enum": ["open", "confirmed", "rejected", "escalated"]},
+        "anomalyScore": {"type": "number"},
+        "detectionSample": {"type": "integer", "minimum": 0},
+        "diagnosisSample": {"type": "integer", "minimum": 0},
+        "diagnosisDelaySamples": {"const": 20},
+        "diagnosisState": {"enum": ["pending", "provisional", "updated"]},
+        "diagnosisAnomalyScore": {"type": "number"},
+        "anomalyLatched": {"const": true},
+        "initialCandidates": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/FaultCandidate"}
+        },
+        "candidates": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/FaultCandidate"}
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/EvidenceItem"}
+        },
+        "recommendation": {"$ref": "#/$defs/Recommendation"},
+        "modelVersion": {"type": "string"},
+        "dataSourceDisclosure": {"const": "Public simulation data, not real Guizhou plant data."}
+      },
+      "additionalProperties": false
+    },
+    "Decision": {
+      "type": "object",
+      "required": ["decision", "operatorName", "note"],
+      "properties": {
+        "decision": {"enum": ["confirm", "reject", "escalate"]},
+        "operatorName": {"type": "string", "minLength": 1, "maxLength": 80},
+        "note": {"type": "string", "maxLength": 1000}
+      },
+      "additionalProperties": false
+    },
+    "DecisionRecord": {
+      "type": "object",
+      "required": ["id", "eventId", "decision", "operatorName", "note", "createdAt", "modelVersion", "traceId"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "eventId": {"type": "string", "format": "uuid"},
+        "decision": {"enum": ["confirm", "reject", "escalate"]},
+        "operatorName": {"type": "string"},
+        "note": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"},
+        "modelVersion": {"type": "string"},
+        "traceId": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

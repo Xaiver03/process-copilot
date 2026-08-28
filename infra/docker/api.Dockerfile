@@ -1,0 +1,24 @@
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_HTTP_TIMEOUT=120 \
+    PATH="/app/.venv/bin:$PATH"
+WORKDIR /app
+
+RUN groupadd --system --gid 10001 process \
+    && useradd --system --uid 10001 --gid process --home-dir /app --shell /usr/sbin/nologin process
+
+COPY apps/api/pyproject.toml apps/api/uv.lock /app/
+COPY apps/api/process_copilot_api /app/process_copilot_api
+RUN python -m pip install --retries 5 uv==0.10.7 \
+    && uv sync --frozen --no-dev \
+    && chown -R process:process /app
+COPY --chown=process:process data/processed /app/data/processed
+
+USER process
+EXPOSE 8000
+CMD ["uvicorn", "process_copilot_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
