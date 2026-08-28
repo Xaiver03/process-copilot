@@ -15,6 +15,8 @@ RUN groupadd --system --gid 10001 process \
 COPY services/ml/pyproject.toml /app/services/ml/pyproject.toml
 COPY services/ml/process_copilot_ml /app/services/ml/process_copilot_ml
 COPY apps/api/pyproject.toml apps/api/uv.lock /app/apps/api/
+COPY apps/api/alembic.ini /app/apps/api/alembic.ini
+COPY apps/api/alembic /app/apps/api/alembic
 COPY apps/api/process_copilot_api /app/apps/api/process_copilot_api
 WORKDIR /app/apps/api
 RUN python -m pip install --retries 5 uv==0.10.7 \
@@ -24,4 +26,4 @@ COPY --chown=process:process data/processed /app/data/processed
 
 USER process
 EXPOSE 8000
-CMD ["uvicorn", "process_copilot_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m process_copilot_api.migrations && uvicorn process_copilot_api.main:app --host 0.0.0.0 --port 8000"]

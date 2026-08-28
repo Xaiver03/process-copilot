@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+from process_copilot_api.db import Database, column_names, table_names
+from process_copilot_api.migrations import upgrade_database
+
+
+def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'migrated.db'}"
+
+    upgrade_database(database_url)
+
+    database = Database(database_url)
+    database.check_ready()
+    tables = table_names(database.engine)
+    expected_tables = {
+        "operators",
+        "decision_records",
+        "replay_runs",
+        "anomaly_events",
+        "audits",
+        "idempotency_records",
+    }
+    assert expected_tables.issubset(tables)
+    assert "operator_role" in column_names(database.engine, "decision_records")
+
+
+def test_upgrade_head_backfills_existing_schema(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'legacy.db'}"
+
+    database = Database(database_url)
+    database.create_schema()
+    with database.engine.begin() as connection:
+        connection.exec_driver_sql("ALTER TABLE decision_records DROP COLUMN operator_role")
+        connection.exec_driver_sql("CREATE TABLE legacy_marker (id INTEGER PRIMARY KEY)")
+
+    upgrade_database(database_url)
+
+    assert "operator_role" in column_names(database.engine, "decision_records")
+    assert "legacy_marker" in table_names(database.engine)

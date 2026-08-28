@@ -128,6 +128,9 @@ chmod 600 "$RUNTIME_ENV"
 
 pushd "$RELEASE_DIR" >/dev/null
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$RELEASE_DIR/infra/compose.yaml" config --quiet
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$RELEASE_DIR/infra/compose.yaml" up -d postgres --wait
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$RELEASE_DIR/infra/compose.yaml" build api
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$RELEASE_DIR/infra/compose.yaml" run --rm --no-deps api python -m process_copilot_api.migrations
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$RELEASE_DIR/infra/compose.yaml" up -d --build --wait
 popd >/dev/null
 

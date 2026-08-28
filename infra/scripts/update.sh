@@ -36,6 +36,9 @@ git reset --hard "origin/$BRANCH"
 
 COMPOSE_FILE="$REPO_DIR/infra/compose.yaml"
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" config --quiet
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d postgres --wait
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" build api
+docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" run --rm --no-deps api python -m process_copilot_api.migrations
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d --build --wait
 
 HTTP_PORT="$(grep '^COPILOT_HTTP_PORT=' "$RUNTIME_ENV" | cut -d= -f2)"
