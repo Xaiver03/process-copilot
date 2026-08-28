@@ -44,7 +44,11 @@ export function AppShell({
       <a className="skip-link" href="#main-content">跳到主要内容</a>
       <aside id="app-navigation" className={`app-sidebar${navigationOpen ? " sidebar-open" : ""}`}>
         <button className="sidebar-close" type="button" aria-label="关闭主导航" onClick={() => setNavigationOpen(false)}><X aria-hidden="true" /></button>
-        <Link className="brand-lockup" href="/demo" aria-label="序安过程哨兵首页">
+        <Link
+          className="brand-lockup"
+          href="/demo"
+          aria-label="序安 Process Sentinel（序安·过程哨兵）首页"
+        >
           <span className="brand-mark" aria-hidden="true"><ShieldCheck weight="duotone" /></span>
           <span><strong>序安</strong><small>PROCESS SENTINEL</small></span>
         </Link>
