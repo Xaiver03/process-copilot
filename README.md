@@ -52,6 +52,16 @@ BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
 
 当前 Web 验收基线：`79 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。API 为 `86 passed`，基础设施校验通过；ML 与契约使用各自验收命令独立复核。
 
+正式前后端用户旅程验收：
+
+```bash
+PLAYWRIGHT_BASE_URL=https://huagong.finlaw.cloud \
+PLAYWRIGHT_EVIDENCE_TARGET=public \
+pnpm test:e2e:journeys
+```
+
+同一套 Playwright 脚本在本地与公网均通过 `10/10`，覆盖 22 个关键状态并同时保存首屏与完整页面，共 88 张截图。UJ-09、UJ-10 专门验证工业模型证据、AI 追问、调用审计、运行与降级状态、密钥不回显和公网只读边界。详见 [完整用户旅程验收](docs/submission/序安完整用户旅程验收_v01_REVIEW.md)与 [AI 用户流程验收](docs/submission/序安AI用户流程验收_v01_REVIEW.md)。
+
 ## 运行与部署
 
 - 远端主机：`wunoos`
@@ -109,6 +119,8 @@ docs/submission/          作品、数据与 Demo 材料
 - [UI 可读性与响应式审查](docs/design/2026-08-28_UI可读性与响应式审查_v01_REVIEW.md)
 - [产品手册交付目录](04_交付成品/README.md)
 - [产品手册唯一 LaTeX 源入口](02_方案源文件/README.md)
+- [完整前后端用户旅程验收](docs/submission/序安完整用户旅程验收_v01_REVIEW.md)
+- [AI 用户流程验收](docs/submission/序安AI用户流程验收_v01_REVIEW.md)
 - [多 Agent 协作编排规范](docs/plans/2026-08-28_多Agent协作编排规范_v01_DRAFT.md)
 - [Claude Code 独立验收 Prompt](docs/plans/2026-08-28_Claude_Code_独立验收Prompt_v01.md)
 - [Figma 设计系统](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)

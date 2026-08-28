@@ -1,0 +1,673 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/node_modules/@playwright/test/cli.js",
+      "test",
+      "-c",
+      "tests/e2e/playwright.config.ts"
+    ],
+    "configFile": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/tests/e2e/playwright.config.ts",
+    "rootDir": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/tests/e2e/playwright",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/tests/e2e/playwright",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/playwright-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/html-report",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "user-journeys.spec.ts",
+      "file": "user-journeys.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "序安完整前后端用户旅程",
+          "file": "user-journeys.spec.ts",
+          "line": 151,
+          "column": 15,
+          "specs": [
+            {
+              "title": "UJ-01 访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 31489,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:00:20.918Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ01-01_演示入口-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-01-演示入口-viewport-ef4cbbc20e298e25fb91c5d9985ab6523155df64.png"
+                        },
+                        {
+                          "name": "UJ01-01_演示入口-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-01-演示入口-full-page-681db09285202dbc28314e05bb182d4c8800f8b1.png"
+                        },
+                        {
+                          "name": "UJ01-02_在线回放推进-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-02-在线回放推进-viewport-d142829e1d3d8600bf83d0a937dab90c698ebdb3.png"
+                        },
+                        {
+                          "name": "UJ01-02_在线回放推进-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-02-在线回放推进-full-page-9cadfb6d45edfc52fdd6ce9a03d6170deb0653e6.png"
+                        },
+                        {
+                          "name": "UJ01-03_偏移捕获-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-03-偏移捕获-viewport-ed383301ea76c49689886f8e1fabef98be37f32c.png"
+                        },
+                        {
+                          "name": "UJ01-03_偏移捕获-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-01-访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件/attachments/UJ01-03-偏移捕获-full-page-4bf1b4205f1299277bb09b589b91106e0cdb9c70.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-f01231497c2ad1c21ad7",
+              "file": "user-journeys.spec.ts",
+              "line": 165,
+              "column": 7
+            },
+            {
+              "title": "UJ-02 未登录用户看见完整 AI 依据、登录门和只读写回预演",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1056,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:06.206Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ02-01_未登录事件研判-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-02-未登录用户看见完整-AI-依据、登录门和只读写回预演/attachments/UJ02-01-未登录事件研判-viewport-f0eb5312792346e8a90c4270ea5632d2c0e2ab0d.png"
+                        },
+                        {
+                          "name": "UJ02-01_未登录事件研判-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-02-未登录用户看见完整-AI-依据、登录门和只读写回预演/attachments/UJ02-01-未登录事件研判-full-page-7d4f9d55fdb4ce935b416f282314f1d5cffedb3c.png"
+                        },
+                        {
+                          "name": "UJ02-02_受控写回仅预演-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-02-未登录用户看见完整-AI-依据、登录门和只读写回预演/attachments/UJ02-02-受控写回仅预演-viewport-e99040a47debe71b87e6006d51aaad379385556e.png"
+                        },
+                        {
+                          "name": "UJ02-02_受控写回仅预演-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-02-未登录用户看见完整-AI-依据、登录门和只读写回预演/attachments/UJ02-02-受控写回仅预演-full-page-d3cb9aea5b43a22b4c0352d2b3f677e52739adab.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-92c5153c049816181903",
+              "file": "user-journeys.spec.ts",
+              "line": 194,
+              "column": 7
+            },
+            {
+              "title": "UJ-03 中控操作员在线追问 AI，只能升级并形成可追溯记录",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1943,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:07.266Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ03-01_操作员AI追问-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-03-中控操作员在线追问-AI，只能升级并形成可追溯记录/attachments/UJ03-01-操作员AI追问-viewport-35be60231759b0e6c5d883e3c5270dd4e7e86d9a.png"
+                        },
+                        {
+                          "name": "UJ03-01_操作员AI追问-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-03-中控操作员在线追问-AI，只能升级并形成可追溯记录/attachments/UJ03-01-操作员AI追问-full-page-5ea9164445335194fe0ec33d2ec2b7388c0deb84.png"
+                        },
+                        {
+                          "name": "UJ03-02_操作员升级记录-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-03-中控操作员在线追问-AI，只能升级并形成可追溯记录/attachments/UJ03-02-操作员升级记录-viewport-43779fc5478970038015a81614ee8289f254bb30.png"
+                        },
+                        {
+                          "name": "UJ03-02_操作员升级记录-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-03-中控操作员在线追问-AI，只能升级并形成可追溯记录/attachments/UJ03-02-操作员升级记录-full-page-ad904aa03db015095b8e65e3e73d596cf1f1d4a7.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-812a5346507f9da47473",
+              "file": "user-journeys.spec.ts",
+              "line": 207,
+              "column": 7
+            },
+            {
+              "title": "UJ-04 当班班长可以确认偏移并留下身份、模型与 Trace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1480,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:09.212Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ04-01_班长确认记录-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-04-当班班长可以确认偏移并留下身份、模型与-Trace/attachments/UJ04-01-班长确认记录-viewport-bfbd3c67562fdbeca922862e3420cefad16c162a.png"
+                        },
+                        {
+                          "name": "UJ04-01_班长确认记录-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-04-当班班长可以确认偏移并留下身份、模型与-Trace/attachments/UJ04-01-班长确认记录-full-page-1d1997a5ec6aca54a489110d20bca99a09d9dde3.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-760784987e6a0e2d6b24",
+              "file": "user-journeys.spec.ts",
+              "line": 230,
+              "column": 7
+            },
+            {
+              "title": "UJ-05 工艺工程师可以驳回偏移并留下独立审计记录",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1514,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:10.695Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ05-01_工程师驳回记录-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-05-工艺工程师可以驳回偏移并留下独立审计记录/attachments/UJ05-01-工程师驳回记录-viewport-21172c1cd3fe487ee0de825906acbc131d746187.png"
+                        },
+                        {
+                          "name": "UJ05-01_工程师驳回记录-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-05-工艺工程师可以驳回偏移并留下独立审计记录/attachments/UJ05-01-工程师驳回记录-full-page-f52981195c19528b39e048a5180310ca0326a64e.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-2a69a08c7aa7d3faf586",
+              "file": "user-journeys.spec.ts",
+              "line": 244,
+              "column": 7
+            },
+            {
+              "title": "UJ-06 管理后台执行 RBAC、运行概览、只读 AI 配置、调用与配置审计",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2486,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:12.213Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ06-01_普通账号拒绝后台-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-01-普通账号拒绝后台-viewport-1256473fcd52c3458c7ce54f6f47f3a7c6397d3c.png"
+                        },
+                        {
+                          "name": "UJ06-01_普通账号拒绝后台-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-01-普通账号拒绝后台-full-page-57dad81397e8cfd04efa35b0b054f505a00bb419.png"
+                        },
+                        {
+                          "name": "UJ06-02_管理运行概览-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-02-管理运行概览-viewport-903b1c4bf9c450a435b96f4946f3ee977a0291f2.png"
+                        },
+                        {
+                          "name": "UJ06-02_管理运行概览-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-02-管理运行概览-full-page-65237ae52473307d42d4179ba58b44e7cc7160f6.png"
+                        },
+                        {
+                          "name": "UJ06-03_AI配置只读边界-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-03-AI配置只读边界-viewport-6c8df4d545d9d5785b186008607798db918e8d9b.png"
+                        },
+                        {
+                          "name": "UJ06-03_AI配置只读边界-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-03-AI配置只读边界-full-page-55d28f62632d6f29e3c0a72856a96e9cb77e0c75.png"
+                        },
+                        {
+                          "name": "UJ06-04_AI调用记录-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-04-AI调用记录-viewport-66b916d8931c78d948fddbcf2e0444cc2b457bec.png"
+                        },
+                        {
+                          "name": "UJ06-04_AI调用记录-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-04-AI调用记录-full-page-c250a1cfca54e8aa7afa81fdc251240d26d4756c.png"
+                        },
+                        {
+                          "name": "UJ06-05_配置审计-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-05-配置审计-viewport-9fdc8d73239dddbae6b9580a255cb8afbeb4b7ac.png"
+                        },
+                        {
+                          "name": "UJ06-05_配置审计-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--213ff--RBAC、运行概览、只读-AI-配置、调用与配置审计/attachments/UJ06-05-配置审计-full-page-baff158f05a5c1f182fdbf50c43927f6acd62fea.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-bbebcb6c56add5eec463",
+              "file": "user-journeys.spec.ts",
+              "line": 257,
+              "column": 7
+            },
+            {
+              "title": "UJ-07 系统状态同时验证前端可见健康信息与后端 health/readiness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 499,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:14.703Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ07-01_系统健康与只读边界-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--f5ca0-端可见健康信息与后端-health-readiness/attachments/UJ07-01-系统健康与只读边界-viewport-44bbf6145fb9e348fe31a64bfb9681424ee31273.png"
+                        },
+                        {
+                          "name": "UJ07-01_系统健康与只读边界-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--f5ca0-端可见健康信息与后端-health-readiness/attachments/UJ07-01-系统健康与只读边界-full-page-689932ff08619ad86a12eb45e6281bbb1d905359.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-adf5d4b3944e640f9003",
+              "file": "user-journeys.spec.ts",
+              "line": 294,
+              "column": 7
+            },
+            {
+              "title": "UJ-08 核心页面在桌面、平板与手机均无水平溢出",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1989,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:15.206Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ08-桌面1440_事件页-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-桌面1440-事件页-viewport-85961579bf440234d5996c9464cd95d061a0c8ad.png"
+                        },
+                        {
+                          "name": "UJ08-桌面1440_事件页-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-桌面1440-事件页-full-page-026c5294f8f5f5aa26a12b5526b1f3ba2328e6ad.png"
+                        },
+                        {
+                          "name": "UJ08-平板1024_事件页-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-平板1024-事件页-viewport-66ce42fb58c5e037b2d5c79a70a060f5cf9d697f.png"
+                        },
+                        {
+                          "name": "UJ08-平板1024_事件页-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-平板1024-事件页-full-page-039f4a841d15c1a738bb9c1d55c950ab1d16c464.png"
+                        },
+                        {
+                          "name": "UJ08-手机390_事件页-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-手机390-事件页-viewport-37db7afedbb042cdd47230602a3bc3125e760220.png"
+                        },
+                        {
+                          "name": "UJ08-手机390_事件页-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-手机390-事件页-full-page-44184e27e9c5a7a986a465c22808b90fdbb11048.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-dd6aefcd1211fa5bc0ae",
+              "file": "user-journeys.spec.ts",
+              "line": 309,
+              "column": 7
+            },
+            {
+              "title": "UJ-09 AI 从工业模型研判、证据解释到调用审计保持同一条可追溯链路",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1373,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:17.199Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ09-01_AI研判与证据解释-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0b0dd-从工业模型研判、证据解释到调用审计保持同一条可追溯链路/attachments/UJ09-01-AI研判与证据解释-viewport-b81eba84abed1b48884de92d0b54fe8dfd91adb7.png"
+                        },
+                        {
+                          "name": "UJ09-01_AI研判与证据解释-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0b0dd-从工业模型研判、证据解释到调用审计保持同一条可追溯链路/attachments/UJ09-01-AI研判与证据解释-full-page-e765b54e56e31c667593e34aff3a94a7adac94c3.png"
+                        },
+                        {
+                          "name": "UJ09-02_AI调用同链审计-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0b0dd-从工业模型研判、证据解释到调用审计保持同一条可追溯链路/attachments/UJ09-02-AI调用同链审计-viewport-066bb1c84786423bea8099eea5e2510e9949888b.png"
+                        },
+                        {
+                          "name": "UJ09-02_AI调用同链审计-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0b0dd-从工业模型研判、证据解释到调用审计保持同一条可追溯链路/attachments/UJ09-02-AI调用同链审计-full-page-7acda56f3922ae85fb6d8b386be52a7d37b0ea7f.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-6130423b62ca0e9fec75",
+              "file": "user-journeys.spec.ts",
+              "line": 334,
+              "column": 7
+            },
+            {
+              "title": "UJ-10 AI 运行模式、降级原因、密钥不回显和公网只读边界全部透明",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1133,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-28T17:01:18.576Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ10-01_AI运行与降级状态透明-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0e680--运行模式、降级原因、密钥不回显和公网只读边界全部透明/attachments/UJ10-01-AI运行与降级状态透明-viewport-eaf895cf8cccd9446d0613a45840d97b23f59157.png"
+                        },
+                        {
+                          "name": "UJ10-01_AI运行与降级状态透明-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0e680--运行模式、降级原因、密钥不回显和公网只读边界全部透明/attachments/UJ10-01-AI运行与降级状态透明-full-page-883ae139dcbf04fa7cda62f394ddcdf0b73d25ab.png"
+                        },
+                        {
+                          "name": "UJ10-02_AI配置密钥与只读边界-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0e680--运行模式、降级原因、密钥不回显和公网只读边界全部透明/attachments/UJ10-02-AI配置密钥与只读边界-viewport-ad20c0a5d0bfde51a2614bd59745a158496ba145.png"
+                        },
+                        {
+                          "name": "UJ10-02_AI配置密钥与只读边界-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--0e680--运行模式、降级原因、密钥不回显和公网只读边界全部透明/attachments/UJ10-02-AI配置密钥与只读边界-full-page-9494c6fb55c7de57628754159a6d2eb473ad6e12.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-b6b1ae59e7de59175e57",
+              "file": "user-journeys.spec.ts",
+              "line": 397,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-28T17:00:20.726Z",
+    "duration": 59035.89,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
