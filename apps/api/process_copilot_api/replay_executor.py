@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from math import isfinite
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -29,6 +30,18 @@ from .db import (
 _RAW_VARIABLE = re.compile(r"^(?:XMEAS|XMV)\([0-9]+\)$")
 _BATCH_LIMIT = 20
 _SAFETY_BOUNDARY = "Read-only advice. No automatic control write-back."
+
+
+def _contract_alarm_state(value: str) -> str:
+    return {
+        "normal": "normal",
+        "pending": "warning",
+        "recovering": "warning",
+        "open": "critical",
+    }.get(
+        value,
+        "warning",
+    )
 
 
 def _now() -> datetime:
@@ -145,13 +158,16 @@ class ReplayExecutor:
         return {key: value for key, value in row.items() if _RAW_VARIABLE.fullmatch(key)}
 
     def _persist_inference(self, session: Any, run: ReplayRunRow, result: Any) -> None:
+        numeric_values = (result.t2, result.spe, result.anomaly_score, result.latency_ms)
+        if any(value is None or not isfinite(float(value)) for value in numeric_values):
+            return
         payload = {
             "runId": run.id,
             "sampleIndex": result.sample_index,
             "t2": result.t2,
             "spe": result.spe,
             "anomalyScore": result.anomaly_score,
-            "alarmState": result.alarm_state,
+            "alarmState": _contract_alarm_state(result.alarm_state),
             "modelVersion": result.model_version,
             "latencyMs": result.latency_ms,
         }
@@ -197,9 +213,47 @@ class ReplayExecutor:
                 result.sample_index,
                 {"runId": run.id, "eventId": event.id, "sampleIndex": result.sample_index},
             )
+        elif result.transition == "closed":
+            event = session.scalars(
+                select(AnomalyEventRow)
+                .where(AnomalyEventRow.run_id == run.id, AnomalyEventRow.state == "open")
+                .order_by(AnomalyEventRow.sample_index.desc(), AnomalyEventRow.id.desc())
+            ).first()
+            if event is None:
+                return
+            detail = dict(event.detail or {})
+            detail.update(
+                {
+                    "state": "resolved",
+                    "diagnosisSample": result.sample_index,
+                    "diagnosisState": "updated",
+                    "diagnosisAnomalyScore": float(result.anomaly_score or 0),
+                    "modelVersion": result.model_version,
+                }
+            )
+            event.detail = detail
+            event.state = "resolved"
+            self._append_message(
+                session,
+                run.id,
+                "diagnosis_updated",
+                result.sample_index,
+                {
+                    "runId": run.id,
+                    "eventId": event.id,
+                    "sampleIndex": result.sample_index,
+                    "state": "resolved",
+                },
+            )
 
     def _detail(
-        self, result: Any, run_id: str, event_id: str, diagnosis_state: str
+        self,
+        result: Any,
+        run_id: str,
+        event_id: str,
+        diagnosis_state: str,
+        *,
+        event_state: str = "open",
     ) -> dict[str, Any]:
         candidates = result.initial_candidates or result.updated_candidates or ()
         updated = result.updated_candidates or candidates
@@ -217,7 +271,7 @@ class ReplayExecutor:
             "runId": run_id,
             "sampleIndex": result.sample_index,
             "severity": "critical" if result.alarm_state == "open" else "warning",
-            "state": "open",
+            "state": event_state,
             "anomalyScore": float(result.anomaly_score or 0),
             "detectionSample": result.sample_index,
             "diagnosisSample": result.sample_index,

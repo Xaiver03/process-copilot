@@ -16,7 +16,7 @@ from process_copilot_api.db import (
     RunInferenceStateRow,
     RunStreamMessageRow,
 )
-from process_copilot_api.replay_executor import ReplayExecutor
+from process_copilot_api.replay_executor import ReplayExecutor, _contract_alarm_state
 
 RAW_COLUMNS = [
     *(f"XMEAS({index})" for index in range(1, 42)),
@@ -27,6 +27,7 @@ RAW_COLUMNS = [
 class FakeEngine:
     calls: list[int] = []
     fail = False
+    invalid_at: int | None = None
 
     def __init__(self, model_version: str = "fake-v1") -> None:
         self.model_version = model_version
@@ -35,10 +36,10 @@ class FakeEngine:
         if self.fail:
             raise RuntimeError("inference failed")
         self.calls.append(sample_index)
-        transition = {2: "detected", 4: "updated"}.get(sample_index)
+        transition = {2: "detected", 4: "updated", 5: "closed"}.get(sample_index)
         return SimpleNamespace(
             sample_index=sample_index,
-            t2=float(sample_index),
+            t2=float("inf") if sample_index == self.invalid_at else float(sample_index),
             spe=float(sample_index) + 0.1,
             anomaly_score=2.0 if transition else 0.1,
             alarm_state="open" if transition else "normal",
@@ -128,6 +129,7 @@ def _database_with_run(
 def fake_engine(monkeypatch):
     FakeEngine.calls = []
     FakeEngine.fail = False
+    FakeEngine.invalid_at = None
     monkeypatch.setattr(
         "process_copilot_api.replay_executor.OnlineInferenceEngine.from_artifacts",
         lambda model_dir, variable_dictionary_path: FakeEngine(),
@@ -256,3 +258,35 @@ def test_tick_persists_detected_and_updated_event_messages(tmp_path: Path, fake_
             "diagnosis_updated",
             "completed",
         }
+        inference = next(message for message in messages if message.sample_index == 2)
+        assert inference.payload["alarmState"] == "critical"
+        assert events[0].state == "resolved"
+        assert events[0].detail["evidence"]
+        assert events[0].detail["candidates"]
+        resolved = next(
+            message
+            for message in messages
+            if message.event_type == "diagnosis_updated"
+            and message.payload.get("state") == "resolved"
+        )
+        assert resolved.sample_index == 5
+
+
+def test_alarm_states_are_mapped_to_contract_values() -> None:
+    assert _contract_alarm_state("normal") == "normal"
+    assert _contract_alarm_state("pending") == "warning"
+    assert _contract_alarm_state("recovering") == "warning"
+    assert _contract_alarm_state("open") == "critical"
+
+
+def test_tick_drops_non_finite_inference_frame(tmp_path: Path, fake_engine) -> None:
+    _write_artifacts(tmp_path, row_count=2)
+    database, run_id = _database_with_run(tmp_path, speed=2)
+    fake_engine.invalid_at = 0
+    executor = ReplayExecutor(database, tmp_path, worker_id="worker-test")
+
+    assert executor.tick(run_id) is True
+    with database.session() as session:
+        messages = session.query(RunStreamMessageRow).filter_by(run_id=run_id).all()
+        inference = [message for message in messages if message.event_type == "inference"]
+        assert [message.sample_index for message in inference] == [1]

@@ -74,7 +74,7 @@ from .schemas import (
     ServiceStatus,
     UpdateAIConfigRequest,
 )
-from .worker import inspect_processed_data
+from .worker import check_worker, inspect_processed_data
 
 DEFAULT_SOURCE_DISCLOSURE = "Public simulation data, not real Guizhou plant data."
 DEFAULT_SAFETY_BOUNDARY = "Read-only advice. No automatic control write-back."
@@ -871,7 +871,22 @@ def create_app(
                 ),
             )
         status, message = app.state.catalog.readiness()
-        return Health(status=status, checks={"demo_data": message, "database": "available"})
+        worker_check = check_worker(
+            data_dir=data_dir or _default_data_dir(),
+            database=app.state.database,
+            heartbeat_timeout_seconds=float(os.getenv("WORKER_HEARTBEAT_TIMEOUT_SECONDS", "60")),
+        )
+        if worker_check["status"] != "ok":
+            status = "degraded"
+        return Health(
+            status=status,
+            checks={
+                "demo_data": message,
+                "database": "available",
+                "worker": worker_check["checks"]["worker_heartbeat"],
+                "industrial_model": worker_check["checks"]["industrial_model"],
+            },
+        )
 
     @app.get("/api/v1/scenarios", response_model=list[Scenario], operation_id="listScenarios")
     def list_scenarios() -> list[Scenario]:
