@@ -1,11 +1,13 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 import yaml
 from fastapi.testclient import TestClient
 from process_copilot_api.catalog import DataCatalog
+from process_copilot_api.db import RunInferenceStateRow, RunStreamMessageRow
 from process_copilot_api.main import create_app
 from process_copilot_api.worker import inspect_processed_data
 
@@ -452,11 +454,115 @@ def test_control_and_sse_last_event_id_replay(client: TestClient):
 
     resumed = client.get(
         f"/api/v1/runs/{run_id}/stream",
-        headers={"Last-Event-ID": "2"},
+        headers={"Last-Event-ID": "1"},
     )
     assert resumed.status_code == 200
-    assert "event: state" not in resumed.text
-    assert "event: anomaly" in resumed.text
+    assert "event: anomaly_opened" in resumed.text
+    assert "event: state" in resumed.text
+    assert '"sequence":1' not in resumed.text
+
+
+def test_online_run_freezes_mode_and_waits_for_worker_generated_events(client: TestClient):
+    created = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    )
+
+    assert created.status_code == 201
+    assert created.json()["inferenceMode"] == "online"
+    assert created.json()["modelVersion"]
+    assert client.get(f"/api/v1/runs/{created.json()['id']}/events").json() == []
+
+    with client.app.state.database.session() as session:
+        inference = session.get(RunInferenceStateRow, created.json()["id"])
+        assert inference is not None
+        assert inference.mode == "online"
+
+    fetched = client.get(f"/api/v1/runs/{created.json()['id']}")
+    assert fetched.json()["inferenceMode"] == "online"
+
+
+def test_online_restart_clears_only_current_run_products(client: TestClient):
+    first = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    second = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    with client.app.state.database.session() as session:
+        session.add_all(
+            [
+                RunStreamMessageRow(
+                    run_id=first["id"],
+                    event_type="inference",
+                    sample_index=3,
+                    payload={"runId": first["id"], "sampleIndex": 3},
+                    created_at=datetime.now(UTC).replace(tzinfo=None),
+                ),
+                RunStreamMessageRow(
+                    run_id=second["id"],
+                    event_type="inference",
+                    sample_index=4,
+                    payload={"runId": second["id"], "sampleIndex": 4},
+                    created_at=datetime.now(UTC).replace(tzinfo=None),
+                ),
+            ]
+        )
+
+    restarted = client.post(
+        f"/api/v1/runs/{first['id']}/control",
+        json={"action": "restart"},
+    )
+    assert restarted.status_code == 200
+    assert restarted.json()["state"] == "ready"
+    assert restarted.json()["currentSample"] == 0
+
+    with client.app.state.database.session() as session:
+        first_messages = session.query(RunStreamMessageRow).filter_by(run_id=first["id"]).all()
+        second_messages = session.query(RunStreamMessageRow).filter_by(run_id=second["id"]).all()
+    assert [message.event_type for message in first_messages] == ["state"]
+    assert len(second_messages) >= 2
+
+
+def test_sse_replays_durable_messages_after_database_cursor(client: TestClient):
+    run = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    with client.app.state.database.session() as session:
+        session.add(
+            RunStreamMessageRow(
+                run_id=run["id"],
+                event_type="inference",
+                sample_index=8,
+                payload={
+                    "runId": run["id"],
+                    "sampleIndex": 8,
+                    "t2": 1.2,
+                    "spe": 0.4,
+                    "anomalyScore": 0.2,
+                    "alarmState": "normal",
+                    "modelVersion": run["modelVersion"],
+                    "latencyMs": 0.5,
+                },
+                created_at=datetime.now(UTC).replace(tzinfo=None),
+            )
+        )
+        session.flush()
+        cursor = session.query(RunStreamMessageRow).filter_by(run_id=run["id"]).first().id
+
+    response = client.get(
+        f"/api/v1/runs/{run['id']}/stream",
+        headers={"Last-Event-ID": str(cursor)},
+    )
+
+    assert response.status_code == 200
+    assert "event: state" not in response.text
+    assert "event: inference" in response.text
+    assert f'"runId":"{run["id"]}"' in response.text
+    assert '"inference":{"runId"' in response.text
 
 
 def test_sse_stream_emits_bounded_periodic_heartbeats(client: TestClient):

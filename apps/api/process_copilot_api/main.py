@@ -16,7 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 
 from .ai_config import AIConfigPatch, AIConfigService, AIConfigValidationError
@@ -42,6 +42,7 @@ from .db import (
     IdempotencyRow,
     ReplayRunRow,
     RunInferenceStateRow,
+    RunStreamMessageRow,
 )
 from .llm import ExplanationEnhancer, LLMSettings
 from .schemas import (
@@ -125,7 +126,7 @@ def _sse_frame(event_id: int, event: str, payload: Any) -> str:
     return f"id: {event_id}\nevent: {event}\ndata: {encoded}\n\n"
 
 
-def _run_response(row: ReplayRunRow) -> ReplayRun:
+def _run_response(row: ReplayRunRow, inference: RunInferenceStateRow | None) -> ReplayRun:
     return ReplayRun(
         id=UUID(row.id),
         scenario_id=row.scenario_id,
@@ -133,7 +134,74 @@ def _run_response(row: ReplayRunRow) -> ReplayRun:
         speed=row.speed,
         current_sample=row.current_sample,
         created_at=row.created_at.replace(tzinfo=UTC),
+        inference_mode=inference.mode if inference is not None else "template",
+        model_version=(
+            inference.model_version if inference is not None else DEGRADED_FALLBACK_MODEL_VERSION
+        ),
     )
+
+
+def _online_model_version(data_dir: Path) -> str:
+    manifest = data_dir / "models" / "model_manifest.json"
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return "online-model-pending"
+    version = payload.get("modelVersion")
+    return version if isinstance(version, str) and version else "online-model-pending"
+
+
+def _append_stream_message(
+    session: Any,
+    run_id: str,
+    event_type: str,
+    sample_index: int | None,
+    payload: dict[str, Any],
+) -> RunStreamMessageRow:
+    row = RunStreamMessageRow(
+        run_id=run_id,
+        event_type=event_type,
+        sample_index=sample_index,
+        payload=payload,
+        created_at=_now(),
+    )
+    session.add(row)
+    return row
+
+
+def _stream_payload(row: RunStreamMessageRow) -> dict[str, Any]:
+    payload = dict(row.payload or {})
+    message: dict[str, Any] = {
+        "type": row.event_type,
+        "sequence": row.id,
+        "runId": row.run_id,
+        "emittedAt": row.created_at.replace(tzinfo=UTC),
+    }
+    if row.sample_index is not None:
+        message["sampleIndex"] = row.sample_index
+    if row.event_type == "inference":
+        message["inference"] = payload
+    elif row.event_type == "state":
+        message["state"] = payload.get("state", "ready")
+    elif row.event_type == "anomaly_opened":
+        message.update(
+            eventId=payload.get("eventId"),
+            diagnosisState=payload.get("diagnosisState", "provisional"),
+        )
+    elif row.event_type == "diagnosis_updated":
+        message.update(
+            eventId=payload.get("eventId"),
+            diagnosisState=payload.get("diagnosisState", "updated"),
+        )
+    elif row.event_type == "completed":
+        message["state"] = "completed"
+    elif row.event_type == "failed":
+        message.update(
+            state="failed",
+            errorCode="online_inference_failed",
+            message="在线推理未完成，请由管理员检查 Worker 与模型状态。",
+        )
+    return message
 
 
 def _event_response(row: AnomalyEventRow) -> AnomalyEvent:
@@ -829,7 +897,6 @@ def create_app(
                 if previous:
                     return JSONResponse(status_code=previous.status_code, content=previous.response)
                 run_id = uuid4()
-                event_id = uuid4()
                 created_at = _now()
                 run_row = ReplayRunRow(
                     id=str(run_id),
@@ -839,27 +906,60 @@ def create_app(
                     current_sample=0,
                     created_at=created_at,
                 )
-                detail = _fallback_detail(
-                    event_id,
-                    run_id,
-                    scenario,
-                    app.state.catalog.event_template(scenario.id),
+                model_version = (
+                    _online_model_version(app.state.catalog.data_dir)
+                    if body.inference_mode == "online"
+                    else DEGRADED_FALLBACK_MODEL_VERSION
                 )
                 session.add(run_row)
-                session.add(
-                    AnomalyEventRow(
-                        id=str(event_id),
-                        run_id=str(run_id),
-                        sample_index=detail.sample_index,
-                        severity=detail.severity,
-                        state=detail.state,
-                        anomaly_score=detail.anomaly_score,
-                        detail=detail.model_dump(
-                            mode="json", by_alias=True, exclude={"id", "runId"}
-                        ),
-                    )
+                inference = RunInferenceStateRow(
+                    run_id=str(run_id),
+                    mode=body.inference_mode,
+                    model_version=model_version,
                 )
-                response = _run_response(run_row)
+                session.add(inference)
+                _append_stream_message(
+                    session,
+                    str(run_id),
+                    "state",
+                    0,
+                    {"runId": str(run_id), "state": "ready", "currentSample": 0},
+                )
+                if body.inference_mode == "template":
+                    event_id = uuid4()
+                    detail = _fallback_detail(
+                        event_id,
+                        run_id,
+                        scenario,
+                        app.state.catalog.event_template(scenario.id),
+                    )
+                    inference.model_version = detail.model_version
+                    session.add(
+                        AnomalyEventRow(
+                            id=str(event_id),
+                            run_id=str(run_id),
+                            sample_index=detail.sample_index,
+                            severity=detail.severity,
+                            state=detail.state,
+                            anomaly_score=detail.anomaly_score,
+                            detail=detail.model_dump(
+                                mode="json", by_alias=True, exclude={"id", "runId"}
+                            ),
+                        )
+                    )
+                    _append_stream_message(
+                        session,
+                        str(run_id),
+                        "anomaly_opened",
+                        detail.sample_index,
+                        {
+                            "runId": str(run_id),
+                            "eventId": str(event_id),
+                            "sampleIndex": detail.sample_index,
+                            "diagnosisState": detail.diagnosis_state,
+                        },
+                    )
+                response = _run_response(run_row, inference)
                 _save_idempotency(session, scope, idempotency_key, payload, response, 201)
                 return response
         except IntegrityError:
@@ -877,7 +977,8 @@ def create_app(
             row = session.get(ReplayRunRow, str(runId))
             if not row:
                 raise APIError(404, "run_not_found", "Replay run not found")
-            return _run_response(row)
+            inference = session.get(RunInferenceStateRow, str(runId))
+            return _run_response(row, inference)
 
     @app.post("/api/v1/runs/{runId}/control", response_model=ReplayRun, operation_id="controlRun")
     def control_run(
@@ -895,12 +996,25 @@ def create_app(
                 row = session.get(ReplayRunRow, str(runId))
                 if not row:
                     raise APIError(404, "run_not_found", "Replay run not found")
+                inference = session.get(RunInferenceStateRow, str(runId))
                 if body.action == "play":
                     row.state = "playing"
                 elif body.action == "pause":
                     row.state = "paused"
                 elif body.action == "restart":
                     row.state, row.current_sample = "ready", 0
+                    if inference is not None and inference.mode == "online":
+                        session.execute(
+                            delete(RunStreamMessageRow).where(
+                                RunStreamMessageRow.run_id == str(runId)
+                            )
+                        )
+                        session.execute(
+                            delete(AnomalyEventRow).where(AnomalyEventRow.run_id == str(runId))
+                        )
+                        inference.failure_reason = None
+                        inference.worker_id = None
+                        inference.heartbeat_at = None
                 elif body.action == "seek":
                     if body.sample_index is None:
                         raise APIError(
@@ -916,7 +1030,18 @@ def create_app(
                     row.current_sample = body.sample_index
                 if body.speed is not None:
                     row.speed = body.speed
-                response = _run_response(row)
+                _append_stream_message(
+                    session,
+                    str(runId),
+                    "state",
+                    row.current_sample,
+                    {
+                        "runId": str(runId),
+                        "state": row.state,
+                        "currentSample": row.current_sample,
+                    },
+                )
+                response = _run_response(row, inference)
                 _save_idempotency(session, scope, idempotency_key, payload, response, 200)
                 return response
         except IntegrityError:
@@ -947,41 +1072,47 @@ def create_app(
             run = session.get(ReplayRunRow, str(runId))
             if not run:
                 raise APIError(404, "run_not_found", "Replay run not found")
-            event_rows = list(
-                session.scalars(
-                    select(AnomalyEventRow)
-                    .where(AnomalyEventRow.run_id == str(runId))
-                    .order_by(AnomalyEventRow.sample_index, AnomalyEventRow.id)
-                )
-            )
-            run_payload = _run_response(run)
-            stream_events = [
-                ("state", run_payload),
-                ("heartbeat", {"status": "ok", "runId": str(runId)}),
-                *[("anomaly", _event_response(event)) for event in event_rows],
-            ]
 
         async def event_stream():
-            event_id = 1
-            for event, payload in stream_events:
-                if event_id > cursor:
-                    yield _sse_frame(event_id, event, payload)
-                event_id += 1
-
-            heartbeat_number = 1
-            while (
-                app.state.sse_heartbeat_count is None
-                or heartbeat_number < app.state.sse_heartbeat_count
+            durable_cursor = cursor
+            heartbeat_number = 0
+            while app.state.sse_heartbeat_count is None or (
+                heartbeat_number < app.state.sse_heartbeat_count
             ):
-                await asyncio.sleep(app.state.sse_heartbeat_interval_seconds)
-                if event_id > cursor:
-                    yield _sse_frame(
-                        event_id,
-                        "heartbeat",
-                        {"status": "ok", "runId": str(runId)},
+                with app.state.database.session() as session:
+                    messages = list(
+                        session.scalars(
+                            select(RunStreamMessageRow)
+                            .where(
+                                RunStreamMessageRow.run_id == str(runId),
+                                RunStreamMessageRow.id > durable_cursor,
+                            )
+                            .order_by(RunStreamMessageRow.id)
+                        )
                     )
-                event_id += 1
+                if messages:
+                    for message in messages:
+                        durable_cursor = message.id
+                        yield _sse_frame(
+                            message.id,
+                            message.event_type,
+                            _stream_payload(message),
+                        )
+                    continue
+                await asyncio.sleep(app.state.sse_heartbeat_interval_seconds)
                 heartbeat_number += 1
+                heartbeat_payload = {
+                    "type": "heartbeat",
+                    "sequence": durable_cursor,
+                    "runId": str(runId),
+                    "emittedAt": _now().replace(tzinfo=UTC),
+                }
+                encoded = json.dumps(
+                    jsonable_encoder(heartbeat_payload),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                )
+                yield f"event: heartbeat\ndata: {encoded}\n\n"
 
         return StreamingResponse(
             event_stream(),

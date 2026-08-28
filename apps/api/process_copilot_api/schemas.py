@@ -38,6 +38,7 @@ class Scenario(ContractModel):
 class CreateRunRequest(ContractModel):
     scenario_id: str
     speed: Literal[1, 5, 10, 20] = 10
+    inference_mode: Literal["online", "template"] = "template"
 
 
 class ReplayRun(ContractModel):
@@ -47,6 +48,8 @@ class ReplayRun(ContractModel):
     speed: float
     current_sample: int = Field(ge=0)
     created_at: datetime
+    inference_mode: Literal["online", "template"]
+    model_version: str
 
 
 class RunControlRequest(ContractModel):
