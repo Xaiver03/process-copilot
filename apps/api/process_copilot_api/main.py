@@ -6,7 +6,7 @@ import os
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, Header, Request
@@ -18,7 +18,6 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from .catalog import DataCatalog
 from .auth import (
     LoginRequestModel,
     LoginResponse,
@@ -27,6 +26,7 @@ from .auth import (
     require_role,
     seed_operators,
 )
+from .catalog import DataCatalog
 from .db import AnomalyEventRow, AuditRow, Database, DecisionRow, IdempotencyRow, ReplayRunRow
 from .schemas import (
     AnomalyEvent,
@@ -313,10 +313,12 @@ def create_app(
         try:
             return authenticate(app.state.database, body.username, body.password)
         except PermissionError:
-            raise APIError(401, "invalid_credentials", "Username or password is incorrect")
+            raise APIError(
+                401, "invalid_credentials", "Username or password is incorrect"
+            ) from None
 
     @app.get("/api/v1/auth/me", operation_id="me")
-    def me(operator: Any = Depends(current_operator)) -> dict[str, str]:
+    def me(operator: Annotated[Any, Depends(current_operator)]) -> dict[str, str]:
         return {
             "username": operator.username,
             "role": operator.role,
@@ -561,7 +563,7 @@ def create_app(
         request: Request,
         eventId: UUID,
         body: DecisionRequest,
-        operator: Any = Depends(require_role("operator")),
+        operator: Annotated[Any, Depends(require_role("operator"))],
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
     ) -> Any:
         if body.decision in {"confirm", "reject"} and operator.role != "shift_lead":

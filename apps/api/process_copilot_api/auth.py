@@ -11,7 +11,7 @@ import hmac
 import os
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import jwt
 from fastapi import Depends, Request
@@ -24,9 +24,24 @@ Role = Literal["operator", "shift_lead"]
 ROLE_ORDER: dict[str, int] = {"operator": 1, "shift_lead": 2}
 
 DEFAULT_OPERATORS: list[dict[str, str]] = [
-    {"username": "operator-01", "password": "demo-op-2026", "role": "operator", "display_name": "中控操作员 01"},
-    {"username": "shift-lead", "password": "demo-lead-2026", "role": "shift_lead", "display_name": "当班班长"},
-    {"username": "process-engineer", "password": "demo-eng-2026", "role": "shift_lead", "display_name": "工艺工程师"},
+    {
+        "username": "operator-01",
+        "password": "demo-op-2026",
+        "role": "operator",
+        "display_name": "中控操作员 01",
+    },
+    {
+        "username": "shift-lead",
+        "password": "demo-lead-2026",
+        "role": "shift_lead",
+        "display_name": "当班班长",
+    },
+    {
+        "username": "process-engineer",
+        "password": "demo-eng-2026",
+        "role": "shift_lead",
+        "display_name": "工艺工程师",
+    },
 ]
 
 TOKEN_TTL_HOURS = 12
@@ -130,9 +145,9 @@ def current_operator(request: Request) -> OperatorInfo:
     try:
         payload = jwt.decode(token, token_secret(), algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        raise _auth_error("token_expired", "Token has expired")
+        raise _auth_error("token_expired", "Token has expired") from None
     except jwt.InvalidTokenError:
-        raise _auth_error("invalid_token", "Token is invalid")
+        raise _auth_error("invalid_token", "Token is invalid") from None
     username = payload.get("sub")
     role = payload.get("role")
     if not username or role not in ROLE_ORDER:
@@ -143,7 +158,9 @@ def current_operator(request: Request) -> OperatorInfo:
 
 
 def require_role(minimum: Role):
-    def dependency(operator: OperatorInfo = Depends(current_operator)) -> OperatorInfo:
+    def dependency(
+        operator: Annotated[OperatorInfo, Depends(current_operator)],
+    ) -> OperatorInfo:
         if ROLE_ORDER[operator.role] < ROLE_ORDER[minimum]:
             raise _auth_error(
                 "forbidden",
