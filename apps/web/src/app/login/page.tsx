@@ -6,9 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, FormEvent, useState } from "react";
 
 import { login } from "@/lib/api-client";
-import { useSession } from "@/lib/auth-store";
+import { useAuthSession } from "@/lib/auth-store";
 
 const PRESET_ACCOUNTS = [
+  { username: "system-admin", password: "demo-admin-2026", label: "系统管理员", hint: "AI 配置与审计权限" },
   { username: "operator-01", password: "demo-op-2026", label: "中控操作员 01", hint: "仅可升级上报" },
   { username: "shift-lead", password: "demo-lead-2026", label: "当班班长", hint: "可确认 / 驳回" },
   { username: "process-engineer", password: "demo-eng-2026", label: "工艺工程师", hint: "可确认 / 驳回" },
@@ -93,7 +94,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const session = useSession();
+  const session = useAuthSession();
+  const isAdmin = session?.role === "admin";
 
   return (
     <div className="page-stack login-page">
@@ -109,10 +111,16 @@ export default function LoginPage() {
           <p className="operator-identity">
             当前权限：
             <span className={`role-chip role-${session.role}`}>
-              {session.role === "shift_lead" ? "班长权限：可确认 / 驳回" : "操作员权限：仅可升级上报"}
+              {isAdmin
+                ? "管理员权限：可维护 AI 配置与查看审计"
+                : session.role === "shift_lead"
+                  ? "班长权限：可确认 / 驳回"
+                  : "操作员权限：仅可升级上报"}
             </span>
           </p>
-          <Link className="primary-button link-button" href="/events">进入偏移事件队列</Link>
+          <Link className="primary-button link-button" href={isAdmin ? "/admin" : "/events"}>
+            {isAdmin ? "进入系统管理后台" : "进入偏移事件队列"}
+          </Link>
         </section>
       ) : (
         <section className="side-panel">
