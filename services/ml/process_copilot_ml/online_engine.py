@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import time
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Literal
 
 import joblib
@@ -25,6 +27,73 @@ _RAW_VARIABLE_IDS = tuple(
     + [f"XMV({index})" for index in range(1, 12)]
 )
 _MISSING = object()
+_REQUIRED_MODEL_ARTIFACTS = ("pca_detector.joblib", "fault_classifier.joblib")
+_SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+_MODEL_INTEGRITY_ERROR = "model artifact integrity verification failed"
+
+
+def _verified_model_artifacts(model_dir: Path) -> tuple[dict[str, Path], dict[str, object]]:
+    manifest_path = model_dir / "model_manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise ValueError(_MODEL_INTEGRITY_ERROR) from None
+    if not isinstance(manifest, dict):
+        raise ValueError(_MODEL_INTEGRITY_ERROR)
+
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError(_MODEL_INTEGRITY_ERROR)
+
+    try:
+        model_root = model_dir.resolve()
+    except OSError:
+        raise ValueError(_MODEL_INTEGRITY_ERROR) from None
+
+    verified: dict[str, Path] = {}
+    for artifact in artifacts:
+        if not isinstance(artifact, Mapping):
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        path_value = artifact.get("path")
+        digest = artifact.get("sha256")
+        size = artifact.get("sizeBytes")
+        if not isinstance(path_value, str) or not path_value:
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        relative_path = Path(path_value)
+        windows_path = PureWindowsPath(path_value)
+        if (
+            "\x00" in path_value
+            or relative_path.is_absolute()
+            or windows_path.is_absolute()
+            or windows_path.drive
+            or any(part == ".." for part in relative_path.parts)
+            or any(part == ".." for part in windows_path.parts)
+        ):
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        if not isinstance(digest, str) or _SHA256_PATTERN.fullmatch(digest) is None:
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        try:
+            resolved_path = (model_dir / relative_path).resolve()
+            resolved_path.relative_to(model_root)
+            if not resolved_path.is_file() or resolved_path.stat().st_size != size:
+                raise ValueError(_MODEL_INTEGRITY_ERROR)
+            hasher = hashlib.sha256()
+            with resolved_path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    hasher.update(chunk)
+        except (OSError, RuntimeError, ValueError):
+            raise ValueError(_MODEL_INTEGRITY_ERROR) from None
+        if hasher.hexdigest() != digest:
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        if path_value in verified:
+            raise ValueError(_MODEL_INTEGRITY_ERROR)
+        verified[path_value] = resolved_path
+
+    if any(name not in verified for name in _REQUIRED_MODEL_ARTIFACTS):
+        raise ValueError(_MODEL_INTEGRITY_ERROR)
+    return verified, manifest
 
 
 @dataclass(frozen=True)
@@ -92,9 +161,9 @@ class OnlineInferenceEngine:
     ) -> OnlineInferenceEngine:
         model_dir = Path(model_dir)
         variable_dictionary_path = Path(variable_dictionary_path)
-        detector = joblib.load(model_dir / "pca_detector.joblib")
-        classifier = joblib.load(model_dir / "fault_classifier.joblib")
-        manifest = json.loads((model_dir / "model_manifest.json").read_text(encoding="utf-8"))
+        artifact_paths, manifest = _verified_model_artifacts(model_dir)
+        detector = joblib.load(artifact_paths["pca_detector.joblib"])
+        classifier = joblib.load(artifact_paths["fault_classifier.joblib"])
         variables = json.loads(variable_dictionary_path.read_text(encoding="utf-8"))
         model_version = manifest.get("modelVersion")
         if not isinstance(model_version, str):

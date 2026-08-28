@@ -55,6 +55,8 @@ assessment = monitor.process(values, sample_index=sample_index)
 
 `OnlineInferenceEngine.from_artifacts(model_dir, variable_dictionary_path)` 加载冻结的 PCA/HGB 模型和变量字典；随后用 `process(sample_index=index, values=values)` 逐样本推理。`values` 可以是 52 维序列，也可以是包含额外字段的 mapping。mapping 只读取严格有序的 `XMEAS(1..41)`、`XMV(1..11)`；`faultOnsetSample`、`activeFaultId`、文件名中的 fault ID、预计算 `t2/spe/anomalyScore/candidate*` 等字段永远不会进入模型。
 
+加载模型前会先校验 `model_manifest.json` 及其 `artifacts` 台账：清单必须是对象，必须覆盖两个必需的 joblib 文件；每个路径必须是位于模型目录内的相对路径，并且文件大小和小写 SHA-256 必须精确匹配。缺失、越界、篡改或格式错误的清单/模型会在 `joblib.load` 前以安全错误拒绝。
+
 每次调用返回 `OnlineInferenceResult`：
 
 - `sample_index`、`t2`、`spe`、`anomaly_score`、`alarm_state`、`latency_ms`
