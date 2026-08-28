@@ -2,12 +2,13 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 import yaml
 from fastapi.testclient import TestClient
 from process_copilot_api.catalog import DataCatalog
-from process_copilot_api.db import RunInferenceStateRow, RunStreamMessageRow
+from process_copilot_api.db import AnomalyEventRow, RunInferenceStateRow, RunStreamMessageRow
 from process_copilot_api.main import create_app
 from process_copilot_api.worker import inspect_processed_data
 
@@ -480,6 +481,44 @@ def test_online_run_freezes_mode_and_waits_for_worker_generated_events(client: T
 
     fetched = client.get(f"/api/v1/runs/{created.json()['id']}")
     assert fetched.json()["inferenceMode"] == "online"
+
+
+def test_event_queue_prioritizes_active_event_over_auto_resolved_transient(client: TestClient):
+    run = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    with client.app.state.database.session() as session:
+        session.add_all(
+            [
+                AnomalyEventRow(
+                    id=str(uuid4()),
+                    run_id=run["id"],
+                    sample_index=51,
+                    severity="warning",
+                    state="resolved",
+                    anomaly_score=1.1,
+                    detail={},
+                ),
+                AnomalyEventRow(
+                    id=str(uuid4()),
+                    run_id=run["id"],
+                    sample_index=162,
+                    severity="critical",
+                    state="open",
+                    anomaly_score=5.1,
+                    detail={},
+                ),
+            ]
+        )
+
+    events = client.get(f"/api/v1/runs/{run['id']}/events")
+
+    assert events.status_code == 200
+    assert [(event["sampleIndex"], event["state"]) for event in events.json()] == [
+        (162, "open"),
+        (51, "resolved"),
+    ]
 
 
 def test_online_restart_clears_only_current_run_products(client: TestClient):

@@ -16,7 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import ValidationError
-from sqlalchemy import delete, select
+from sqlalchemy import case, delete, select
 from sqlalchemy.exc import IntegrityError
 
 from .ai_config import AIConfigPatch, AIConfigService, AIConfigValidationError
@@ -1149,7 +1149,13 @@ def create_app(
             if not session.get(ReplayRunRow, str(runId)):
                 raise APIError(404, "run_not_found", "Replay run not found")
             rows = session.scalars(
-                select(AnomalyEventRow).where(AnomalyEventRow.run_id == str(runId))
+                select(AnomalyEventRow)
+                .where(AnomalyEventRow.run_id == str(runId))
+                .order_by(
+                    case((AnomalyEventRow.state == "open", 0), else_=1),
+                    AnomalyEventRow.sample_index.desc(),
+                    AnomalyEventRow.id.desc(),
+                )
             ).all()
             return [_event_response(row) for row in rows]
 
