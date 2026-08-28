@@ -45,7 +45,7 @@ make build
 BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
 ```
 
-当前父级验收基线：ML `23 passed`、API `22 passed`、Web `27 passed`，共 72 项测试；契约、Ruff、ESLint、TypeScript、Next.js production build 和 infra 检查均通过。
+当前父级验收基线：ML `46 passed`、API `22 passed`、Web `32 passed`，共 100 项测试；契约、Ruff、ESLint、TypeScript、Next.js production build 和 infra 检查均通过。
 
 ## 运行与部署
 
@@ -91,6 +91,9 @@ docs/submission/          作品、数据与 Demo 材料
 - [作品说明](docs/submission/作品说明_v01_DRAFT.md)
 - [三分钟 Demo 脚本](docs/submission/三分钟Demo脚本_v01_DRAFT.md)
 - [连续化工 AI 判别与“工业小郎中”论文启示](docs/research/2026-08-28_连续化工AI判别与工业小郎中论文启示_v01_DRAFT.md)
+- [UI 可读性与响应式审查](docs/design/2026-08-28_UI可读性与响应式审查_v01_REVIEW.md)
+- [产品手册交付目录](04_交付成品/README.md)
+- [产品手册唯一 LaTeX 源入口](02_方案源文件/README.md)
 - [多 Agent 协作编排规范](docs/plans/2026-08-28_多Agent协作编排规范_v01_DRAFT.md)
 - [Claude Code 独立验收 Prompt](docs/plans/2026-08-28_Claude_Code_独立验收Prompt_v01.md)
 - [Figma 设计系统](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)
