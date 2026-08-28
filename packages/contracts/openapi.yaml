@@ -726,7 +726,7 @@ components:
           items: {type: string}
     AIConfig:
       type: object
-      required: [provider, baseUrl, model, enabled, timeoutMs, maxTokens, temperature, promptVersion, fallbackPolicy, apiKeyConfigured]
+      required: [provider, baseUrl, model, enabled, timeoutMs, maxTokens, temperature, promptVersion, fallbackPolicy, apiKeyConfigured, version]
       properties:
         provider: {type: string}
         baseUrl: {type: string, format: uri}
@@ -738,6 +738,7 @@ components:
         promptVersion: {type: string}
         fallbackPolicy: {type: string, enum: [template, degraded]}
         apiKeyConfigured: {type: boolean}
+        version: {type: integer, minimum: 1}
     UpdateAIConfigRequest:
       type: object
       properties:
@@ -752,6 +753,7 @@ components:
         fallbackPolicy: {type: string, enum: [template, degraded]}
         apiKey: {type: string, minLength: 1, writeOnly: true}
         clearApiKey: {type: boolean, default: false}
+        expectedVersion: {type: integer, minimum: 0}
     AIConnectionTestRequest:
       type: object
       properties:

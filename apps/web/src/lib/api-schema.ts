@@ -541,6 +541,7 @@ export interface components {
             /** @enum {string} */
             fallbackPolicy: "template" | "degraded";
             apiKeyConfigured: boolean;
+            version: number;
         };
         UpdateAIConfigRequest: {
             provider?: string;
@@ -557,6 +558,7 @@ export interface components {
             apiKey?: string;
             /** @default false */
             clearApiKey: boolean;
+            expectedVersion?: number;
         };
         AIConnectionTestRequest: {
             question?: string;

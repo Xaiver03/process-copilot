@@ -115,9 +115,11 @@ def test_ai_status_and_admin_contract_never_return_api_key(openapi: dict, domain
     config = schema(openapi, "AIConfig")
     assert "apiKey" not in config["properties"]
     assert "apiKeyConfigured" in config["required"]
+    assert "version" in config["required"]
     update = schema(openapi, "UpdateAIConfigRequest")
     assert "apiKey" in update["properties"]
     assert "apiKeyConfigured" not in update["properties"]
+    assert "expectedVersion" in update["properties"]
     assert "apiKey" not in domain["$defs"]["AIConfig"]["properties"]
 
 

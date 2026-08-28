@@ -225,7 +225,7 @@
     },
     "AIConfig": {
       "type": "object",
-      "required": ["provider", "baseUrl", "model", "enabled", "timeoutMs", "maxTokens", "temperature", "promptVersion", "fallbackPolicy", "apiKeyConfigured"],
+      "required": ["provider", "baseUrl", "model", "enabled", "timeoutMs", "maxTokens", "temperature", "promptVersion", "fallbackPolicy", "apiKeyConfigured", "version"],
       "properties": {
         "provider": {"type": "string"},
         "baseUrl": {"type": "string", "format": "uri"},
@@ -236,7 +236,8 @@
         "temperature": {"type": "number", "minimum": 0, "maximum": 2},
         "promptVersion": {"type": "string"},
         "fallbackPolicy": {"type": "string", "enum": ["template", "degraded"]},
-        "apiKeyConfigured": {"type": "boolean"}
+        "apiKeyConfigured": {"type": "boolean"},
+        "version": {"type": "integer", "minimum": 1}
       },
       "additionalProperties": false
     },
@@ -253,7 +254,8 @@
         "promptVersion": {"type": "string", "minLength": 1},
         "fallbackPolicy": {"type": "string", "enum": ["template", "degraded"]},
         "apiKey": {"type": "string", "minLength": 1, "writeOnly": true},
-        "clearApiKey": {"type": "boolean", "default": false}
+        "clearApiKey": {"type": "boolean", "default": false},
+        "expectedVersion": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": false
     },
