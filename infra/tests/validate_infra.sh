@@ -133,6 +133,13 @@ if ! grep -q '/api/v1/auth/login' "$ROOT_DIR/tests/e2e/smoke.sh" \
   exit 1
 fi
 
+if ! grep -q 'inferenceMode.*online' "$ROOT_DIR/tests/e2e/smoke.sh" \
+  || ! grep -q '/api/v1/admin/overview' "$ROOT_DIR/tests/e2e/smoke.sh" \
+  || ! grep -q '/ask' "$ROOT_DIR/tests/e2e/smoke.sh"; then
+  printf 'e2e smoke must verify online inference, AI questioning and admin access\n' >&2
+  exit 1
+fi
+
 if grep -qE '^decision_body=.*operatorName' "$ROOT_DIR/tests/e2e/smoke.sh"; then
   printf 'e2e smoke must derive the operator identity from the authenticated token\n' >&2
   exit 1
