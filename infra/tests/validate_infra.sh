@@ -3,9 +3,27 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/infra/compose.yaml"
+HOST_PROXY_FILE="$ROOT_DIR/infra/caddy/host-public.caddy"
 
 if [[ ! -f "$COMPOSE_FILE" ]]; then
   printf 'missing compose file: %s\n' "$COMPOSE_FILE" >&2
+  exit 1
+fi
+
+if [[ ! -f "$HOST_PROXY_FILE" ]]; then
+  printf 'missing host public reverse proxy config: %s\n' "$HOST_PROXY_FILE" >&2
+  exit 1
+fi
+
+if ! grep -q 'reverse_proxy 127.0.0.1:18090' "$HOST_PROXY_FILE" \
+  || ! grep -q 'flush_interval -1' "$HOST_PROXY_FILE"; then
+  printf 'host reverse proxy must target the private high port and stream SSE immediately\n' >&2
+  exit 1
+fi
+
+if ! grep -q 'X-Content-Type-Options' "$HOST_PROXY_FILE" \
+  || ! grep -q '@sensitive path_regexp' "$HOST_PROXY_FILE"; then
+  printf 'host reverse proxy must include security headers and sensitive-path blocking\n' >&2
   exit 1
 fi
 

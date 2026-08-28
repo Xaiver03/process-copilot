@@ -8,9 +8,9 @@
 ## 已部署拓扑
 
 ```text
-host:18090 -> caddy:8080 -> web:3000
-                         -> api:8000 -> postgres:5432
-                                      worker -> postgres:5432
+Internet HTTPS -> host Caddy -> 127.0.0.1:18090 -> container Caddy:8080 -> web:3000
+                                                                          -> api:8000 -> postgres:5432
+                                                                                       worker -> postgres:5432
 ```
 
 - Web、API、worker、PostgreSQL、Caddy 五个服务均已通过健康检查。
@@ -28,11 +28,28 @@ host:18090 -> caddy:8080 -> web:3000
 - 稳定入口：`/opt/process-copilot/current`
 - Compose project：`process-copilot`
 - 宿主监听：`0.0.0.0:18090`
+- 公网入口：`https://huagong.finlaw.cloud`
+- 宿主机 Caddy 配置：`/etc/caddy/conf.d/huagong.caddy`
 - 运行环境文件：`/opt/process-copilot/shared/runtime.env`，权限 `0600`、所有者 `root:root`
 
-云安全组尚未放行公网 `18090`。主机防火墙为非阻断状态，服务也已监听；公网直连超时属于云侧安全组边界。未经基础设施所有者明确授权，不修改安全组或防火墙。
+公网请求通过宿主机现有 Caddy 的 80/443 入口反向代理到 `127.0.0.1:18090`。高位端口 `18090` 无需对公网放行；未经基础设施所有者明确授权，不修改安全组、防火墙或 DNS。仓库中的事实源为 `infra/caddy/host-public.caddy`，部署前必须先用 Caddy 校验完整配置。
 
-安全访问方式：
+宿主机代理包含以下边界：
+
+- HTTPS 由宿主机 Caddy 自动承接，DNS 与证书由既有域名运维流程负责。
+- HSTS、`nosniff`、拒绝 iframe、严格 Referrer Policy 和禁用摄像头/麦克风/定位权限。
+- 拦截 `.env`、`.git`、`.svn` 等敏感路径。
+- `flush_interval -1` 禁用响应缓冲，确保 SSE 心跳及时穿透两层代理。
+- 访问日志输出到 systemd journal，避免使用权限不匹配的宿主文件。
+
+当前配置部署前已备份为 `/etc/caddy/conf.d/huagong.caddy.backup-20260828-140735`，并在完整 `/etc/caddy/Caddyfile` 校验成功后 reload。公网验证入口：
+
+```bash
+curl --fail --show-error https://huagong.finlaw.cloud/healthz
+BASE_URL=https://huagong.finlaw.cloud CHECK_WEB=1 bash tests/e2e/smoke.sh
+```
+
+SSH 隧道作为公网代理不可用时的运维降级入口：
 
 ```bash
 ssh -N -L 127.0.0.1:18091:127.0.0.1:18090 wunoos
@@ -55,7 +72,7 @@ bash infra/tests/validate_infra.sh
 运行中 E2E：
 
 ```bash
-BASE_URL=http://127.0.0.1:18091 CHECK_WEB=1 bash tests/e2e/smoke.sh
+BASE_URL=https://huagong.finlaw.cloud CHECK_WEB=1 bash tests/e2e/smoke.sh
 ```
 
 该脚本覆盖：场景读取、创建回放、真实事件、两阶段时序不变量、幂等冲突、人工确认、审计记录以及非法 SSE 游标 `400`。
@@ -104,4 +121,4 @@ bash infra/scripts/rollback.sh <已有-release-id>
 3. E2E 从创建回放走到审计记录，并验证两阶段样本差固定为 20。
 4. 项目日志不包含密码、令牌、私钥或数据库连接凭证。
 5. 部署前后的其它容器数量、名称与运行状态不变。
-6. 公网未放行时只使用 SSH 隧道，不临时扩大服务器攻击面。
+6. 公网只通过宿主机 Caddy 的 80/443 入口访问；不为 Demo 临时开放 `18090`。

@@ -1,0 +1,28 @@
+# 宿主机 Caddy 公网入口。DNS 与证书由既有域名运维流程负责。
+huagong.finlaw.cloud {
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	@sensitive path_regexp sensitive (?i)(^|/)(\.env|\.git|\.svn)(/|$)
+	respond @sensitive 404
+
+	reverse_proxy 127.0.0.1:18090 {
+		# 让 SSE 心跳立即穿过宿主机代理，不等待响应缓冲。
+		flush_interval -1
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
