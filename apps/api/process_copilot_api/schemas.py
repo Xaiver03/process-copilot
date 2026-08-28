@@ -63,7 +63,7 @@ class AnomalyEvent(ContractModel):
     run_id: UUID
     sample_index: int
     severity: Literal["warning", "critical"]
-    state: Literal["open", "confirmed", "rejected", "escalated"]
+    state: Literal["open", "confirmed", "rejected", "escalated", "resolved"]
     anomaly_score: float
 
 

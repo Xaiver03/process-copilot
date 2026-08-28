@@ -543,7 +543,7 @@ components:
         runId: {type: string, format: uuid}
         sampleIndex: {type: integer}
         severity: {enum: [warning, critical]}
-        state: {enum: [open, confirmed, rejected, escalated]}
+        state: {enum: [open, confirmed, rejected, escalated, resolved]}
         anomalyScore: {type: number}
     FaultCandidate:
       type: object

@@ -409,7 +409,7 @@ export interface components {
             /** @enum {unknown} */
             severity: "warning" | "critical";
             /** @enum {unknown} */
-            state: "open" | "confirmed" | "rejected" | "escalated";
+            state: "open" | "confirmed" | "rejected" | "escalated" | "resolved";
             anomalyScore: number;
         };
         FaultCandidate: {

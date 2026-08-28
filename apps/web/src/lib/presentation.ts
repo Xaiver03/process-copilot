@@ -52,6 +52,7 @@ export const eventStateLabel: Record<AnomalyEvent["state"], string> = {
   confirmed: "已确认",
   rejected: "已驳回",
   escalated: "已升级",
+  resolved: "已自动恢复",
 };
 
 export const eventSeverityPresentation: Record<

@@ -15,6 +15,7 @@ describe("事件与模型语义映射", () => {
     expect(eventStateLabel.confirmed).toBe("已确认");
     expect(eventStateLabel.rejected).toBe("已驳回");
     expect(eventStateLabel.escalated).toBe("已升级");
+    expect(eventStateLabel.resolved).toBe("已自动恢复");
   });
 
   it("完整映射 warning 和 critical 严重度", () => {
