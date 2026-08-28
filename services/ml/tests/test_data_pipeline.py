@@ -3,6 +3,7 @@ from zipfile import ZipFile
 
 import numpy as np
 import pytest
+from conftest import resolve_source_zip
 from process_copilot_ml.data import (
     RunData,
     active_fault_labels,
@@ -10,6 +11,35 @@ from process_copilot_ml.data import (
     make_windows,
     validate_archive_members,
 )
+
+
+def test_source_zip_prefers_explicit_environment_path(tmp_path, monkeypatch) -> None:
+    archive = tmp_path / "tep-source.zip"
+    archive.write_bytes(b"fixture")
+    monkeypatch.setenv("TEP_SOURCE_ZIP", str(archive))
+
+    assert (
+        resolve_source_zip(
+            project_root=tmp_path / "worktree",
+            home_directory=tmp_path / "home",
+        )
+        == archive
+    )
+
+
+def test_source_zip_missing_error_lists_checked_candidates(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("TEP_SOURCE_ZIP", raising=False)
+
+    with pytest.raises(FileNotFoundError) as error:
+        resolve_source_zip(
+            project_root=tmp_path / "worktree",
+            home_directory=tmp_path / "home",
+        )
+
+    message = str(error.value)
+    assert "TEP_SOURCE_ZIP" in message
+    assert "Tennessee_Eastman_Process_Braatz.zip" in message
+    assert str(tmp_path / "home") in message
 
 
 def test_safe_archive_rejects_parent_path() -> None:

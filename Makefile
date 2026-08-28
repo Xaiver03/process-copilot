@@ -14,7 +14,7 @@ data-force:
 test: test-ml test-api test-web contracts infra-check
 
 test-ml:
-	uv run --project services/ml --frozen pytest services/ml/tests -q
+	uv run --python 3.12 --project services/ml --extra test --frozen pytest -c services/ml/pyproject.toml services/ml/tests -q
 
 test-api:
 	uv run --python 3.12 --project apps/api --extra test pytest -c apps/api/pyproject.toml apps/api/tests -q
