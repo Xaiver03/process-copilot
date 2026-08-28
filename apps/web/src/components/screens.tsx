@@ -2,11 +2,15 @@
 
 import {
   ArrowRight,
+  Brain,
+  ChartLineUp,
   CheckCircle,
   Clock,
+  ListChecks,
   Pause,
   Play,
-  ShieldWarning,
+  Pulse,
+  UserFocus,
   Warning,
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -26,7 +30,7 @@ import {
 } from "@/lib/api-client";
 import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
-import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate } from "@/lib/presentation";
+import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, localizeIndustrialCopy } from "@/lib/presentation";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
@@ -94,26 +98,31 @@ export function DemoScreen() {
 
 export function OverviewScreen() {
   const resource = useApiResource<Scenario[]>(getScenariosWithFallback, "scenarios");
+  const overviewCandidate = formatFaultCandidate(demoEvent.candidates[0]);
   return (
     <div className="page-stack">
-      <PageHeader kicker="运营总览" title="装置过程状态" summary="先看偏移与数据新鲜度，再进入单个事件完成研判。" />
+      <PageHeader kicker="AI 运营总览" title="装置过程状态" summary="先看 AI 发现的偏移、当前故障假设和待确认事件，再进入证据页完成人工研判。" />
       <ResourceBoundary {...resource}>{(result) => (
         <>
           <ModeNotice mode={result.mode} notice={result.notice} />
           <section className="metric-strip" aria-label="关键运行指标">
-            <div><span>过程状态</span><strong className="metric-alert">严重偏移</strong><small>样本 176</small></div>
-            <div><span>异常分数</span><strong>0.87</strong><small>阈值 0.62</small></div>
-            <div><span>待研判事件</span><strong>1</strong><small>总事件 3</small></div>
-            <div><span>公开场景</span><strong>{result.data.length}</strong><small>TEP 仿真</small></div>
+            <div><span>装置状态</span><strong className="metric-alert">严重偏移</strong><small>AI 锁定样本 {demoEvent.detectionSample}</small></div>
+            <div><span>AI 异常分数</span><strong>{demoEvent.anomalyScore.toFixed(2)}</strong><small>持续性条件已满足</small></div>
+            <div><span>AI 当前假设</span><strong className="metric-hypothesis">冷却水入口温度</strong><small>Top-1 · {overviewCandidate.probability}</small></div>
+            <div><span>待人工确认</span><strong>1</strong><small>AI 已完成证据整理</small></div>
           </section>
           <div className="overview-grid">
             <ProcessHeatmapChart />
-            <aside className="event-rail">
-              <div className="section-heading"><div><span className="kicker">当前优先</span><h2>待研判事件</h2></div></div>
-              <StatusTag state="critical" label="严重偏移" />
-              <strong>冷却水回路响应异常</strong>
-              <p>Top-1 候选：反应器冷却水入口温度阶跃，置信度 74%。</p>
-              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/demo"}>{result.mode === "static-demo" ? "进入静态研判" : "启动真实主链路"} <ArrowRight aria-hidden="true" /></Link>
+              <aside className="event-rail">
+              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>为什么优先处理</h2></div></div>
+              <p className="event-ai-summary">三项关键变量在同一时间窗内共同偏离，AI 将<strong>{overviewCandidate.label}</strong>排为当前首要故障假设。</p>
+              <dl className="priority-reasons">
+                <div><dt>发现</dt><dd>样本 {demoEvent.detectionSample} 锁定偏移</dd></div>
+                <div><dt>判断</dt><dd>Top-1 概率 {overviewCandidate.probability}</dd></div>
+                <div><dt>解释</dt><dd>{demoEvent.evidence[0].variableId} 贡献最高</dd></div>
+                <div><dt>下一步</dt><dd>等待当班人员确认</dd></div>
+              </dl>
+              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/demo"}>查看 AI 研判依据 <ArrowRight aria-hidden="true" /></Link>
             </aside>
           </div>
         </>
@@ -243,45 +252,76 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
         const severity = eventSeverityPresentation[event.severity];
         return (
           <>
-            <PageHeader kicker="事件研判" title={topCandidate?.label ?? `偏移事件 ${event.id}`} summary={`当前状态：${eventStateLabel[event.state]}。用故障候选、三项变量证据和安全规则建议支持当班工程师判断。`} />
+            <PageHeader kicker="AI 事件研判" title={topCandidate?.label ?? `偏移事件 ${event.id}`} summary={`AI 已完成偏移发现、故障候选排序和变量证据对齐，当前等待${eventStateLabel[event.state] === "待研判" ? "人工确认" : "查看人工结论"}。`} />
             <ModeNotice mode={result.mode} notice={result.notice} />
-            <section className="risk-banner"><ShieldWarning weight="fill" aria-hidden="true" /><div><span>风险提示</span><strong>{event.recommendation.risk}</strong><p>{event.recommendation.safetyBoundary}</p></div><StatusTag state={severity.state} label={`${severity.label}·${eventStateLabel[event.state]}`} /></section>
-            <section className="diagnosis-timeline" aria-labelledby="diagnosis-timeline-title">
-              <div>
-                <span className="kicker">两阶段研判</span>
-                <h2 id="diagnosis-timeline-title">先发现偏移，再刷新候选</h2>
-                <p>事件在样本 {event.detectionSample} 被锁定；候选和证据在固定延迟 {event.diagnosisDelaySamples} 个样本后于样本 {event.diagnosisSample} 刷新。“已更新”不等于故障已确认。</p>
-              </div>
-              <dl>
-                <div><dt>首次异常分数</dt><dd>{event.anomalyScore.toFixed(2)}</dd></div>
-                <div><dt>刷新时异常分数</dt><dd>{event.diagnosisAnomalyScore.toFixed(2)}</dd></div>
-                <div><dt>初始 Top-1</dt><dd>{event.initialCandidates[0] ? formatFaultCandidate(event.initialCandidates[0]).label : "暂无候选"}</dd></div>
-                <div><dt>研判状态</dt><dd>{event.diagnosisState === "updated" ? "候选已更新" : event.diagnosisState === "provisional" ? "临时候选" : "等待更新"}</dd></div>
-              </dl>
-            </section>
-            <div className="investigation-grid">
-              <div className="investigation-main">
+            <ol className="ai-stepper" aria-label="AI 研判主链路">
+              <li><Pulse aria-hidden="true" /><span>01</span><strong>发现</strong><small>锁定异常窗口</small></li>
+              <li><Brain aria-hidden="true" /><span>02</span><strong>判断</strong><small>排序故障候选</small></li>
+              <li><ChartLineUp aria-hidden="true" /><span>03</span><strong>解释</strong><small>对齐变量证据</small></li>
+              <li><ListChecks aria-hidden="true" /><span>04</span><strong>建议</strong><small>生成检查顺序</small></li>
+              <li className="is-human"><UserFocus aria-hidden="true" /><span>05</span><strong>确认</strong><small>决定并留痕</small></li>
+            </ol>
+
+            <div className="ai-workbench">
+              <section className="ai-panel ai-detection" data-ai-step="1" aria-labelledby="ai-detection-title">
+                <div className="ai-section-header"><div><span className="kicker">步骤 01 · AI 发现</span><h2 id="ai-detection-title">偏移何时被看见</h2></div></div>
+                <p className="ai-sample-window">检测样本 {event.detectionSample} → 诊断样本 {event.diagnosisSample}</p>
+                <dl className="ai-stat-grid">
+                  <div><dt>首次异常分数</dt><dd>{event.anomalyScore.toFixed(2)}</dd></div>
+                  <div><dt>诊断异常分数</dt><dd>{event.diagnosisAnomalyScore.toFixed(2)}</dd></div>
+                  <div><dt>候选刷新延迟</dt><dd>{event.diagnosisDelaySamples}<small> 样本</small></dd></div>
+                  <div><dt>告警锁存</dt><dd>{event.anomalyLatched ? "已锁定" : "未锁定"}</dd></div>
+                </dl>
+                <p className="ai-method-note">持续性和滞回规则先过滤瞬时噪声，再由 PCA T² / SPE 判断过程是否偏离正常空间。</p>
+              </section>
+
+              <section className="ai-panel ai-conclusion" data-ai-step="2" aria-labelledby="ai-conclusion-title">
+                <div className="ai-section-header">
+                  <div><span className="kicker">步骤 02 · AI 判断</span><h2 id="ai-conclusion-title">AI 研判结论</h2></div>
+                  <StatusTag state={severity.state} label={`${severity.label} · ${eventStateLabel[event.state]}`} />
+                </div>
+                <p className="ai-thesis">当前最可能是<strong>{topCandidate?.label ?? "候选尚未收敛"}</strong>，AI 将它排在首位的依据来自同步时间窗内的三项高贡献变量。</p>
+                <p className="ai-value-prop">不只报异常，还给出故障假设与变量证据</p>
+                <ol className="ai-candidate-list" aria-label="AI 故障候选排序">
+                  {event.candidates.map((candidate, index) => {
+                    const display = formatFaultCandidate(candidate);
+                    return <li key={`${candidate.faultId}-${index}`}><span className="candidate-rank">{String(index + 1).padStart(2, "0")}</span><b>{display.code}</b><span>{display.label}</span><strong>{display.probability}</strong></li>;
+                  })}
+                </ol>
+              </section>
+
+              <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title">
+                <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">AI 为什么这样判断</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
+                <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`).join("、")}共同指向当前故障假设。</p>
                 <EvidenceTrendChart evidence={event.evidence} />
-                <EvidencePanel evidence={event.evidence} />
-              </div>
-              <aside className="investigation-rail">
-                <section className="side-panel"><span className="kicker">Top-3</span><h2>故障候选</h2><ol className="candidate-list">{event.candidates.map((candidate, index) => { const display = formatFaultCandidate(candidate); return <li key={`${candidate.faultId}-${index}`}><span><b>{display.code}</b>{display.label}</span><strong>{display.probability}</strong></li>; })}</ol></section>
-                <ContributionChart evidence={event.evidence} />
-                <section className="side-panel"><span className="kicker">安全规则建议</span><h2>检查与动作</h2><h3>优先检查</h3><ul>{event.recommendation.checks.map((item) => <li key={item}>{item}</li>)}</ul><h3>建议动作</h3><ul>{event.recommendation.actions.map((item) => <li key={item}>{item}</li>)}</ul></section>
-                {recordHref ? <section className="decision-success" role="status"><CheckCircle weight="fill" aria-hidden="true" /><div><strong>事件记录已形成</strong><span>{decisionMode === "static-demo" ? "静态 Demo 记录未写入服务器。" : "记录已写入审计服务。"}</span><Link href={recordHref}>打开审计记录</Link></div></section> : session ? (
-                  <HumanDecision
-                    operatorName={`${session.displayName}（${session.username}）`}
-                    operatorRole={session.role}
-                    onSubmit={async (payload) => { const decision = await submitDecisionWithFallback(eventId, payload); setDecisionMode(decision.mode); setRecordHref(`/records/${decision.mode === "static-demo" ? "demo-record" : decision.data.id}`); }}
-                  />
-                ) : (
-                  <section className="side-panel login-prompt" role="status">
-                    <span className="kicker">人工确认点</span>
-                    <h2>研判需要登录</h2>
-                    <p>人工决策必须绑定预置操作员身份，记录写入审计服务后不可篡改。</p>
-                    <Link className="primary-button link-button" href={`/login?next=/events/${eventId}`}>登录操作员账号</Link>
-                  </section>
-                )}
+                <div className="ai-evidence-detail"><EvidencePanel evidence={event.evidence} /><ContributionChart evidence={event.evidence} /></div>
+              </section>
+
+              <aside className="ai-side-stack">
+                <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title">
+                  <div className="ai-section-header"><div><span className="kicker">步骤 04 · AI 建议</span><h2 id="ai-recommendation-title">AI 建议下一步</h2></div></div>
+                  <p className="ai-risk-copy"><strong>风险：</strong>{localizeIndustrialCopy(event.recommendation.risk)}</p>
+                  <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
+                  <div className="ai-action-group"><h3>再处置</h3><ol>{event.recommendation.actions.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
+                  <p className="ai-safety-boundary">只读建议，不会向 DCS、PLC 或其他控制系统自动写回。</p>
+                </section>
+
+                <div className="ai-human-gate" data-ai-step="5">
+                  {recordHref ? <section className="decision-success" role="status"><CheckCircle weight="fill" aria-hidden="true" /><div><span className="kicker">人工确认点</span><strong>事件记录已形成</strong><span>{decisionMode === "static-demo" ? "静态 Demo 记录未写入服务器。" : "记录已写入审计服务。"}</span><Link href={recordHref}>打开审计记录</Link></div></section> : session ? (
+                    <HumanDecision
+                      operatorName={`${session.displayName}（${session.username}）`}
+                      operatorRole={session.role}
+                      onSubmit={async (payload) => { const decision = await submitDecisionWithFallback(eventId, payload); setDecisionMode(decision.mode); setRecordHref(`/records/${decision.mode === "static-demo" ? "demo-record" : decision.data.id}`); }}
+                    />
+                  ) : (
+                    <section className="side-panel login-prompt" role="status">
+                      <span className="kicker">人工确认点</span>
+                      <h2>由人决定是否采纳</h2>
+                      <p>AI 只提供判断、证据和检查顺序。人工决策必须绑定预置操作员身份，并写入审计记录。</p>
+                      <Link className="primary-button link-button" href={`/login?next=/events/${eventId}`}>登录并确认结论</Link>
+                    </section>
+                  )}
+                </div>
               </aside>
             </div>
           </>

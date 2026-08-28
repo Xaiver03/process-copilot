@@ -11,7 +11,7 @@ import {
 import { FormEvent, useState } from "react";
 
 import type { components } from "@/lib/api-schema";
-import { formatContribution } from "@/lib/presentation";
+import { formatContribution, formatEvidenceSummary, localizeIndustrialCopy } from "@/lib/presentation";
 
 type Evidence = components["schemas"]["EvidenceItem"];
 type DecisionRequest = components["schemas"]["DecisionRequest"];
@@ -76,8 +76,8 @@ export function EvidencePanel({ evidence }: { evidence: Evidence[] }) {
           <article key={item.variableId} className="evidence-track">
             <div>
               <code>{item.variableId}</code>
-              <strong>{item.variableName}</strong>
-              <p>{item.summary}</p>
+              <strong>{localizeIndustrialCopy(item.variableName)}</strong>
+              <p>{formatEvidenceSummary(item)}</p>
             </div>
             <div className="spark-placeholder" aria-hidden="true">
               {item.values.map((value, index) => (
@@ -100,7 +100,7 @@ export function EvidencePanel({ evidence }: { evidence: Evidence[] }) {
           <tbody>
             {topThree.map((item) => (
               <tr key={item.variableId}>
-                <th scope="row">{item.variableId} {item.variableName}</th>
+                <th scope="row">{item.variableId} {localizeIndustrialCopy(item.variableName)}</th>
                 <td>{item.direction === "up" ? "上升" : item.direction === "down" ? "下降" : "混合"}</td>
                 <td>{formatContribution(item.contribution)}</td>
                 <td>{item.values.at(-1)} {item.unit}</td>

@@ -4,7 +4,9 @@ import {
   eventSeverityPresentation,
   eventStateLabel,
   formatContribution,
+  formatEvidenceSummary,
   formatFaultCandidate,
+  localizeIndustrialCopy,
 } from "@/lib/presentation";
 
 describe("事件与模型语义映射", () => {
@@ -26,6 +28,33 @@ describe("事件与模型语义映射", () => {
       label: "正常 / 分类尚未收敛",
       probability: "52%",
     });
+  });
+
+  it("将 TEP 公开故障标签翻译为现场可读中文", () => {
+    expect(formatFaultCandidate({ faultId: 1, label: "Feed composition step deviation", probability: 1 })).toEqual({
+      code: "IDV 1",
+      label: "进料组成阶跃偏移",
+      probability: "100%",
+    });
+    expect(formatFaultCandidate({ faultId: 13, label: "Reaction kinetics slow drift", probability: 0.42 })).toEqual({
+      code: "IDV 13",
+      label: "反应动力学缓慢漂移",
+      probability: "42%",
+    });
+  });
+
+  it("将公开数据中的英文变量与建议转为中文展示", () => {
+    expect(localizeIndustrialCopy("Compressor Work")).toBe("压缩机功率");
+    expect(localizeIndustrialCopy("Compare stream 4 composition analysis with the current operating target.")).toBe("对照当前运行目标，核对 4 号物流的组成分析结果。");
+    expect(formatEvidenceSummary({
+      variableId: "XMEAS(20)",
+      variableName: "Compressor Work",
+      direction: "down",
+      contribution: 75.270465,
+      summary: "upstream English copy",
+      unit: "kW",
+      values: [340, 330],
+    })).toBe("压缩机功率相对正常基线下降；SPE 贡献值 75.27。");
   });
 
   it("SPE 贡献值保持原始量纲，不误当百分比", () => {

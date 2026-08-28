@@ -1,4 +1,4 @@
-# 连续化工过程偏移副驾驶
+# 序安 Process Sentinel（序安·过程哨兵）
 
 状态：`REVIEW`  
 当前 release：`20260828T0530Z`  
@@ -13,7 +13,7 @@
 - 诚实的两阶段时间轴：首次异常点立即锁定事件；候选和证据在预注册的 20 个样本后刷新。`已更新` 不表示 `已确认`。
 - FastAPI + PostgreSQL：场景、回放、SSE、事件、幂等人工决策、审计记录和真实 readiness。
 - Next.js 驾驶舱：真实 scenario/run/event/decision/record 链路、网络降级、响应式和可访问性。
-- WunoOS/WUWUI 设计系统：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
+- 序安产品界面与组件规范：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
 - Docker Compose：Web、API、worker、PostgreSQL、Caddy 五个健康服务，含发布、备份和回滚脚本。
 
 ## 数据与产品边界
@@ -45,7 +45,7 @@ make build
 BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
 ```
 
-当前父级验收基线：ML `46 passed`、API `22 passed`、Web `32 passed`，共 100 项测试；契约、Ruff、ESLint、TypeScript、Next.js production build 和 infra 检查均通过。
+当前 Web 验收基线：`39 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。ML、API、契约与 infra 使用各自验收命令独立复核。
 
 ## 运行与部署
 
