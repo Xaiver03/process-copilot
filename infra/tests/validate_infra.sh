@@ -47,6 +47,25 @@ if ! grep -q 'MODEL_ARTIFACT_DIR: /app/data/processed/models' <<<"$compose_confi
   exit 1
 fi
 
+for setting in \
+  'INFERENCE_MODE: online' \
+  'LLM_BASE_URL:' \
+  'LLM_MODEL:' \
+  'LLM_TIMEOUT_SECONDS:' \
+  'LLM_MAX_TOKENS:' \
+  'AI_CONFIG_ENCRYPTION_KEY:'; do
+  if ! grep -q "$setting" <<<"$compose_config"; then
+    printf 'missing online AI runtime setting: %s\n' "$setting" >&2
+    exit 1
+  fi
+done
+
+if grep -qE '^AI_CONFIG_ENCRYPTION_KEY=.+$' "$ROOT_DIR/.env.example" \
+  || grep -qE '^LLM_API_KEY=.+$' "$ROOT_DIR/.env.example"; then
+  printf '.env.example must not contain default AI secrets\n' >&2
+  exit 1
+fi
+
 web_config="$(sed -n '/^  web:/,/^  [^ ]/p' <<<"$compose_config")"
 if ! grep -q 'HOSTNAME: 0.0.0.0' <<<"$web_config"; then
   printf 'standalone Next.js must bind 0.0.0.0 so its loopback healthcheck can connect\n' >&2
@@ -135,6 +154,14 @@ if ! grep -q 'shared/runtime.env' "$ROOT_DIR/infra/scripts/deploy.sh" \
   printf 'deploy must persist a protected runtime env and use it for compose up\n' >&2
   exit 1
 fi
+
+for setting in INFERENCE_MODE LLM_PROVIDER LLM_BASE_URL LLM_MODEL LLM_API_KEY \
+  LLM_TIMEOUT_SECONDS LLM_MAX_TOKENS LLM_PROMPT_VERSION AI_CONFIG_ENCRYPTION_KEY; do
+  if ! grep -q "$setting" "$ROOT_DIR/infra/scripts/deploy.sh"; then
+    printf 'deploy runtime env must preserve %s\n' "$setting" >&2
+    exit 1
+  fi
+done
 
 for script in rollback.sh backup-postgres.sh; do
   if ! grep -q -- '--env-file "$RUNTIME_ENV"' "$ROOT_DIR/infra/scripts/$script"; then

@@ -20,8 +20,15 @@ x-api-environment: &api-environment
   DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-process_copilot}:${POSTGRES_PASSWORD:-change_me_before_deploy}@postgres:5432/${POSTGRES_DB:-process_copilot}
   DEMO_DATA_DIR: ${DEMO_DATA_DIR:-/app/data/processed}
   MODEL_ARTIFACT_DIR: ${MODEL_ARTIFACT_DIR:-/app/data/processed/models}
+  INFERENCE_MODE: ${INFERENCE_MODE:-online}
   LLM_PROVIDER: ${LLM_PROVIDER:-disabled}
+  LLM_BASE_URL: ${LLM_BASE_URL:-https://localhost}
+  LLM_MODEL: ${LLM_MODEL:-not-configured}
   LLM_API_KEY: ${LLM_API_KEY:-}
+  LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-8}
+  LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-500}
+  LLM_PROMPT_VERSION: ${LLM_PROMPT_VERSION:-event-copilot-v01}
+  AI_CONFIG_ENCRYPTION_KEY: ${AI_CONFIG_ENCRYPTION_KEY:-}
 
 services:
   caddy:
