@@ -15,7 +15,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy import select
+
 from .catalog import DataCatalog
+from .db import Database, ReplayRunRow, RunInferenceStateRow
+from .replay_executor import ReplayExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,13 @@ def _default_data_dir() -> Path:
     if configured:
         return Path(configured)
     return Path("/app/data/processed")
+
+
+def _default_database_url() -> str:
+    configured = os.getenv("DATABASE_URL")
+    if configured:
+        return configured
+    return "sqlite:////app/data/process_copilot.db"
 
 
 def inspect_processed_data(data_dir: str | Path | None = None) -> dict[str, Any]:
@@ -53,16 +64,55 @@ def inspect_processed_data(data_dir: str | Path | None = None) -> dict[str, Any]
     }
 
 
+def execute_playing_runs(executor: ReplayExecutor) -> int:
+    """Advance every durable online run currently marked ``playing`` once."""
+
+    with executor.database.session() as session:
+        run_ids = list(
+            session.scalars(
+                select(ReplayRunRow.id)
+                .join(RunInferenceStateRow, RunInferenceStateRow.run_id == ReplayRunRow.id)
+                .where(ReplayRunRow.state == "playing", RunInferenceStateRow.mode == "online")
+            )
+        )
+    for run_id in run_ids:
+        executor.tick(run_id)
+    return len(run_ids)
+
+
+def run_worker_once(
+    database_url: str | None = None,
+    data_dir: str | Path | None = None,
+    worker_id: str = "worker",
+) -> int:
+    """Create an executor, process current playing runs, and return its count."""
+
+    database = Database(database_url or _default_database_url())
+    database.create_schema()
+    executor = ReplayExecutor(database, data_dir or _default_data_dir(), worker_id=worker_id)
+    return execute_playing_runs(executor)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Process Copilot read-only artifact worker")
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument("--database-url", default=None)
     parser.add_argument("--interval", type=float, default=5.0)
     parser.add_argument("--once", action="store_true", help="inspect inputs once and exit")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+    database = Database(args.database_url or _default_database_url())
+    database.create_schema()
+    executor = ReplayExecutor(
+        database,
+        args.data_dir or _default_data_dir(),
+        worker_id=os.getenv("WORKER_ID", "worker"),
+    )
     while True:
+        run_count = execute_playing_runs(executor)
         snapshot = inspect_processed_data(args.data_dir)
+        snapshot["runsAdvanced"] = run_count
         logger.info("worker inputs: %s", json.dumps(snapshot, ensure_ascii=False))
         if args.once:
             print(json.dumps(snapshot, ensure_ascii=False))
