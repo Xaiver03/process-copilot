@@ -168,7 +168,7 @@ class AIConfigService:
 
     def update(self, patch: AIConfigPatch) -> AIConfig:
         existing = self.repository.load()
-        current = existing.config if existing else None
+        current = existing.config if existing else resolve_config_from_env(self.environ)
         values: dict[str, Any] = {}
         for field in (
             "enabled",
@@ -233,28 +233,42 @@ def resolve_config_from_env(environ: Mapping[str, str] | None = None) -> AIConfi
     own server-side secret path rather than this public configuration representation.
     """
     source = environ if environ is not None else os.environ
-    config_env_names = ("AI_PROVIDER", "AI_BASE_URL", "AI_MODEL", "AI_API_KEY")
+    config_env_names = (
+        "AI_PROVIDER",
+        "AI_BASE_URL",
+        "AI_MODEL",
+        "AI_API_KEY",
+        "LLM_PROVIDER",
+        "LLM_BASE_URL",
+        "LLM_MODEL",
+        "LLM_API_KEY",
+    )
     if not any(source.get(name) for name in config_env_names):
         return None
+
+    def value(ai_name: str, llm_name: str, default: str) -> str:
+        return source.get(ai_name) or source.get(llm_name) or default
+
+    provider = value("AI_PROVIDER", "LLM_PROVIDER", "custom")
     try:
-        timeout = int(source.get("AI_TIMEOUT", "30"))
-        max_tokens = int(source.get("AI_MAX_TOKENS", "2048"))
+        timeout = int(value("AI_TIMEOUT", "LLM_TIMEOUT_SECONDS", "30"))
+        max_tokens = int(value("AI_MAX_TOKENS", "LLM_MAX_TOKENS", "2048"))
         temperature = float(source.get("AI_TEMPERATURE", "0.2"))
         version = int(source.get("AI_CONFIG_VERSION", "1"))
     except ValueError as exc:
         raise AIConfigValidationError("AI numeric environment setting is invalid") from exc
     return AIConfig(
-        enabled=_parse_bool(source.get("AI_ENABLED"), default=True),
-        provider=source.get("AI_PROVIDER", "custom"),
-        baseUrl=source.get("AI_BASE_URL", "https://localhost"),
-        model=source.get("AI_MODEL", "sentinel-explainer"),
+        enabled=_parse_bool(source.get("AI_ENABLED"), default=provider != "disabled"),
+        provider=provider,
+        baseUrl=value("AI_BASE_URL", "LLM_BASE_URL", "https://localhost"),
+        model=value("AI_MODEL", "LLM_MODEL", "sentinel-explainer"),
         timeout=timeout,
         maxTokens=max_tokens,
         temperature=temperature,
-        promptVersion=source.get("AI_PROMPT_VERSION", "v1"),
+        promptVersion=value("AI_PROMPT_VERSION", "LLM_PROMPT_VERSION", "v1"),
         fallbackMode=source.get("AI_FALLBACK_MODE", "template"),
         version=version,
-        apiKeyConfigured=bool(source.get("AI_API_KEY")),
+        apiKeyConfigured=bool(source.get("AI_API_KEY") or source.get("LLM_API_KEY")),
     )
 
 

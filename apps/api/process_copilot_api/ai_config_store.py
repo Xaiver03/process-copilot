@@ -27,7 +27,7 @@ class SQLAlchemyAIConfigRepository:
             row = session.get(AIConfigurationRow, self.config_id)
             expected_previous_version = config.version - 1
             actual_previous_version = row.version if row is not None else 0
-            if actual_previous_version != expected_previous_version:
+            if row is not None and actual_previous_version != expected_previous_version:
                 raise AIConfigConflictError(
                     "AI configuration changed while this update was being prepared"
                 )

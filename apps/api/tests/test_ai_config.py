@@ -154,6 +154,29 @@ def test_environment_fallback_is_public_and_does_not_return_raw_key(
     assert "apiKey" not in public.to_dict()
 
 
+def test_environment_fallback_accepts_runtime_llm_variable_names():
+    public = resolve_config_from_env(
+        {
+            "LLM_PROVIDER": "openai-compatible",
+            "LLM_BASE_URL": "https://llm.example.test/v1",
+            "LLM_MODEL": "sentinel-explainer",
+            "LLM_API_KEY": "runtime-secret",
+            "LLM_TIMEOUT_SECONDS": "12",
+            "LLM_MAX_TOKENS": "900",
+            "LLM_PROMPT_VERSION": "event-copilot-v02",
+        }
+    )
+
+    assert public is not None
+    assert public.enabled is True
+    assert public.provider == "openai-compatible"
+    assert public.timeout == 12
+    assert public.maxTokens == 900
+    assert public.promptVersion == "event-copilot-v02"
+    assert public.apiKeyConfigured is True
+    assert "runtime-secret" not in repr(public)
+
+
 def test_sensitive_field_redaction_handles_nested_payloads():
     payload = {
         "provider": "openai-compatible",
