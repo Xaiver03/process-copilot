@@ -16,7 +16,13 @@ const ReactECharts = dynamic(() => import("echarts-for-react"), {
   loading: () => <div className="chart-loading" role="status">正在加载图表</div>,
 });
 
-export function ProcessHeatmapChart() {
+export function ProcessHeatmapChart({
+  currentSample = 500,
+  faultOnsetSample = 160,
+}: {
+  currentSample?: number;
+  faultOnsetSample?: number;
+} = {}) {
   return (
     <section className="chart-panel heatmap-panel" aria-labelledby="heatmap-title">
       <div className="section-heading">
