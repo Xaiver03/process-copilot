@@ -1,0 +1,152 @@
+{
+  "sourcePptx": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/04_交付成品/序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pptx",
+  "workspace": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02",
+  "outDir": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect",
+  "generatedAt": "2026-08-28T14:35:08.708Z",
+  "slideCount": 10,
+  "slideArtifacts": [
+    {
+      "slide": 1,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-01.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-01.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-01.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-01.layout.json"
+    },
+    {
+      "slide": 2,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-02.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-02.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-02.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-02.layout.json"
+    },
+    {
+      "slide": 3,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-03.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-03.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-03.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-03.layout.json"
+    },
+    {
+      "slide": 4,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-04.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-04.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-04.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-04.layout.json"
+    },
+    {
+      "slide": 5,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-05.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-05.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-05.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-05.layout.json"
+    },
+    {
+      "slide": 6,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-06.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-06.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-06.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-06.layout.json"
+    },
+    {
+      "slide": 7,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-07.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-07.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-07.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-07.layout.json"
+    },
+    {
+      "slide": 8,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-08.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-08.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-08.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-08.layout.json"
+    },
+    {
+      "slide": 9,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-09.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-09.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-09.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-09.layout.json"
+    },
+    {
+      "slide": 10,
+      "previewPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/source-slides/source-slide-10.png",
+      "previewRelativePath": "template-inspect/source-slides/source-slide-10.png",
+      "layoutPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/layouts/source-slide-10.layout.json",
+      "layoutRelativePath": "template-inspect/layouts/source-slide-10.layout.json"
+    }
+  ],
+  "inspectPath": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/template-inspect.ndjson",
+  "inspectRelativePath": "template-inspect/template-inspect.ndjson",
+  "inspectTruncated": true,
+  "inspectMetadata": {
+    "revision": "ikg76p",
+    "target": {
+      "id": "pr/n032eg"
+    },
+    "kind": {
+      "requested": "slide,textbox,shape,image,table,chart",
+      "tokens": [
+        "slide",
+        "textbox",
+        "shape",
+        "image",
+        "table",
+        "chart"
+      ]
+    },
+    "include": {
+      "tokens": []
+    },
+    "exclude": {
+      "tokens": []
+    },
+    "notices": []
+  },
+  "extractedMedia": [
+    {
+      "entry": "ppt/media/image.png",
+      "path": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/assets/ppt/media/image.png",
+      "relativePath": "template-inspect/assets/ppt/media/image.png",
+      "bytes": 324060
+    },
+    {
+      "entry": "ppt/media/image2.png",
+      "path": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/assets/ppt/media/image2.png",
+      "relativePath": "template-inspect/assets/ppt/media/image2.png",
+      "bytes": 109880
+    },
+    {
+      "entry": "ppt/media/image3.png",
+      "path": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/assets/ppt/media/image3.png",
+      "relativePath": "template-inspect/assets/ppt/media/image3.png",
+      "bytes": 168914
+    },
+    {
+      "entry": "ppt/media/image4.png",
+      "path": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/assets/ppt/media/image4.png",
+      "relativePath": "template-inspect/assets/ppt/media/image4.png",
+      "bytes": 106950
+    },
+    {
+      "entry": "ppt/media/image5.png",
+      "path": "/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/90_构建与分析缓存/序安黑客松路演_v02/template-inspect/assets/ppt/media/image5.png",
+      "relativePath": "template-inspect/assets/ppt/media/image5.png",
+      "bytes": 324060
+    }
+  ],
+  "fonts": [
+    "+mj-lt",
+    "+mn-lt",
+    "Calibri",
+    "Calibri Light",
+    "Courier New",
+    "Source Han Sans SC"
+  ],
+  "packageParts": {
+    "mediaCount": 5,
+    "slideXmlCount": 10,
+    "chartCount": 0,
+    "tableSlideCount": 0
+  }
+}

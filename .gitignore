@@ -5,6 +5,7 @@
 
 # JavaScript
 node_modules/
+**/node_modules
 .next/
 coverage/
 *.tsbuildinfo
@@ -23,3 +24,8 @@ apps/api/process_copilot.db
 
 # System files
 .DS_Store
+.~*.pptx
+
+# Local artifact runtimes
+90_构建与分析缓存/**/runtime-bin/
+90_构建与分析缓存/**/qa/font-cache/

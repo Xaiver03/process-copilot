@@ -6,23 +6,32 @@
 
 当前评审版：
 
-- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pptx`：10 页、16:9、可编辑源文件。
-- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pdf`：同版 PDF 预览与提交件。
+- `序安_Process_Sentinel_黑客松路演_v02_ZH_REVIEW.pptx`：10 页、16:9、可编辑源文件；已统一现行序安标志，并写入可直接照读的逐页演讲备注。
+- `序安_Process_Sentinel_黑客松路演_v02_ZH_REVIEW.pdf`：与 v02 PowerPoint 对应的 10 页提交件，已逐页渲染验收。
+- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pdf`：历史 PDF 对照版。
+- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pptx`：历史可编辑版，不覆盖。
 
 叙事覆盖具体化工堵点、偏移提前发现、AI 候选与变量证据、人机主动交互、当前只读边界、受控写回路线、公开 TEP 数据、现场 Demo 和 4–8 周只读 PoC。贵州磷化集团“1468”仅作为产业闭环价值的官方公开参照，不表示合作关系或真实数据来源。
 
 可重建源与 QA 证据位于：
 
-`../90_构建与分析缓存/序安黑客松路演_v01/`
+`../90_构建与分析缓存/序安黑客松路演_v02/`
+
+配套逐字稿：`../docs/submission/序安黑客松路演逐字稿_v01_REVIEW.md`。
 
 ## 黑客松易拉宝
 
-当前评审版：`序安_Process_Sentinel_黑客松易拉宝_v01_ZH_REVIEW.pdf`。
+当前评审版：`序安_Process_Sentinel_黑客松易拉宝_v05_ZH_CMYK_REVIEW.pdf`。
 
 - 成品尺寸：800 mm × 1800 mm，单页。
-- XeLaTeX 构建；文字、线条、图标、异常曲线和二维码保持矢量，PDF 不含嵌入栅格图像。
-- 二维码指向 `https://huagong.finlaw.cloud/demo`，已从最终渲染图回读并复核公网 HTTP 200。
-- 配套逐字稿：`../docs/submission/序安黑客松易拉宝讲解逐字稿_v01_REVIEW.md`，可供普通观众讲解时直接照读。
+- XeLaTeX 构建；文字、线条、信息图和二维码保持矢量。通用工业氛围图与现行 Logo 为独立 CMYK 位图资产，不把整张易拉宝栅格化。
+- 顶部使用产品仓库现行眼形过程环标志；v02 的临时盾牌和纵向遮罩条不再使用。
+- v05 按最终 PDF 的实际字高验收：除版本状态外，所有业务文字均不低于 18.28 mm；证据名称约 18.98 mm、章节标题约 22–25 mm、核心主张约 52 mm；不再保留 13–15 mm 的“近看层”。
+- 二维码指向 `https://huagong.finlaw.cloud/demo`，2026-08-28 复核公网 HTTP 200。
+- 配套逐字稿：`../docs/submission/序安黑客松易拉宝讲解逐字稿_v03_REVIEW.md`，可供普通观众讲解时直接照读。
+- 品牌应用审计：`../docs/submission/序安品牌标志应用审计_v01_REVIEW.md`。现行 Logo 尚未全量应用到路演 PPTX 和产品手册，不能声称已经全部统一。
+- 观看距离与字高验收：`../docs/submission/序安黑客松易拉宝观看距离与字高验收_v01_REVIEW.md`。
+- v04、v03、v02 与 v01 保留为历史 REVIEW，不覆盖、不作为当前印刷候选。
 
 唯一 LaTeX 源、来源台账与印刷 QA 位于：
 
