@@ -1,8 +1,8 @@
 # 序安 Process Sentinel（序安·过程哨兵）
 
 状态：`REVIEW`  
-当前 release：`20260828T0530Z`  
-主链路：`过程数据回放 -> 偏移发现 -> 候选刷新 -> Top-3 变量证据 -> 安全建议 -> 人工确认 -> 审计留痕`
+当前交付分支：`codex/process-sentinel-online-ai`  
+主链路：`过程数据回放 -> 在线偏移发现 -> Top-3 候选与变量证据 -> 人机主动追问 -> 人工确认 -> 调用与决策审计`
 
 这不是泛化的“智慧工厂大屏”。它只聚焦连续生产装置的一个动作：当班工程师看到过程偏移后，快速判断“是不是真偏了、先看哪三个变量、下一步先查什么、谁确认过”。
 
@@ -13,6 +13,8 @@
 - 诚实的两阶段时间轴：首次异常点立即锁定事件；候选和证据在预注册的 20 个样本后刷新。`已更新` 不表示 `已确认`。
 - FastAPI + PostgreSQL：场景、回放、SSE、事件、幂等人工决策、审计记录和真实 readiness。
 - Next.js 驾驶舱：真实 scenario/run/event/decision/record 链路、网络降级、响应式和可访问性。
+- 完整管理后台：AI 运行概览、Provider 配置、密钥只写、调用记录、配置审计与管理员 RBAC。
+- 人机协同研判：事件证据内主动追问；语言模型未开启时如实标记“模板降级”，不伪装在线调用。
 - 序安产品界面与组件规范：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
 - Docker Compose：Web、API、worker、PostgreSQL、Caddy 五个健康服务，含发布、备份和回滚脚本。
 
@@ -25,6 +27,7 @@
 - 场景：`F01 Feed composition step deviation`、`F06 A-feed loss`、`F13 Reaction kinetics slow drift`
 - 这是公开仿真数据，不是贵州企业真实生产数据；不能据此声称生产误报率、漏报率、提前量或收益。
 - 系统只提供读侧证据与建议，没有 DCS、PLC、联锁或控制回路写回能力。
+- 公网管理后台可查看真实运行状态，但 AI 配置写入和连接测试默认关闭；私有部署才可按白名单和出站策略启用。
 
 详细口径见 [数据说明](docs/submission/数据说明_v01_DRAFT.md)。
 
@@ -98,6 +101,8 @@ docs/submission/          作品、数据与 Demo 材料
 - [黑客松路演实施计划](docs/plans/2026-08-28_序安黑客松路演PPT实施计划.md)
 - [作品说明](docs/submission/作品说明_v01_DRAFT.md)
 - [三分钟 Demo 脚本](docs/submission/三分钟Demo脚本_v01_DRAFT.md)
+- [完整演示演习手册](docs/submission/序安完整演示演习手册_v01_REVIEW.md)
+- [Codex 与 Claude Code 多智能体协作规范](docs/development/多智能体协作规范_v01.md)
 - [连续化工 AI 判别与“工业小郎中”论文启示](docs/research/2026-08-28_连续化工AI判别与工业小郎中论文启示_v01_DRAFT.md)
 - [UI 可读性与响应式审查](docs/design/2026-08-28_UI可读性与响应式审查_v01_REVIEW.md)
 - [产品手册交付目录](04_交付成品/README.md)
