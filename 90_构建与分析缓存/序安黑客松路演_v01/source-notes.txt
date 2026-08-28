@@ -1,0 +1,44 @@
+序安 Process Sentinel 黑客松路演 v01｜来源台账
+记录日期：2026-08-28
+
+一、内部事实源
+1. 产品状态、主链路、只读边界、部署入口与 release
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/README.md
+2. 黑客松作品口径、PoC 路径与评委现场关注点
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/docs/submission/作品说明_v01_DRAFT.md
+3. 三分钟现场 Demo 步骤与降级策略
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/docs/submission/三分钟Demo脚本_v01_DRAFT.md
+4. TEP 数据来源、52 路变量、20 点/60 分钟窗口、hash 与冻结场景
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/docs/submission/数据说明_v01_DRAFT.md
+5. 在线 PCA 内核、严格盲测边界和尚未完成项
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/services/ml/README.md
+6. 当前部署拓扑、健康服务、E2E 与回滚事实
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶/docs/deployment.md
+7. Wuno 核心颜色、字体和组件语义
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/01_品牌视觉与媒体/00_设计系统/Wuno_设计系统规范.md
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/01_品牌视觉与媒体/00_设计系统/tokens/wuno-design-tokens.json
+
+二、外部公开事实源
+1. Tennessee Eastman Process 上游仓库
+   https://github.com/camaramm/tennessee-eastman-profBraatz
+   用途：公开仿真数据来源、41 个测量变量 + 11 个操纵变量、21 类扰动背景。
+2. 贵州省大数据发展管理局：《贵州省行业大模型典型应用案例之十七｜磷化工能耗优化大模型》，2026-01-20
+   https://dsj.guizhou.gov.cn/ztzl/rdzt/jdal/202601/t20260120_89316875.html
+   用途：产业参照。官方页面描述“1468”装置以预测、APC、RTO 和边缘控制形成能耗/品质/设备与参数优化闭环；公开成效包括相关装置能耗降低 2% 以上、操作频次下降 70% 以上、稳定性提升 30% 以上。
+   边界：这些成效仅归属于官方案例，不是序安成效；不暗示合作或真实数据关系。
+
+三、视觉资产原件
+1. Wuno 蓝色球形主视觉
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/01_品牌视觉与媒体/WUWEI_Wuno_蓝色球形主视觉.png
+2. 序安过程回放首屏
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/07_LaTeX文档工程/02_产品手册/2026-08_连续化工过程偏移副驾驶/assets/screenshots/03_过程回放_首屏.png
+3. 序安事件研判首屏
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/07_LaTeX文档工程/02_产品手册/2026-08_连续化工过程偏移副驾驶/assets/screenshots/05_事件研判_首屏.png
+4. 序安审计记录首屏
+   /Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/04_品牌与市场资产/Wuno_WUWEI品牌市场/07_LaTeX文档工程/02_产品手册/2026-08_连续化工过程偏移副驾驶/assets/screenshots/07_审计记录_首屏.png
+
+四、Deck 中的来源备注策略
+- 每页演讲者备注均以 [Sources] 开头。
+- 内部事实使用 repo-relative path；外部事实使用 URL。
+- 贵州磷化集团案例页必须包含“公开产业参照；与序安无合作或数据关系”的边界声明。
+- 未来写回页必须写明当前 Demo 只读，未来路线图需人工授权、权限校验、联锁/安全边界校验和受控控制网关。
