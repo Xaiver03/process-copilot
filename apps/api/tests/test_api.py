@@ -35,6 +35,8 @@ def client(tmp_path: Path):
     app = create_app(
         database_url=f"sqlite:///{tmp_path / 'api.db'}",
         data_dir=data_dir,
+        sse_heartbeat_interval_seconds=0.001,
+        sse_heartbeat_count=3,
     )
     with TestClient(app) as test_client:
         yield test_client
@@ -388,6 +390,16 @@ def test_sse_stream_emits_bounded_periodic_heartbeats(client: TestClient):
         if line.startswith("id: ")
     ]
     assert event_ids == sorted(set(event_ids))
+
+
+def test_production_sse_defaults_to_long_lived_heartbeat_configuration(tmp_path: Path):
+    app = create_app(
+        database_url=f"sqlite:///{tmp_path / 'production-default.db'}",
+        data_dir=tmp_path,
+    )
+
+    assert app.state.sse_heartbeat_interval_seconds == 15.0
+    assert app.state.sse_heartbeat_count is None
 
 
 def test_event_detail_decision_and_record_are_auditable(client: TestClient):

@@ -42,8 +42,8 @@ DEGRADED_FALLBACK_MODEL_VERSION = "degraded-demo-fallback-v0.1"
 DEGRADED_FALLBACK_RISK = (
     "演示降级：事件模板缺失或无效，以下证据为固定占位内容，不代表真实模型计算结果。"
 )
-SSE_HEARTBEAT_COUNT = 3
-SSE_HEARTBEAT_INTERVAL_SECONDS = 0.05
+DEFAULT_SSE_HEARTBEAT_INTERVAL_SECONDS = 15.0
+DEFAULT_SSE_HEARTBEAT_COUNT: int | None = None
 
 
 class APIError(Exception):
@@ -240,7 +240,13 @@ def _fallback_detail(
 def create_app(
     database_url: str | None = None,
     data_dir: str | Path | None = None,
+    sse_heartbeat_interval_seconds: float = DEFAULT_SSE_HEARTBEAT_INTERVAL_SECONDS,
+    sse_heartbeat_count: int | None = DEFAULT_SSE_HEARTBEAT_COUNT,
 ) -> FastAPI:
+    if sse_heartbeat_interval_seconds <= 0:
+        raise ValueError("sse_heartbeat_interval_seconds must be positive")
+    if sse_heartbeat_count is not None and sse_heartbeat_count < 1:
+        raise ValueError("sse_heartbeat_count must be positive or None")
     app = FastAPI(
         title="Wuno Process Copilot API",
         version="0.1.0",
@@ -250,6 +256,8 @@ def create_app(
     app.state.database = Database(database_url or _default_database_url())
     app.state.database.create_schema()
     app.state.catalog = DataCatalog(data_dir or _default_data_dir())
+    app.state.sse_heartbeat_interval_seconds = sse_heartbeat_interval_seconds
+    app.state.sse_heartbeat_count = sse_heartbeat_count
 
     @app.middleware("http")
     async def trace_middleware(request: Request, call_next: Any) -> Any:
@@ -472,8 +480,12 @@ def create_app(
                     yield _sse_frame(event_id, event, payload)
                 event_id += 1
 
-            for _ in range(SSE_HEARTBEAT_COUNT - 1):
-                await asyncio.sleep(SSE_HEARTBEAT_INTERVAL_SECONDS)
+            heartbeat_number = 1
+            while (
+                app.state.sse_heartbeat_count is None
+                or heartbeat_number < app.state.sse_heartbeat_count
+            ):
+                await asyncio.sleep(app.state.sse_heartbeat_interval_seconds)
                 if event_id > cursor:
                     yield _sse_frame(
                         event_id,
@@ -481,6 +493,7 @@ def create_app(
                         {"status": "ok", "runId": str(runId)},
                     )
                 event_id += 1
+                heartbeat_number += 1
 
         return StreamingResponse(
             event_stream(),
