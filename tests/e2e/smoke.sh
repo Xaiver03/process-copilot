@@ -5,6 +5,8 @@ BASE_URL="${BASE_URL:-http://127.0.0.1:18090}"
 CHECK_WEB="${CHECK_WEB:-1}"
 CURL_CONNECT_TIMEOUT="${CURL_CONNECT_TIMEOUT:-5}"
 CURL_MAX_TIME="${CURL_MAX_TIME:-30}"
+E2E_USERNAME="${E2E_USERNAME:-shift-lead}"
+E2E_PASSWORD="${E2E_PASSWORD:-demo-lead-2026}"
 curl_limits=(--connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME")
 
 command -v curl >/dev/null 2>&1 || { printf 'curl is required\n' >&2; exit 1; }
@@ -62,14 +64,27 @@ jq -e '
   and .dataSourceDisclosure == "Public simulation data, not real Guizhou plant data."
 ' <<<"$event" >/dev/null
 
-decision_body='{"decision":"escalate","operatorName":"E2E Smoke","note":"Automated read-only demo chain verification."}'
+login_body="$(jq -nc --arg username "$E2E_USERNAME" --arg password "$E2E_PASSWORD" \
+  '{username: $username, password: $password}')"
+auth_token="$(curl "${curl_limits[@]}" -fsS -X POST "$BASE_URL/api/v1/auth/login" \
+  -H 'Content-Type: application/json' \
+  --data "$login_body" | jq -er '.token')"
+
+decision_body='{"decision":"escalate","decisionMethod":"followed","note":"Automated read-only demo chain verification."}'
 record="$(curl "${curl_limits[@]}" -fsS -X POST "$BASE_URL/api/v1/events/$event_id/decision" \
   -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $auth_token" \
   -H "Idempotency-Key: $request_id-decision" \
   --data "$decision_body")"
 record_id="$(jq -er '.id' <<<"$record")"
 curl "${curl_limits[@]}" -fsS "$BASE_URL/api/v1/records/$record_id" \
-  | jq -e --arg event_id "$event_id" '.eventId == $event_id and .decision == "escalate" and (.traceId | length > 0)' >/dev/null
+  | jq -e --arg event_id "$event_id" '
+      .eventId == $event_id
+      and .decision == "escalate"
+      and .operatorRole == "shift_lead"
+      and (.operatorName | length > 0)
+      and (.traceId | length > 0)
+    ' >/dev/null
 
 cursor_status="$(curl "${curl_limits[@]}" -sS -o "$cursor_file" -w '%{http_code}' \
   -H 'Last-Event-ID: invalid' "$BASE_URL/api/v1/runs/$run_id/stream")"

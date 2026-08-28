@@ -95,6 +95,17 @@ if ! grep -q 'PIP_DEFAULT_TIMEOUT=120' "$ROOT_DIR/infra/docker/api.Dockerfile" \
   exit 1
 fi
 
+if ! grep -q '/api/v1/auth/login' "$ROOT_DIR/tests/e2e/smoke.sh" \
+  || ! grep -q 'Authorization: Bearer' "$ROOT_DIR/tests/e2e/smoke.sh"; then
+  printf 'e2e smoke must authenticate before submitting an operator decision\n' >&2
+  exit 1
+fi
+
+if grep -qE '^decision_body=.*operatorName' "$ROOT_DIR/tests/e2e/smoke.sh"; then
+  printf 'e2e smoke must derive the operator identity from the authenticated token\n' >&2
+  exit 1
+fi
+
 if grep -qE '^COPY --from=build .*apps/web/public ' "$ROOT_DIR/infra/docker/web.Dockerfile"; then
   printf 'web image must not unconditionally copy an optional public directory\n' >&2
   exit 1
