@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ApiProblemError,
   getEventWithFallback,
+  getRecordWithFallback,
   startScenarioWithFallback,
   submitDecisionWithFallback,
 } from "@/lib/api-client";
@@ -89,5 +90,18 @@ describe("真实 API 主链路与降级边界", () => {
   it("普通异常不会触发静态降级", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("schema mismatch")));
     await expect(getEventWithFallback("any-event")).rejects.toThrow("schema mismatch");
+  });
+
+  it("明确的静态 Demo 深链接不请求在线 API", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const event = await getEventWithFallback("demo-event");
+    const record = await getRecordWithFallback("demo-record");
+
+    expect(event.mode).toBe("static-demo");
+    expect(record.mode).toBe("static-demo");
+    expect(event.notice).toContain("静态 Demo");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
