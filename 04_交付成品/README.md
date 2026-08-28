@@ -7,7 +7,8 @@
 当前评审版：
 
 - `序安_Process_Sentinel_黑客松路演_v02_ZH_REVIEW.pptx`：10 页、16:9、可编辑源文件；已统一现行序安标志，并写入可直接照读的逐页演讲备注。
-- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pdf`：v01 的 PDF 预览与提交件，暂作为对照版保留。
+- `序安_Process_Sentinel_黑客松路演_v02_ZH_REVIEW.pdf`：与 v02 PowerPoint 对应的 10 页提交件，已逐页渲染验收。
+- `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pdf`：历史 PDF 对照版。
 - `序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pptx`：历史可编辑版，不覆盖。
 
 叙事覆盖具体化工堵点、偏移提前发现、AI 候选与变量证据、人机主动交互、当前只读边界、受控写回路线、公开 TEP 数据、现场 Demo 和 4–8 周只读 PoC。贵州磷化集团“1468”仅作为产业闭环价值的官方公开参照，不表示合作关系或真实数据来源。

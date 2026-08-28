@@ -28,3 +28,4 @@ apps/api/process_copilot.db
 
 # Local artifact runtimes
 90_构建与分析缓存/**/runtime-bin/
+90_构建与分析缓存/**/qa/font-cache/
