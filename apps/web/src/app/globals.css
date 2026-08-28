@@ -205,6 +205,17 @@ textarea { resize: vertical; }
 .copilot-conversation p { grid-template-columns: 72px minmax(0, 1fr); padding: 12px 14px; border-radius: 10px; line-height: 1.65; }
 .copilot-conversation .operator-message { background: color-mix(in srgb, var(--wuno-primary-500) 7%, white); }
 .copilot-conversation .assistant-message { border-left: 3px solid var(--wuno-primary-700); background: var(--wuno-surface-canvas); }
+.copilot-answer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--wuno-text-secondary);
+  font-size: var(--font-caption);
+  line-height: 1.45;
+}
+.copilot-answer-meta span { overflow-wrap: anywhere; }
 .copilot-question-form { display: grid; gap: 7px; }
 .copilot-question-form label, .writeback-preview > label { color: var(--wuno-text-secondary); font-size: var(--font-support); font-weight: 800; }
 .copilot-question-form > div { display: grid; grid-template-columns: minmax(0, 1fr) 48px; }
