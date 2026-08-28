@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import pytest
 from process_copilot_api.db import AnomalyEventRow, Database, column_names, table_names
 from process_copilot_api.migrations import upgrade_database
+from sqlalchemy import text
 
 
 def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
@@ -56,3 +58,14 @@ def test_upgrade_head_backfills_existing_schema(tmp_path) -> None:
 
     assert "operator_role" in column_names(database.engine, "decision_records")
     assert "legacy_marker" in table_names(database.engine)
+
+
+def test_upgrade_rejects_partial_online_runtime_schema(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'partial-runtime.db'}"
+    database = Database(database_url)
+    database.create_schema()
+    with database.engine.begin() as connection:
+        connection.execute(text("ALTER TABLE run_stream_messages DROP COLUMN payload"))
+
+    with pytest.raises(RuntimeError, match="run_stream_messages.*payload"):
+        upgrade_database(database_url)

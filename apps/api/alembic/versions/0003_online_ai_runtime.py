@@ -19,6 +19,84 @@ def _tables() -> set[str]:
     return set(sa.inspect(op.get_bind()).get_table_names())
 
 
+def _verify_runtime_schema() -> None:
+    expected = {
+        "run_inference_state": {
+            "run_id",
+            "mode",
+            "model_version",
+            "worker_id",
+            "heartbeat_at",
+            "failure_reason",
+        },
+        "run_stream_messages": {
+            "id",
+            "run_id",
+            "event_type",
+            "sample_index",
+            "payload",
+            "created_at",
+        },
+        "ai_interactions": {
+            "id",
+            "event_id",
+            "operator",
+            "question",
+            "answer",
+            "evidence_refs",
+            "mode",
+            "model",
+            "latency_ms",
+            "trace_id",
+            "created_at",
+        },
+        "ai_configurations": {
+            "id",
+            "enabled",
+            "provider",
+            "base_url",
+            "model",
+            "api_key_ciphertext",
+            "timeout_seconds",
+            "max_tokens",
+            "temperature",
+            "prompt_version",
+            "fallback_mode",
+            "version",
+            "updated_at",
+        },
+        "admin_audit_events": {
+            "id",
+            "actor",
+            "action",
+            "resource_type",
+            "resource_id",
+            "change_summary",
+            "trace_id",
+            "request_id",
+            "created_at",
+        },
+        "audit_events": {
+            "id",
+            "event_id",
+            "record_id",
+            "action",
+            "actor",
+            "payload",
+            "trace_id",
+            "created_at",
+        },
+    }
+    inspector = sa.inspect(op.get_bind())
+    for table, required_columns in expected.items():
+        actual_columns = {column["name"] for column in inspector.get_columns(table)}
+        missing = sorted(required_columns - actual_columns)
+        if missing:
+            raise RuntimeError(
+                f"incompatible existing schema: {table} is missing columns {', '.join(missing)}"
+            )
+
+
 def upgrade() -> None:
     tables = _tables()
 
@@ -148,6 +226,8 @@ def upgrade() -> None:
         op.create_index(
             op.f("ix_audit_events_record_id"), "audit_events", ["record_id"], unique=False
         )
+
+    _verify_runtime_schema()
 
 
 def downgrade() -> None:
