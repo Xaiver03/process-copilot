@@ -1,10 +1,15 @@
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
-from process_copilot_api.db import AIConfigurationRow
+from process_copilot_api.db import (
+    AIConfigurationRow,
+    ReplayRunRow,
+    RunInferenceStateRow,
+)
 from process_copilot_api.main import create_app
 
 
@@ -136,3 +141,36 @@ def test_connection_test_is_audited_and_rate_limited(admin_client) -> None:
 
     audit = client.get("/api/v1/admin/audit", headers=headers).json()
     assert audit["total"] == 3
+
+
+def test_admin_status_never_exposes_raw_worker_failure(admin_client) -> None:
+    client, app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+    with app.state.database.session() as session:
+        session.add(
+            ReplayRunRow(
+                id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                scenario_id="tep-fault-05",
+                state="playing",
+                speed=20,
+                current_sample=1,
+                created_at=datetime.now(UTC).replace(tzinfo=None),
+            )
+        )
+        session.add(
+            RunInferenceStateRow(
+                run_id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                mode="online",
+                model_version="model-v1",
+                worker_id="worker-secret",
+                heartbeat_at=datetime.now(UTC).replace(tzinfo=None),
+                failure_reason="/private/server/path leaked provider-secret",
+            )
+        )
+
+    overview = client.get("/api/v1/admin/overview", headers=headers)
+
+    assert overview.status_code == 200
+    serialized = json.dumps(overview.json(), ensure_ascii=False)
+    assert "/private/server/path" not in serialized
+    assert "provider-secret" not in serialized

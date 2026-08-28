@@ -465,7 +465,7 @@ def create_app(
 
     def current_ai_status() -> AIStatus:
         config = app.state.ai_config_service.get()
-        worker_status = ServiceStatus(status="unknown", reason="尚无 worker 心跳")
+        worker_version: str | None = None
         with app.state.database.session() as session:
             latest = session.scalars(
                 select(RunInferenceStateRow)
@@ -474,11 +474,22 @@ def create_app(
                 .limit(1)
             ).first()
             if latest is not None:
-                worker_status = ServiceStatus(
-                    status="degraded" if latest.failure_reason else "ready",
-                    version=latest.worker_id,
-                    reason=latest.failure_reason,
-                )
+                worker_version = latest.worker_id
+        worker_snapshot = check_worker(
+            data_dir=data_dir or _default_data_dir(),
+            database=app.state.database,
+        )
+        heartbeat = worker_snapshot["checks"]["worker_heartbeat"]
+        worker_reason = {
+            "missing": "在线回放已开始，但 Worker 尚未写入心跳。",
+            "stale": "Worker 心跳已超时，请检查运行进程。",
+            "unavailable": "Worker 运行依赖未就绪，请检查受限服务端日志。",
+        }.get(heartbeat)
+        worker_status = ServiceStatus(
+            status="ready" if worker_snapshot["status"] == "ok" else "degraded",
+            version=worker_version,
+            reason=worker_reason,
+        )
         snapshot = inspect_processed_data(data_dir or _default_data_dir())
         industrial_status = ServiceStatus(
             status="ready" if snapshot["modelReady"] else "degraded",
