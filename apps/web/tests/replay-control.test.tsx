@@ -10,6 +10,25 @@ vi.mock("@/components/charts", () => ({
 
 import { ReplayScreen } from "@/components/screens";
 
+function streamResponse(chunks: string[]) {
+  return new Response(new ReadableStream<Uint8Array>({
+    start(controller) {
+      const encoder = new TextEncoder();
+      for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+    },
+  }), { status: 200, headers: { "Content-Type": "text/event-stream" } });
+}
+
+function streamMessage(type: string, runId: string, sequence: number, payload: Record<string, unknown>) {
+  return `event: ${type}\ndata: ${JSON.stringify({
+    type,
+    sequence,
+    runId,
+    emittedAt: "2026-08-28T09:00:00.000Z",
+    ...payload,
+  })}\n\n`;
+}
+
 describe("回放控制", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -25,10 +44,12 @@ describe("回放控制", () => {
     const run = {
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       scenarioId: "tep-f06-a-feed-loss",
-      state: "playing",
+      state: "ready",
       speed: 10,
       currentSample: 160,
       createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "online",
+      modelVersion: "tep-online-v1",
     };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(response([{
@@ -41,14 +62,8 @@ describe("回放控制", () => {
         sourceLabel: "Tennessee Eastman Process public simulation",
       }]))
       .mockResolvedValueOnce(response(run, 201))
-      .mockResolvedValueOnce(response([{
-        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-        runId: run.id,
-        sampleIndex: 170,
-        severity: "critical",
-        state: "open",
-        anomalyScore: 0.91,
-      }]))
+      .mockResolvedValueOnce(response({ ...run, state: "playing" }))
+      .mockResolvedValueOnce(streamResponse([streamMessage("state", run.id, 1, { state: "playing", sampleIndex: 160 })]))
       .mockResolvedValueOnce(response({ ...run, speed: 20 }));
     vi.stubGlobal("fetch", fetchMock);
     render(<ReplayScreen />);
@@ -58,12 +73,10 @@ describe("回放控制", () => {
     expect(screen.getByRole("combobox", { name: "回放倍速" }).closest("label")).toHaveClass("replay-speed-field");
     await user.click(screen.getByRole("button", { name: "开始回放" }));
     expect(await screen.findByText("回放进行中")).toBeInTheDocument();
-    expect(screen.getByText("XMEAS(1)")).toBeInTheDocument();
-    expect(screen.queryByText("XMEAS(21)")).not.toBeInTheDocument();
-    expect(screen.getByText("场景仿真变量 · 非现场实时遥测")).toBeInTheDocument();
+    expect(screen.getByText("在线 AI 推理样本通过实时事件流更新，不展示替代遥测。")).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: "回放倍速" }), "20");
     expect(await screen.findByRole("option", { name: "20×", selected: true })).toBeInTheDocument();
-    const [url, init] = fetchMock.mock.calls[3] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[4] as [string, RequestInit];
     expect(url).toContain(`/api/v1/runs/${run.id}/control`);
     expect(JSON.parse(String(init.body))).toMatchObject({ action: "play", speed: 20 });
   });
@@ -77,10 +90,12 @@ describe("回放控制", () => {
     const run = {
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       scenarioId: "tep-f06-a-feed-loss",
-      state: "playing",
+      state: "ready",
       speed: 10,
       currentSample: 150,
       createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "online",
+      modelVersion: "tep-online-v1",
     };
     const event = {
       id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -90,6 +105,23 @@ describe("回放控制", () => {
       state: "open",
       anomalyScore: 0.91,
     };
+    const inference = streamMessage("inference", run.id, 1, {
+      sampleIndex: 175,
+      inference: {
+        runId: run.id,
+        sampleIndex: 175,
+        t2: 12.4,
+        spe: 8.1,
+        anomalyScore: 0.91,
+        alarmState: "critical",
+        modelVersion: "tep-online-v1",
+        latencyMs: 4,
+      },
+    });
+    const anomalyOpened = streamMessage("anomaly_opened", run.id, 2, {
+      sampleIndex: 170,
+      eventId: event.id,
+    });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(response([{
         id: "tep-f06-a-feed-loss",
@@ -101,6 +133,8 @@ describe("回放控制", () => {
         sourceLabel: "Tennessee Eastman Process public simulation",
       }]))
       .mockResolvedValueOnce(response(run, 201))
+      .mockResolvedValueOnce(response({ ...run, state: "playing" }))
+      .mockResolvedValueOnce(streamResponse([inference, anomalyOpened]))
       .mockResolvedValueOnce(response([event]))
       .mockResolvedValueOnce(response({ ...run, state: "paused" }));
     vi.stubGlobal("fetch", fetchMock);
@@ -110,10 +144,8 @@ describe("回放控制", () => {
     expect(screen.queryByText("A-feed loss")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "开始回放" }));
 
-    expect(await screen.findByTestId("current-sample")).toHaveTextContent("150");
-    expect(screen.queryByText(/样本 170 捕获严重偏移/)).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId("current-sample")).not.toHaveTextContent("150"), { timeout: 1400 });
-    await waitFor(() => expect(screen.getByText(/样本 170 捕获严重偏移/)).toBeInTheDocument(), { timeout: 1800 });
+    await waitFor(() => expect(screen.getByTestId("current-sample")).toHaveTextContent("175"));
+    expect(await screen.findByText(/样本 170 捕获严重偏移/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "暂停回放" }));
     const pausedSample = screen.getByTestId("current-sample").textContent;
@@ -129,11 +161,17 @@ describe("回放控制", () => {
     const run = {
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       scenarioId: "tep-f06-a-feed-loss",
-      state: "playing",
+      state: "ready",
       speed: 20,
       currentSample: 958,
       createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "online",
+      modelVersion: "tep-online-v1",
     };
+    const completed = streamMessage("completed", run.id, 2, {
+      state: "completed",
+      sampleIndex: 960,
+    });
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(response([{
         id: "tep-f06-a-feed-loss",
@@ -145,14 +183,8 @@ describe("回放控制", () => {
         sourceLabel: "Tennessee Eastman Process public simulation",
       }]))
       .mockResolvedValueOnce(response(run, 201))
-      .mockResolvedValueOnce(response([{
-        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-        runId: run.id,
-        sampleIndex: 170,
-        severity: "critical",
-        state: "open",
-        anomalyScore: 0.91,
-      }])));
+      .mockResolvedValueOnce(response({ ...run, state: "playing" }))
+      .mockResolvedValueOnce(streamResponse([completed])));
 
     const user = userEvent.setup();
     render(<ReplayScreen />);

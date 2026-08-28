@@ -4,6 +4,7 @@ import {
   ApiProblemError,
   getEventWithFallback,
   getRecordWithFallback,
+  startOnlineScenarioWithFallback,
   startScenarioWithFallback,
   submitDecisionWithFallback,
 } from "@/lib/api-client";
@@ -72,6 +73,39 @@ describe("真实 API 主链路与降级边界", () => {
     expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toMatchObject({ action: "play", speed: 10 });
     expect(fetchMock.mock.calls[2]?.[0]).toContain("/api/v1/runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/events");
     expect(fetchMock.mock.calls[3]?.[0]).toContain("/api/v1/events/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/decision");
+  });
+
+  it("在线回放创建后立即播放并等待事件流，不提前读取事件列表", async () => {
+    const run = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      scenarioId: "tep-f06-a-feed-loss",
+      state: "ready",
+      speed: 10,
+      currentSample: 0,
+      createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "online",
+      modelVersion: "tep-online-v1",
+    };
+    const playingRun = { ...run, state: "playing" };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(run, 201))
+      .mockResolvedValueOnce(jsonResponse(playingRun));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await startOnlineScenarioWithFallback("tep-f06-a-feed-loss", 10);
+
+    expect(result.mode).toBe("live");
+    expect(result.data.run).toEqual(playingRun);
+    expect(result.data.event).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toMatchObject({
+      scenarioId: "tep-f06-a-feed-loss",
+      inferenceMode: "online",
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toMatchObject({
+      action: "play",
+      speed: 10,
+    });
   });
 
   it("HTTP 404 抛出 Problem，绝不回退为静态事件", async () => {

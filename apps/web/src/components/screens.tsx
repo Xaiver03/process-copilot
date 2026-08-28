@@ -24,7 +24,7 @@ import {
   getRecordWithFallback,
   getScenariosWithFallback,
   listRunEventsWithFallback,
-  startScenarioWithFallback,
+  startOnlineScenarioWithFallback,
   submitDecisionWithFallback,
   type ApiResult,
 } from "@/lib/api-client";
@@ -32,6 +32,7 @@ import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
 import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, formatScenarioPresentation, localizeIndustrialCopy } from "@/lib/presentation";
 import { advanceReplaySample, createReplayTelemetry, describeReplayStage, getReplaySignalDefinitions, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
+import { subscribeToRun, type RunStreamMessage } from "@/lib/run-stream";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
@@ -136,20 +137,21 @@ export function OverviewScreen() {
 export function ReplayScreen() {
   const scenarios = useApiResource<Scenario[]>(getScenariosWithFallback, "replay-scenarios");
   const [selectedId, setSelectedId] = useState("");
-  const [journey, setJourney] = useState<ApiResult<{ run: ReplayRun; event: AnomalyEvent }> | null>(null);
+  const [journey, setJourney] = useState<ApiResult<{ run: ReplayRun; event?: AnomalyEvent }> | null>(null);
   const [displaySample, setDisplaySample] = useState(0);
   const [replayCompleted, setReplayCompleted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const selectedScenario = scenarios.result?.data.find((scenario) => scenario.id === selectedId);
   const totalSamples = selectedScenario?.sampleCount ?? REPLAY_TOTAL_SAMPLES;
+  const liveRunId = journey?.mode === "live" ? journey.data.run.id : undefined;
 
   useEffect(() => {
     if (!selectedId && scenarios.result?.data[0]) setSelectedId(scenarios.result.data[0].id);
   }, [scenarios.result, selectedId]);
 
   useEffect(() => {
-    if (!journey || journey.data.run.state !== "playing" || replayCompleted) return;
+    if (!journey || journey.mode !== "static-demo" || journey.data.run.state !== "playing" || replayCompleted) return;
     const timer = window.setInterval(() => {
       setDisplaySample((sample) => {
         const next = advanceReplaySample(sample, normalizeReplaySpeed(journey.data.run.speed), totalSamples);
@@ -163,6 +165,69 @@ export function ReplayScreen() {
     return () => window.clearInterval(timer);
   }, [journey, replayCompleted, totalSamples]);
 
+  useEffect(() => {
+    if (!liveRunId) return;
+    const runId = liveRunId;
+    let active = true;
+
+    const updateRun = (message: RunStreamMessage, completed = false) => {
+      setActionError("");
+      setJourney((current) => {
+        if (!active || !current || current.data.run.id !== runId) return current;
+        const sampleIndex = message.inference?.sampleIndex ?? message.sampleIndex;
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            run: {
+              ...current.data.run,
+              ...(message.state ? { state: message.state } : {}),
+              ...(sampleIndex !== undefined ? { currentSample: sampleIndex } : {}),
+            },
+          },
+        };
+      });
+      const sampleIndex = message.inference?.sampleIndex ?? message.sampleIndex;
+      if (sampleIndex !== undefined) setDisplaySample(sampleIndex);
+      if (completed) setReplayCompleted(true);
+    };
+
+    const refreshLiveEvent = async () => {
+      try {
+        const result = await listRunEventsWithFallback(runId);
+        if (result.mode === "static-demo") {
+          throw new Error(`回放 ${runId} 已在服务器运行，但事件读取失败；不会混用静态事件。`);
+        }
+        const event = result.data.find((candidate) => candidate.state === "open") ?? result.data[0];
+        if (!active) return;
+        setActionError("");
+        setJourney((current) => current && current.data.run.id === runId
+          ? { ...current, data: { ...current.data, event } }
+          : current);
+      } catch (cause) {
+        if (active) setActionError(cause instanceof Error ? cause.message : "在线事件读取失败");
+      }
+    };
+
+    const unsubscribe = subscribeToRun(runId, {
+      onState: (message) => updateRun(message, message.state === "completed" || message.state === "failed"),
+      onInference: (message) => updateRun(message),
+      onAnomalyOpened: () => { void refreshLiveEvent(); },
+      onDiagnosisUpdated: () => { void refreshLiveEvent(); },
+      onCompleted: (message) => updateRun(message, true),
+      onFailed: (message) => {
+        updateRun(message, true);
+        setActionError(message.message ?? "在线回放执行失败");
+      },
+      onError: (error) => setActionError(error.message),
+      onHeartbeat: () => setActionError(""),
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [liveRunId]);
+
   async function startReplay() {
     if (!selectedId) return;
     setBusy(true);
@@ -172,10 +237,10 @@ export function ReplayScreen() {
         const result = await controlRunWithFallback(journey.data.run.id, { action: "play", speed: normalizeReplaySpeed(journey.data.run.speed) });
         setJourney({ ...journey, data: { ...journey.data, run: result.data }, mode: result.mode, notice: result.notice });
       } else {
-        const result = await startScenarioWithFallback(selectedId, 10);
+        const result = await startOnlineScenarioWithFallback(selectedId, 10);
         setJourney(result);
         setDisplaySample(result.data.run.currentSample);
-        setReplayCompleted(result.data.run.currentSample >= totalSamples);
+        setReplayCompleted(result.data.run.state === "completed" || result.data.run.state === "failed" || result.data.run.currentSample >= totalSamples);
       }
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : "回放创建失败");
@@ -213,10 +278,11 @@ export function ReplayScreen() {
     }
   }
   const faultOnsetSample = selectedScenario?.faultOnsetSample ?? 160;
-  const replayStage = describeReplayStage(displaySample, faultOnsetSample, journey?.data.event.sampleIndex ?? faultOnsetSample);
+  const replayStage = describeReplayStage(displaySample, faultOnsetSample, journey?.data.event?.sampleIndex ?? faultOnsetSample);
   const replaySignals = getReplaySignalDefinitions(selectedScenario?.faultId ?? 4);
-  const telemetry = createReplayTelemetry(displaySample, faultOnsetSample, selectedScenario?.faultId ?? 4);
-  const eventVisible = Boolean(journey && displaySample >= journey.data.event.sampleIndex);
+  const isStaticReplay = journey?.mode === "static-demo" || journey?.data.run.inferenceMode === "template";
+  const telemetry = isStaticReplay ? createReplayTelemetry(displaySample, faultOnsetSample, selectedScenario?.faultId ?? 4) : [];
+  const eventVisible = Boolean(journey?.data.event && displaySample >= journey.data.event.sampleIndex);
   return (
     <div className="page-stack replay-page">
       <PageHeader kicker="过程回放" title="52 路过程数据回放" summary="热力图先定位变量组，再用事件研判页查看三条对齐证据。" />
@@ -235,11 +301,11 @@ export function ReplayScreen() {
       {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`}>
         <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
         <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
-        {telemetry.length > 0 ? <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl> : <p className="simulation-disclosure">当前场景尚未配置仿真变量，不展示其他故障的替代数据。</p>}
-        <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p>
+        {telemetry.length > 0 ? <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl> : <p className="simulation-disclosure">在线 AI 推理样本通过实时事件流更新，不展示替代遥测。</p>}
+        {isStaticReplay ? <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p> : null}
       </section> : null}
       <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} evidenceVariables={replaySignals.map(({ id, name }) => ({ id, name }))} />
-      {journey && eventVisible ? <section className="capture-banner">
+      {journey && eventVisible && journey.data.event ? <section className="capture-banner">
         <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} 捕获{journey.data.event.severity === "critical" ? "严重" : ""}偏移</strong><span>异常分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
         <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>
       </section> : null}

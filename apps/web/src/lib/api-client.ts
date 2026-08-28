@@ -221,3 +221,34 @@ export async function startScenarioWithFallback(
     notice: eventsResult.notice,
   };
 }
+
+export async function startOnlineScenarioWithFallback(
+  scenarioId: string,
+  speed: NonNullable<CreateRunRequest["speed"]> = 10,
+): Promise<ApiResult<{ run: ReplayRun; event?: AnomalyEvent }>> {
+  const runResult = await createRunWithFallback({ scenarioId, speed, inferenceMode: "online" });
+  if (runResult.mode === "static-demo") {
+    return {
+      data: { run: runResult.data, event: demoEvent },
+      mode: runResult.mode,
+      notice: runResult.notice,
+    };
+  }
+
+  if (runResult.data.state === "completed" || runResult.data.state === "failed") {
+    throw new Error(`回放创建后已处于 ${runResult.data.state}，不能直接播放。`);
+  }
+
+  const startedRunResult = runResult.data.state === "playing"
+    ? runResult
+    : await controlRunWithFallback(runResult.data.id, { action: "play", speed });
+  if (startedRunResult.mode === "static-demo") {
+    throw new Error(`回放 ${startedRunResult.data.id} 已在服务器创建，但播放控制请求失败；请保留该 run ID 后重试。`);
+  }
+
+  return {
+    data: { run: startedRunResult.data },
+    mode: startedRunResult.mode,
+    notice: startedRunResult.notice,
+  };
+}
