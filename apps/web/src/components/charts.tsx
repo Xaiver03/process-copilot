@@ -19,9 +19,11 @@ const ReactECharts = dynamic(() => import("echarts-for-react"), {
 export function ProcessHeatmapChart({
   currentSample = 500,
   faultOnsetSample = 160,
+  totalSamples = 500,
 }: {
   currentSample?: number;
   faultOnsetSample?: number;
+  totalSamples?: number;
 } = {}) {
   return (
     <section className="chart-panel heatmap-panel" aria-labelledby="heatmap-title">
@@ -31,7 +33,7 @@ export function ProcessHeatmapChart({
       </div>
       <p className="sr-summary" role="status">样本 {faultOnsetSample} 前为正常基线，之后 XMEAS(9)、XMEAS(21) 与 XMV(10) 的偏移强度明显上升；当前已回放到样本 {currentSample}。</p>
       <ReactECharts
-        option={createProcessHeatmapOption(currentSample, faultOnsetSample)}
+        option={createProcessHeatmapOption(currentSample, faultOnsetSample, totalSamples)}
         className="heatmap-chart desktop-chart"
         opts={{ renderer: "canvas" }}
         aria-hidden="true"

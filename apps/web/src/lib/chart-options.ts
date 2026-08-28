@@ -36,6 +36,8 @@ export function createProcessHeatmapOption(
   totalSamples = 500,
 ): EChartsOption & { series: Array<{ type: string; markLine?: unknown; markArea?: unknown }> } {
   const xAxisSamples = Array.from({ length: Math.floor(totalSamples / 10) + 1 }, (_, index) => String(index * 10));
+  const faultAxisSample = String(Math.round(faultOnsetSample / 10) * 10);
+  const currentAxisSample = String(Math.floor(Math.min(currentSample, totalSamples) / 10) * 10);
   return {
     animation: false,
     tooltip: { position: "top", formatter: (params: unknown) => {
@@ -64,13 +66,13 @@ export function createProcessHeatmapOption(
         symbol: "none",
         label: { formatter: `故障注入 ${faultOnsetSample}`, color: "#a52f42", fontWeight: 700 },
         lineStyle: { color: "#de5b6d", width: 2, type: "dashed" },
-        data: [{ name: "故障注入", xAxis: String(faultOnsetSample) }],
+        data: [{ name: "故障注入", xAxis: faultAxisSample }],
       },
       markArea: {
         silent: true,
         label: { color: "#627987", fontWeight: 700 },
         itemStyle: { color: "rgba(98, 121, 135, 0.12)" },
-        data: [[{ name: "尚未回放", xAxis: String(Math.min(currentSample, totalSamples)) }, { xAxis: String(totalSamples) }]],
+        data: [[{ name: "尚未回放", xAxis: currentAxisSample }, { xAxis: String(totalSamples) }]],
       },
     }],
   };

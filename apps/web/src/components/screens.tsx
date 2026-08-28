@@ -138,20 +138,30 @@ export function ReplayScreen() {
   const [selectedId, setSelectedId] = useState("");
   const [journey, setJourney] = useState<ApiResult<{ run: ReplayRun; event: AnomalyEvent }> | null>(null);
   const [displaySample, setDisplaySample] = useState(0);
+  const [replayCompleted, setReplayCompleted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const selectedScenario = scenarios.result?.data.find((scenario) => scenario.id === selectedId);
+  const totalSamples = selectedScenario?.sampleCount ?? REPLAY_TOTAL_SAMPLES;
 
   useEffect(() => {
     if (!selectedId && scenarios.result?.data[0]) setSelectedId(scenarios.result.data[0].id);
   }, [scenarios.result, selectedId]);
 
   useEffect(() => {
-    if (!journey || journey.data.run.state !== "playing") return;
+    if (!journey || journey.data.run.state !== "playing" || replayCompleted) return;
     const timer = window.setInterval(() => {
-      setDisplaySample((sample) => advanceReplaySample(sample, normalizeReplaySpeed(journey.data.run.speed), REPLAY_TOTAL_SAMPLES));
+      setDisplaySample((sample) => {
+        const next = advanceReplaySample(sample, normalizeReplaySpeed(journey.data.run.speed), totalSamples);
+        if (next >= totalSamples) {
+          window.clearInterval(timer);
+          setReplayCompleted(true);
+        }
+        return next;
+      });
     }, REPLAY_TICK_MS);
     return () => window.clearInterval(timer);
-  }, [journey]);
+  }, [journey, replayCompleted, totalSamples]);
 
   async function startReplay() {
     if (!selectedId) return;
@@ -165,6 +175,7 @@ export function ReplayScreen() {
         const result = await startScenarioWithFallback(selectedId, 10);
         setJourney(result);
         setDisplaySample(result.data.run.currentSample);
+        setReplayCompleted(result.data.run.currentSample >= totalSamples);
       }
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : "回放创建失败");
@@ -201,7 +212,6 @@ export function ReplayScreen() {
       setBusy(false);
     }
   }
-  const selectedScenario = scenarios.result?.data.find((scenario) => scenario.id === selectedId);
   const faultOnsetSample = selectedScenario?.faultOnsetSample ?? 160;
   const replayStage = describeReplayStage(displaySample, faultOnsetSample, journey?.data.event.sampleIndex ?? faultOnsetSample);
   const telemetry = createReplayTelemetry(displaySample, faultOnsetSample);
@@ -213,20 +223,20 @@ export function ReplayScreen() {
       {scenarios.error ? <div className="form-error" role="alert"><p>{scenarios.error}</p><button className="text-link" type="button" onClick={scenarios.retry}>重试读取场景</button></div> : null}
       {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
       <section className="replay-control" aria-label="回放控制">
-        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{formatScenarioPresentation(scenario).name}</option>)}</select></label>
+        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setJourney(null); setDisplaySample(0); setReplayCompleted(false); }} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{formatScenarioPresentation(scenario).name}</option>)}</select></label>
         <button className="control-button" type="button" onClick={startReplay} disabled={busy || !selectedId} aria-label="开始回放">
           {busy ? <Clock aria-hidden="true" /> : <Play aria-hidden="true" weight="fill" />}<span>{busy ? "创建回放中" : "开始回放"}</span>
         </button>
-        <button className="control-button" type="button" disabled={!journey || busy} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
+        <button className="control-button" type="button" disabled={!journey || busy || replayCompleted} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
         <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
-        <div className="sample-readout"><span>{journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong data-testid="current-sample">{displaySample}</strong><small>/ {REPLAY_TOTAL_SAMPLES}</small></div>
+        <div className="sample-readout"><span>{replayCompleted ? "回放已完成" : journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong data-testid="current-sample">{displaySample}</strong><small>/ {totalSamples}</small></div>
       </section>
-      {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`} aria-live="polite">
-        <div><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayStage.title}</strong><span>{replayStage.detail}</span></p></div>
-        <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / REPLAY_TOTAL_SAMPLES * 100)}%` }} /></div>
+      {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`}>
+        <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
+        <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
         <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl>
       </section> : null}
-      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} />
+      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} />
       {journey && eventVisible ? <section className="capture-banner">
         <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} 捕获{journey.data.event.severity === "critical" ? "严重" : ""}偏移</strong><span>异常分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
         <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>

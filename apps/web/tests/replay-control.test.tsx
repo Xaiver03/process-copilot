@@ -117,4 +117,48 @@ describe("回放控制", () => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     expect(screen.getByTestId("current-sample")).toHaveTextContent(pausedSample ?? "");
   });
+
+  it("使用场景样本总数并在末尾停止回放", async () => {
+    const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+    const run = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      scenarioId: "tep-f06-a-feed-loss",
+      state: "playing",
+      speed: 20,
+      currentSample: 958,
+      createdAt: "2026-08-28T09:00:00+08:00",
+    };
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(response([{
+        id: "tep-f06-a-feed-loss",
+        name: "A-feed loss",
+        description: "TEP scenario",
+        faultId: 6,
+        sampleCount: 960,
+        faultOnsetSample: 160,
+        sourceLabel: "Tennessee Eastman Process public simulation",
+      }]))
+      .mockResolvedValueOnce(response(run, 201))
+      .mockResolvedValueOnce(response([{
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        runId: run.id,
+        sampleIndex: 170,
+        severity: "critical",
+        state: "open",
+        anomalyScore: 0.91,
+      }])));
+
+    const user = userEvent.setup();
+    render(<ReplayScreen />);
+    await screen.findByRole("option", { name: "A 进料中断（故障 6）" });
+    await user.click(screen.getByRole("button", { name: "开始回放" }));
+
+    expect(await screen.findByText("/ 960")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId("current-sample")).toHaveTextContent("960"), { timeout: 1200 });
+    expect(screen.getByText("回放已完成")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "暂停回放" })).toBeDisabled();
+  });
 });
