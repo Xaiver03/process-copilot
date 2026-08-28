@@ -1,0 +1,374 @@
+"""Safe, optional OpenAI-compatible explanation enhancement for event summaries."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import re
+import time
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, Literal
+from uuid import uuid4
+
+import httpx
+
+logger = logging.getLogger(__name__)
+
+LLMMode = Literal["llm_enhanced", "template", "degraded"]
+TEMPLATE_MODEL = "template-v0.1"
+MAX_QUESTION_CHARS = 500
+MAX_ANSWER_CHARS = 2_000
+
+SYSTEM_PROMPT = """
+You are an industrial process explanation assistant. Return one JSON object with exactly
+these fields: answer (a concise narrative string) and evidenceRefs (an array of variable
+IDs from the supplied event summary). Explain the supplied facts only. Do not alter or
+invent anomaly scores, samples, severity, candidates, evidence, model versions, or plant
+data. Do not provide PLC/DCS addresses, registers, control instructions, executable steps,
+tool calls, or write-back commands. The system is read-only and a human operator makes
+all decisions.
+""".strip()
+
+_ALLOWED_RESPONSE_KEYS = frozenset({"answer", "narrative", "evidenceRefs"})
+_UNSAFE_RESPONSE_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\b(?:plc|dcs|scada|modbus|opc[ -]?ua)\b",
+        r"寄存器|点位地址|控制指令|调用工具|工具调用|写回|下发命令",
+        r"\b(?:tool_calls?|function_call|execute|sudo|curl|ssh)\b",
+        r"https?://|(?:\d{1,3}\.){3}\d{1,3}",
+        r"(?:set|write|change|adjust|open|close|increase|decrease)\s+"
+        r"(?:the\s+)?(?:valve|pressure|flow|temperature|setpoint|output)",
+        r"(?:设置|调整|打开|关闭|调高|调低|写入|下发).{0,20}"
+        r"(?:阀|压力|流量|温度|设定值|setpoint|寄存器)",
+        r"(?:anomaly\s*score|异常分数|检测样本|严重等级|模型版本)"
+        r".{0,30}(?:改为|修改|调整|覆盖|应为|should\s+be|set\s+to|change)",
+    )
+)
+
+
+@dataclass(frozen=True, slots=True)
+class LLMSettings:
+    provider: str = "disabled"
+    base_url: str = ""
+    model: str = ""
+    api_key: str = ""
+    timeout_seconds: float = 8.0
+    max_tokens: int = 500
+    prompt_version: str = "event-copilot-v01"
+
+    def __post_init__(self) -> None:
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        if self.max_tokens < 1:
+            raise ValueError("max_tokens must be positive")
+
+    @classmethod
+    def from_env(cls) -> LLMSettings:
+        try:
+            timeout_seconds = float(os.getenv("LLM_TIMEOUT_SECONDS", "8"))
+        except ValueError:
+            timeout_seconds = 8.0
+        try:
+            max_tokens = int(os.getenv("LLM_MAX_TOKENS", "500"))
+        except ValueError:
+            max_tokens = 500
+        return cls(
+            provider=os.getenv("LLM_PROVIDER", "disabled").strip().lower(),
+            base_url=os.getenv("LLM_BASE_URL", "").strip().rstrip("/"),
+            model=os.getenv("LLM_MODEL", "").strip(),
+            api_key=os.getenv("LLM_API_KEY", ""),
+            timeout_seconds=timeout_seconds,
+            max_tokens=max_tokens,
+            prompt_version=os.getenv("LLM_PROMPT_VERSION", "event-copilot-v01").strip(),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ExplanationResult:
+    answer: str
+    mode: LLMMode
+    model: str
+    evidence_refs: list[str]
+    latency_ms: int
+    trace_id: str
+    fallback_reason: str | None = None
+
+    @property
+    def narrative(self) -> str:
+        return self.answer
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "answer": self.answer,
+            "mode": self.mode,
+            "model": self.model,
+            "evidenceRefs": list(self.evidence_refs),
+            "latencyMs": self.latency_ms,
+            "traceId": self.trace_id,
+        }
+
+    as_dict = to_dict
+
+
+class ExplanationEnhancer:
+    """Enhance a structured event summary, with a deterministic template fallback."""
+
+    def __init__(
+        self,
+        settings: LLMSettings | None = None,
+        *,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
+        self.settings = settings or LLMSettings.from_env()
+        self._transport = transport
+
+    def enhance(
+        self,
+        event_summary: Mapping[str, Any],
+        question: str,
+        *,
+        trace_id: str | None = None,
+    ) -> ExplanationResult:
+        started = time.perf_counter()
+        resolved_trace_id = trace_id or str(uuid4())
+        safe_summary = _sanitize_event_summary(event_summary)
+        if safe_summary is None:
+            return self._fallback(started, resolved_trace_id, [], "invalid_event_summary")
+        if not isinstance(question, str) or not 0 < len(question.strip()) <= MAX_QUESTION_CHARS:
+            return self._fallback(
+                started,
+                resolved_trace_id,
+                _evidence_refs(safe_summary),
+                "invalid_question",
+            )
+
+        refs = _evidence_refs(safe_summary)
+        if self.settings.provider != "openai-compatible":
+            return self._fallback(started, resolved_trace_id, refs, "provider_disabled")
+        if not self.settings.base_url or not self.settings.model or not self.settings.api_key:
+            return self._fallback(started, resolved_trace_id, refs, "provider_not_configured")
+
+        try:
+            provider_payload = self._request(safe_summary, question.strip())
+            parsed = _parse_provider_result(provider_payload, refs)
+            if parsed is None:
+                return self._fallback(started, resolved_trace_id, refs, "invalid_provider_schema")
+            answer, evidence_refs = parsed
+            return ExplanationResult(
+                answer=answer,
+                mode="llm_enhanced",
+                model=self.settings.model,
+                evidence_refs=evidence_refs,
+                latency_ms=_latency_ms(started),
+                trace_id=resolved_trace_id,
+            )
+        except Exception as exc:
+            # Never log the URL, request, response, exception text, or headers: any may
+            # contain credentials supplied by a provider or an operator configuration.
+            logger.warning("LLM provider call failed: %s", type(exc).__name__)
+            return self._fallback(started, resolved_trace_id, refs, type(exc).__name__)
+
+    def explain(
+        self,
+        event_summary: Mapping[str, Any],
+        question: str,
+        *,
+        trace_id: str | None = None,
+    ) -> ExplanationResult:
+        return self.enhance(event_summary, question, trace_id=trace_id)
+
+    def _request(self, event_summary: dict[str, Any], question: str) -> Any:
+        request_payload = {
+            "model": self.settings.model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {"eventSummary": event_summary, "question": question},
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                },
+            ],
+            "temperature": 0,
+            "max_tokens": self.settings.max_tokens,
+            "response_format": {"type": "json_object"},
+        }
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        headers["Authorization"] = f"Bearer {self.settings.api_key}"
+        with httpx.Client(
+            transport=self._transport,
+            timeout=self.settings.timeout_seconds,
+        ) as client:
+            response = client.post(
+                f"{self.settings.base_url}/chat/completions",
+                headers=headers,
+                json=request_payload,
+            )
+        if not 200 <= response.status_code < 300:
+            raise RuntimeError(f"provider_status_{response.status_code}")
+        return response.json()
+
+    def _fallback(
+        self,
+        started: float,
+        trace_id: str,
+        refs: list[str],
+        reason: str,
+    ) -> ExplanationResult:
+        reference_text = "、".join(refs[:3]) or "已登记证据"
+        return ExplanationResult(
+            answer=(
+                f"当前使用确定性模板模式。请先核对 {reference_text} 的趋势与现场仪表状态，"
+                "再由操作员确认；本回答仅作只读解释。"
+            ),
+            mode="template",
+            model=TEMPLATE_MODEL,
+            evidence_refs=refs,
+            latency_ms=_latency_ms(started),
+            trace_id=trace_id,
+            fallback_reason=reason,
+        )
+
+
+def _latency_ms(started: float) -> int:
+    return max(0, round((time.perf_counter() - started) * 1000))
+
+
+def _value(mapping: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in mapping:
+            return mapping[key]
+    return None
+
+
+def _sanitize_event_summary(summary: Mapping[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(summary, Mapping):
+        return None
+    result: dict[str, Any] = {}
+    scalar_keys = (
+        ("eventId", "event_id"),
+        ("sampleIndex", "sample_index"),
+        ("severity",),
+        ("state",),
+        ("anomalyScore", "anomaly_score"),
+        ("diagnosisState", "diagnosis_state"),
+        ("diagnosisAnomalyScore", "diagnosis_anomaly_score"),
+        ("modelVersion", "model_version"),
+        ("dataSourceDisclosure", "data_source_disclosure"),
+    )
+    for aliases in scalar_keys:
+        value = _value(summary, *aliases)
+        if isinstance(value, (str, int, float, bool)):
+            result[aliases[0]] = value
+
+    candidates = _value(summary, "candidates", "initialCandidates", "initial_candidates")
+    if isinstance(candidates, list):
+        result["candidates"] = [
+            {
+                "label": candidate.get("label"),
+                "probability": candidate.get("probability"),
+            }
+            for candidate in candidates[:3]
+            if isinstance(candidate, Mapping)
+            and isinstance(candidate.get("label"), str)
+            and isinstance(candidate.get("probability"), (int, float))
+        ]
+
+    evidence = _value(summary, "evidence")
+    if isinstance(evidence, list):
+        result["evidence"] = []
+        for item in evidence[:3]:
+            if not isinstance(item, Mapping):
+                continue
+            variable_id = _value(item, "variableId", "variable_id")
+            if not isinstance(variable_id, str) or not variable_id.strip():
+                continue
+            safe_item: dict[str, Any] = {"variableId": variable_id.strip()}
+            for aliases in (
+                ("variableName", "variable_name"),
+                ("unit",),
+                ("contribution",),
+                ("direction",),
+                ("summary",),
+            ):
+                value = _value(item, *aliases)
+                if isinstance(value, (str, int, float, bool)):
+                    safe_item[aliases[0]] = value
+            values = _value(item, "values")
+            if isinstance(values, list):
+                safe_item["values"] = [
+                    value for value in values[:8] if isinstance(value, (int, float))
+                ]
+            result["evidence"].append(safe_item)
+
+    recommendation = _value(summary, "recommendation")
+    if isinstance(recommendation, Mapping):
+        safe_recommendation: dict[str, Any] = {}
+        for key in ("risk", "checks", "actions"):
+            value = recommendation.get(key)
+            if isinstance(value, str):
+                safe_recommendation[key] = value
+            elif isinstance(value, list):
+                safe_recommendation[key] = [item for item in value[:5] if isinstance(item, str)]
+        if safe_recommendation:
+            result["recommendation"] = safe_recommendation
+    return result
+
+
+def _evidence_refs(event_summary: Mapping[str, Any]) -> list[str]:
+    evidence = event_summary.get("evidence")
+    if not isinstance(evidence, list):
+        return []
+    refs: list[str] = []
+    for item in evidence:
+        if not isinstance(item, Mapping):
+            continue
+        variable_id = item.get("variableId")
+        if isinstance(variable_id, str) and variable_id not in refs:
+            refs.append(variable_id)
+    return refs
+
+
+def _parse_provider_result(payload: Any, allowed_refs: list[str]) -> tuple[str, list[str]] | None:
+    if isinstance(payload, Mapping) and "choices" in payload:
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            return None
+        first = choices[0]
+        if not isinstance(first, Mapping):
+            return None
+        message = first.get("message")
+        if not isinstance(message, Mapping):
+            return None
+        content = message.get("content")
+    else:
+        content = payload
+    if isinstance(content, str):
+        try:
+            content = json.loads(content)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(content, Mapping):
+        return None
+    if set(content) - _ALLOWED_RESPONSE_KEYS:
+        return None
+    answer = content.get("answer", content.get("narrative"))
+    refs = content.get("evidenceRefs")
+    if not isinstance(answer, str) or not answer.strip() or len(answer) > MAX_ANSWER_CHARS:
+        return None
+    if not isinstance(refs, list) or _unsafe_answer(answer):
+        return None
+    filtered_refs: list[str] = []
+    for ref in refs:
+        if isinstance(ref, str) and ref in allowed_refs and ref not in filtered_refs:
+            filtered_refs.append(ref)
+    return answer.strip(), filtered_refs
+
+
+def _unsafe_answer(answer: str) -> bool:
+    return any(pattern.search(answer) for pattern in _UNSAFE_RESPONSE_PATTERNS)

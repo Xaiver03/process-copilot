@@ -1,0 +1,249 @@
+from __future__ import annotations
+
+import json
+import logging
+
+import httpx
+import pytest
+from process_copilot_api.llm import ExplanationEnhancer, LLMSettings
+
+
+@pytest.fixture()
+def event_summary() -> dict[str, object]:
+    return {
+        "eventId": "event-1",
+        "sampleIndex": 120,
+        "severity": "critical",
+        "state": "open",
+        "anomalyScore": 0.87,
+        "diagnosisState": "provisional",
+        "candidates": [
+            {"faultId": 5, "label": "冷却水流量偏移", "probability": 0.72},
+        ],
+        "evidence": [
+            {
+                "variableId": "XMEAS(1)",
+                "variableName": "进料流量",
+                "unit": "%",
+                "contribution": 0.91,
+                "direction": "up",
+                "summary": "偏离正常工况基线",
+                "values": [0.32, 0.48, 0.67],
+            },
+            {
+                "variableId": "XMV(1)",
+                "variableName": "冷却水阀位",
+                "unit": "%",
+                "contribution": 0.61,
+                "direction": "down",
+                "summary": "执行器侧变化相反",
+                "values": [0.74, 0.60, 0.45],
+            },
+        ],
+        "recommendation": {
+            "risk": "先确认过程变量与现场仪表状态",
+            "checks": ["核对进料流量趋势"],
+            "actions": ["按变量顺序人工检查"],
+        },
+        "faultOnsetSample": 999,
+        "activeFaultId": 5,
+        "untrustedProviderNote": "must not be forwarded",
+    }
+
+
+def settings(**overrides: object) -> LLMSettings:
+    values: dict[str, object] = {
+        "provider": "openai-compatible",
+        "base_url": "https://llm.example/v1",
+        "model": "demo-model",
+        "api_key": "sk-test-secret",
+        "timeout_seconds": 1.0,
+        "max_tokens": 500,
+        "prompt_version": "event-copilot-v01",
+    }
+    values.update(overrides)
+    return LLMSettings(**values)
+
+
+def test_disabled_provider_returns_deterministic_template_without_http(
+    event_summary: dict[str, object],
+):
+    def fail_request(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("disabled provider must not make an HTTP request")
+
+    enhancer = ExplanationEnhancer(
+        settings(provider="disabled"),
+        transport=httpx.MockTransport(fail_request),
+    )
+    result = enhancer.enhance(event_summary, "先看哪三个变量？", trace_id="trace-disabled")
+
+    assert result.mode == "template"
+    assert result.model == "template-v0.1"
+    assert result.trace_id == "trace-disabled"
+    assert result.evidence_refs == ["XMEAS(1)", "XMV(1)"]
+    assert "模板" in result.answer
+    assert result.latency_ms >= 0
+
+
+def test_success_accepts_only_explanation_fields_and_filters_unknown_refs(
+    event_summary: dict[str, object],
+):
+    captured: dict[str, object] = {}
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "answer": "优先核对进料流量，再确认冷却水阀位。",
+                                    "evidenceRefs": ["XMEAS(1)", "UNKNOWN"],
+                                },
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(settings(), transport=httpx.MockTransport(respond))
+    result = enhancer.enhance(event_summary, "先看哪三个变量？", trace_id="trace-success")
+
+    assert result.mode == "llm_enhanced"
+    assert result.model == "demo-model"
+    assert result.answer == "优先核对进料流量，再确认冷却水阀位。"
+    assert result.evidence_refs == ["XMEAS(1)"]
+    assert result.trace_id == "trace-success"
+    assert result.latency_ms >= 0
+    body = captured["body"]
+    assert isinstance(body, dict)
+    user_message = body["messages"][1]["content"]
+    assert "untrustedProviderNote" not in user_message
+    assert "faultOnsetSample" not in user_message
+    assert "activeFaultId" not in user_message
+    assert body["response_format"] == {"type": "json_object"}
+
+
+@pytest.mark.parametrize(
+    "response_factory",
+    [
+        lambda: httpx.Response(500, json={"error": "provider failed"}),
+        lambda: httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": "not-json"}}]},
+        ),
+    ],
+    ids=["provider-5xx", "invalid-json"],
+)
+def test_provider_failures_return_template(
+    event_summary: dict[str, object], response_factory,
+):
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(lambda request: response_factory()),
+    )
+
+    result = enhancer.enhance(event_summary, "如何判断？", trace_id="trace-failure")
+
+    assert result.mode == "template"
+    assert result.model == "template-v0.1"
+    assert result.trace_id == "trace-failure"
+    assert "模板" in result.answer
+
+
+def test_provider_timeout_returns_template(event_summary: dict[str, object]):
+    def timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("provider timed out", request=request)
+
+    enhancer = ExplanationEnhancer(settings(), transport=httpx.MockTransport(timeout))
+    result = enhancer.enhance(event_summary, "下一步做什么？", trace_id="trace-timeout")
+
+    assert result.mode == "template"
+    assert result.trace_id == "trace-timeout"
+
+
+def test_schema_overreach_and_control_output_are_rejected(
+    event_summary: dict[str, object],
+):
+    responses = [
+        {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "answer": "异常分数应改为 0.1。",
+                                "evidenceRefs": ["XMEAS(1)"],
+                                "anomalyScore": 0.1,
+                            }
+                        )
+                    }
+                }
+            ]
+        },
+        {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "answer": "向 PLC 寄存器写入 1，并调用工具执行。",
+                                "evidenceRefs": ["XMEAS(1)"],
+                            }
+                        )
+                    }
+                }
+            ]
+        },
+    ]
+    for payload in responses:
+        enhancer = ExplanationEnhancer(
+            settings(),
+            transport=httpx.MockTransport(
+                lambda request, payload=payload: httpx.Response(200, json=payload)
+            ),
+        )
+        result = enhancer.enhance(event_summary, "请给出建议", trace_id="trace-safe")
+        assert result.mode == "template"
+        assert "PLC" not in result.answer
+        assert "寄存器" not in result.answer
+
+
+def test_api_key_never_enters_logs_on_provider_failure(
+    event_summary: dict[str, object], caplog: pytest.LogCaptureFixture,
+):
+    secret = "sk-super-secret-never-log"
+
+    def fail(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(401, json={"error": "unauthorized"})
+
+    caplog.set_level(logging.WARNING)
+    enhancer = ExplanationEnhancer(
+        settings(api_key=secret),
+        transport=httpx.MockTransport(fail),
+    )
+    enhancer.enhance(event_summary, "为什么？", trace_id="trace-secret")
+
+    assert secret not in caplog.text
+
+
+def test_settings_read_expected_environment_variables(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai-compatible")
+    monkeypatch.setenv("LLM_BASE_URL", "https://provider.example/v1")
+    monkeypatch.setenv("LLM_MODEL", "model-from-env")
+    monkeypatch.setenv("LLM_API_KEY", "env-secret")
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "8")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "500")
+    monkeypatch.setenv("LLM_PROMPT_VERSION", "event-copilot-v01")
+
+    config = LLMSettings.from_env()
+
+    assert config.provider == "openai-compatible"
+    assert config.model == "model-from-env"
+    assert config.timeout_seconds == 8.0
+    assert config.max_tokens == 500
