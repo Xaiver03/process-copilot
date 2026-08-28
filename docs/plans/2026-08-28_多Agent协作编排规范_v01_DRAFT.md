@@ -34,7 +34,7 @@
 | 前端真实链路 | 已完成，27 tests | `apps/web/tests/live-api-chain.test.ts`、`apps/web/tests/container-integration.test.ts` |
 | 共享契约 | 已存在，父 Agent 负责冻结与冲突消解 | [`packages/contracts/openapi.yaml`](../../packages/contracts/openapi.yaml)、[`packages/contracts/schemas/domain.schema.json`](../../packages/contracts/schemas/domain.schema.json) |
 | Figma 设计系统 | 文件已创建，待独立审阅和代码对齐 | [WunoOS - 连续化工过程偏移副驾驶](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)；本地规则见 [`design-system/连续化工过程偏移副驾驶/MASTER.md`](../../design-system/连续化工过程偏移副驾驶/MASTER.md) |
-| 基础设施 | 五服务镜像已构建并部署，远端 release `20260828T0515Z` 全部 healthy | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
+| 基础设施 | 五服务镜像已构建并部署，远端 release `20260828T0530Z` 全部 healthy | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
 | 远端 E2E | 已通过 | [`tests/e2e/smoke.sh`](../../tests/e2e/smoke.sh)；覆盖真实 run/event、两阶段时序、幂等 409、人工确认、审计和非法 SSE 游标 |
 | 产品边界 | 公开仿真 Demo、读侧建议、人工确认留痕 | [`README.md`](../../README.md)、[`docs/submission/数据说明_v01_DRAFT.md`](../submission/数据说明_v01_DRAFT.md) |
 
@@ -300,7 +300,7 @@ docker compose -p process-copilot-test -f infra/compose.yaml down
 - **D/M：** 数据格式、故障边界、窗口规则、PCA/分类/贡献和确定性产物已修正复核；23 tests 通过。
 - **A：** 健康/ready、场景、回放、长期 SSE 心跳、幂等、事件、人工决策、审计、降级标识、错误和 OpenAPI 对齐已修正复核；22 tests 通过。
 - **F：** 真实 scenario/run/event/decision/record 链路、两阶段 UI、网络降级边界和贡献值单位已完成；27 tests、typecheck、lint、production build 通过。
-- **I：** release `20260828T0515Z` 已部署至 `wunoos`；Web、API、worker、PostgreSQL、Caddy 全部 healthy，远端 E2E 与 17 秒真实 SSE 心跳检查通过。
+- **I：** release `20260828T0530Z` 已部署至 `wunoos`；Web、API、worker、PostgreSQL、Caddy 全部 healthy，远端 E2E 与 17 秒真实 SSE 心跳检查通过。
 - **X/Q：** 容器、凭证、日志、数据诚实性与接口边界已独立审阅；Claude Code 结论为 `PASS WITH RISKS`，其中三处过时文档已在本轮修正。
 - **S（资产创建）：** Figma 文件已创建；不等于组件、变量、状态、截图和代码 token 已独立审阅通过。
 
