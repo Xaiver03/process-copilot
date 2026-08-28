@@ -6,7 +6,7 @@ import { ShellProvider } from "@/components/shell-provider";
 
 export const metadata: Metadata = {
   title: "序安 Process Sentinel | 连续化工过程偏移副驾驶",
-  description: "基于 Tennessee Eastman Process 公开仿真数据的只读过程偏移研判 Demo。",
+  description: "基于田纳西-伊士曼过程（TEP）公开仿真数据的连续过程偏移研判 Demo。",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

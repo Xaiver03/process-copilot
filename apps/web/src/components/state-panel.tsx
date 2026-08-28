@@ -28,8 +28,8 @@ const states = {
     icon: CloudSlash,
   },
   "read-only": {
-    title: "只读建议",
-    body: "系统只提供研判证据与建议，不自动写回 DCS、PLC 或其他控制系统。",
+    title: "当前 Demo 只读",
+    body: "当前演示不连接控制网；生产版可经人工授权、权限校验与联锁校验后受控写回 PLC/DCS。",
     icon: Eye,
   },
 } as const;

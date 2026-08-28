@@ -66,7 +66,7 @@ describe("全状态", () => {
     ["error", "数据读取失败"],
     ["empty", "当前没有偏移事件"],
     ["degraded", "静态 Demo 降级"],
-    ["read-only", "只读建议"],
+    ["read-only", "当前 Demo 只读"],
   ] as const)("渲染 %s 状态", (state, copy) => {
     render(<StatePanel state={state} />);
     expect(screen.getByText(copy)).toBeInTheDocument();

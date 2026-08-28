@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import type { components } from "@/lib/api-schema";
 import { getScenariosWithFallback, startScenarioWithFallback, type ApiResult } from "@/lib/api-client";
+import { formatScenarioPresentation } from "@/lib/presentation";
 import { ModeNotice } from "./mode-notice";
 
 type Scenario = components["schemas"]["Scenario"];
@@ -52,7 +53,7 @@ export function DemoJourney() {
       <label className="demo-scenario-field">
         演示场景
         <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!scenarios || busy}>
-          {scenarios?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}
+          {scenarios?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{formatScenarioPresentation(scenario).name}</option>)}
         </select>
       </label>
       {error ? <div className="form-error" role="alert"><strong>操作失败</strong><p>{error}</p>{!scenarios ? <button className="text-link" type="button" onClick={() => { setError(""); setLoadRevision((value) => value + 1); }}>重试读取场景</button> : null}</div> : null}

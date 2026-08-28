@@ -61,7 +61,7 @@ export function AppShell({
         </nav>
         <div className="sidebar-boundary">
           <ClipboardText aria-hidden="true" />
-          <p><strong>只读安全边界</strong><span>不向 DCS / PLC 写回</span></p>
+          <p><strong>当前 Demo 只读</strong><span>生产版支持受控写回</span></p>
         </div>
       </aside>
       {navigationOpen ? <button className="sidebar-scrim" type="button" aria-label="关闭侧栏遮罩" onClick={() => setNavigationOpen(false)} /> : null}

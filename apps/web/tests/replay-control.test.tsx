@@ -53,7 +53,7 @@ describe("回放控制", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<ReplayScreen />);
 
-    await screen.findByRole("option", { name: "A 料进料损失" });
+    await screen.findByRole("option", { name: "A 进料中断（故障 6）" });
     expect(screen.getByRole("combobox", { name: "回放场景" }).closest("label")).toHaveClass("replay-scenario-field");
     expect(screen.getByRole("combobox", { name: "回放倍速" }).closest("label")).toHaveClass("replay-speed-field");
     await user.click(screen.getByRole("button", { name: "开始回放" }));
@@ -103,7 +103,8 @@ describe("回放控制", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<ReplayScreen />);
-    await screen.findByRole("option", { name: "A-feed loss" });
+    await screen.findByRole("option", { name: "A 进料中断（故障 6）" });
+    expect(screen.queryByText("A-feed loss")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "开始回放" }));
 
     expect(await screen.findByTestId("current-sample")).toHaveTextContent("150");

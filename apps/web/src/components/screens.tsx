@@ -30,7 +30,7 @@ import {
 } from "@/lib/api-client";
 import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
-import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, localizeIndustrialCopy } from "@/lib/presentation";
+import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, formatScenarioPresentation, localizeIndustrialCopy } from "@/lib/presentation";
 import { advanceReplaySample, createReplayTelemetry, describeReplayStage, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
@@ -212,7 +212,7 @@ export function ReplayScreen() {
       {scenarios.error ? <div className="form-error" role="alert"><p>{scenarios.error}</p><button className="text-link" type="button" onClick={scenarios.retry}>重试读取场景</button></div> : null}
       {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
       <section className="replay-control" aria-label="回放控制">
-        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}</select></label>
+        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{formatScenarioPresentation(scenario).name}</option>)}</select></label>
         <button className="control-button" type="button" onClick={startReplay} disabled={busy || !selectedId} aria-label="开始回放">
           {busy ? <Clock aria-hidden="true" /> : <Play aria-hidden="true" weight="fill" />}<span>{busy ? "创建回放中" : "开始回放"}</span>
         </button>
@@ -330,7 +330,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                   <p className="ai-risk-copy"><strong>风险：</strong>{localizeIndustrialCopy(event.recommendation.risk)}</p>
                   <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
                   <div className="ai-action-group"><h3>再处置</h3><ol>{event.recommendation.actions.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
-                  <p className="ai-safety-boundary">只读建议，不会向 DCS、PLC 或其他控制系统自动写回。</p>
+                  <p className="ai-safety-boundary"><strong>当前 Demo：</strong>不连接控制网、不向 PLC/DCS 写回。生产部署可在人工授权、权限校验和联锁校验通过后受控写回。</p>
                 </section>
 
                 <div className="ai-human-gate" data-ai-step="5">
@@ -378,15 +378,15 @@ export function SystemScreen() {
   const resource = useApiResource<Health>(getReadinessWithFallback, "readyz");
   return (
     <div className="page-stack">
-      <PageHeader kicker="系统状态" title="数据与模型健康" summary="核对 API、Demo 数据、模型版本和只读边界，不提供控制写入入口。" />
+      <PageHeader kicker="系统状态" title="数据与模型健康" summary="核对接口、演示数据、模型版本，以及当前只读与未来受控写回边界。" />
       <ResourceBoundary {...resource}>{(result) => (
         <>
           <ModeNotice mode={result.mode} notice={result.notice} />
           <section className="system-grid">
             <div><span>应用状态</span><StatusTag state={result.data.status === "ok" ? "normal" : "warning"} label={result.data.status === "ok" ? "就绪" : "降级"} /><p>静态 Demo 可继续完成主链路。</p></div>
-            <div><span>数据来源</span><strong>Tennessee Eastman Process</strong><p>公开仿真数据，不是真实贵州工厂数据。</p></div>
+            <div><span>数据来源</span><strong>田纳西-伊士曼过程（TEP）</strong><p>公开仿真数据，不是真实贵州工厂数据。</p></div>
             <div><span>模型版本</span><strong>{demoEvent.modelVersion}</strong><p>双阶段偏移检测与故障候选 Demo。</p></div>
-            <div><span>安全边界</span><strong>Read-only</strong><p>无 DCS、PLC 写回能力。</p></div>
+            <div><span>安全边界</span><strong>当前 Demo 只读</strong><p>生产版可经人工授权、权限校验与联锁校验后接入 PLC/DCS。</p></div>
           </section>
           <section className="table-panel"><table aria-label="系统依赖检查"><thead><tr><th scope="col">依赖</th><th scope="col">状态</th><th scope="col">说明</th></tr></thead><tbody>{Object.entries(result.data.checks ?? { api: result.data.status }).map(([name, value]) => <tr key={name}><th scope="row">{name}</th><td>{value}</td><td>{name === "api" && result.mode === "static-demo" ? "API 失联，已启用静态 Demo" : "检查结果来自 readiness"}</td></tr>)}</tbody></table></section>
         </>

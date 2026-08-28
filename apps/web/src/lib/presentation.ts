@@ -3,12 +3,24 @@ import type { components } from "./api-schema";
 type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type FaultCandidate = components["schemas"]["FaultCandidate"];
 type EvidenceItem = components["schemas"]["EvidenceItem"];
+type Scenario = components["schemas"]["Scenario"];
 
 const tepFaultLabelZh: Partial<Record<number, string>> = {
   1: "进料组成阶跃偏移",
+  4: "反应器冷却水入口温度阶跃",
   6: "A 进料中断",
   13: "反应动力学缓慢漂移",
 };
+
+export function formatScenarioPresentation(scenario: Scenario) {
+  const localizedName = tepFaultLabelZh[scenario.faultId]
+    ?? (/[㐀-鿿]/.test(scenario.name) ? scenario.name : `连续过程故障 ${scenario.faultId}`);
+  return {
+    name: `${localizedName}（故障 ${scenario.faultId}）`,
+    description: `田纳西-伊士曼过程（TEP）公开仿真；故障从样本 ${scenario.faultOnsetSample} 注入，共 ${scenario.sampleCount} 个样本。`,
+    source: "田纳西-伊士曼过程（TEP）公开仿真数据",
+  };
+}
 
 const industrialCopyZh: Record<string, string> = {
   "Compressor Work": "压缩机功率",

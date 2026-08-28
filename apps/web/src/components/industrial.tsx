@@ -186,7 +186,7 @@ export function HumanDecision({
       <button className="primary-button" type="submit" disabled={submitting}>
         {submitting ? "正在形成记录" : "确认并形成记录"}
       </button>
-      <p className="safety-note">只记录人工研判，不向 DCS、PLC 或其他控制系统写回。</p>
+      <p className="safety-note">当前 Demo 只记录人工研判，不连接控制网；生产版可在安全校验通过后受控写回 PLC/DCS。</p>
     </form>
   );
 }
