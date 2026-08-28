@@ -1,7 +1,9 @@
 # 序安 Process Sentinel（序安·过程哨兵）
 
-状态：`REVIEW`  
-当前交付分支：`codex/process-sentinel-online-ai`  
+状态：`REVIEW`
+
+当前交付分支：`codex/process-sentinel-online-ai`
+
 主链路：`过程数据回放 -> 在线偏移发现 -> Top-3 候选与变量证据 -> 人机主动追问 -> 人工确认 -> 调用与决策审计`
 
 这不是泛化的“智慧工厂大屏”。它只聚焦连续生产装置的一个动作：当班工程师看到过程偏移后，快速判断“是不是真偏了、先看哪三个变量、下一步先查什么、谁确认过”。

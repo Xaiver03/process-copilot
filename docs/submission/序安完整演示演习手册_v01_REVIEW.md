@@ -1,8 +1,11 @@
 # 序安 Process Sentinel 完整演示演习手册 v01
 
-状态：`REVIEW`  
-公网入口：<https://huagong.finlaw.cloud/demo>  
-适用：黑客松评审、产业方演示、PoC 前沟通  
+状态：`REVIEW`
+
+公网入口：<https://huagong.finlaw.cloud/demo>
+
+适用：黑客松评审、产业方演示、PoC 前沟通
+
 主链路：管理预检 → 过程回放 → 偏移事件 → AI 追问 → 人工决策 → 审计留痕
 
 ## 1. 演示必须讲清的事实
