@@ -115,4 +115,63 @@ describe("真实 API 主链路与降级边界", () => {
     expect(event.notice).toContain("静态 Demo");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("live run 已创建后控制请求断网会明确报错，不伪装成静态 Demo", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(jsonResponse({
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        scenarioId: "tep-f06-a-feed-loss",
+        state: "ready",
+        speed: 10,
+        currentSample: 0,
+        createdAt: "2026-08-28T09:00:00+08:00",
+      }, 201))
+      .mockRejectedValueOnce(new TypeError("Failed to fetch")));
+
+    await expect(startScenarioWithFallback("tep-f06-a-feed-loss", 10)).rejects.toThrow(
+      "回放 aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa 已在服务器创建，但播放控制请求失败",
+    );
+  });
+
+  it("live run 已播放后事件请求断网会明确报错，不混入静态事件", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(jsonResponse({
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        scenarioId: "tep-f06-a-feed-loss",
+        state: "ready",
+        speed: 10,
+        currentSample: 0,
+        createdAt: "2026-08-28T09:00:00+08:00",
+      }, 201))
+      .mockResolvedValueOnce(jsonResponse({
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        scenarioId: "tep-f06-a-feed-loss",
+        state: "playing",
+        speed: 10,
+        currentSample: 0,
+        createdAt: "2026-08-28T09:00:00+08:00",
+      }))
+      .mockRejectedValueOnce(new TypeError("Failed to fetch")));
+
+    await expect(startScenarioWithFallback("tep-f06-a-feed-loss", 10)).rejects.toThrow(
+      "回放 aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa 已进入播放态，但事件读取失败",
+    );
+  });
+
+  it("终态 run 不会被重新发送 play", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      scenarioId: "tep-f06-a-feed-loss",
+      state: "completed",
+      speed: 10,
+      currentSample: 960,
+      createdAt: "2026-08-28T09:00:00+08:00",
+    }, 201));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(startScenarioWithFallback("tep-f06-a-feed-loss", 10)).rejects.toThrow(
+      "回放创建后已处于 completed，不能直接播放",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

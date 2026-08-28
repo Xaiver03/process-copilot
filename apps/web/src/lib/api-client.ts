@@ -198,18 +198,21 @@ export async function startScenarioWithFallback(
     };
   }
 
+  if (runResult.data.state === "completed" || runResult.data.state === "failed") {
+    throw new Error(`回放创建后已处于 ${runResult.data.state}，不能直接播放。`);
+  }
+
   const startedRunResult = runResult.data.state === "playing"
     ? runResult
     : await controlRunWithFallback(runResult.data.id, { action: "play", speed });
   if (startedRunResult.mode === "static-demo") {
-    return {
-      data: { run: startedRunResult.data, event: demoEvent },
-      mode: startedRunResult.mode,
-      notice: startedRunResult.notice,
-    };
+    throw new Error(`回放 ${runResult.data.id} 已在服务器创建，但播放控制请求失败；请保留该 run ID 后重试。`);
   }
 
   const eventsResult = await listRunEventsWithFallback(startedRunResult.data.id);
+  if (eventsResult.mode === "static-demo") {
+    throw new Error(`回放 ${startedRunResult.data.id} 已进入播放态，但事件读取失败；不会混用静态事件。`);
+  }
   const event = eventsResult.data[0];
   if (!event) throw new Error("回放已创建，但尚未生成可研判事件，请重试。");
   return {
