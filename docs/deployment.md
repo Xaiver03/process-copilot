@@ -1,7 +1,7 @@
 # 单机部署说明
 
 状态：`REVIEW`  
-当前远端 release：`20260828T0435Z`
+当前远端 release：`20260828T0515Z`
 
 本项目使用独立 Compose project `process-copilot`，部署在已审计的 `wunoos` 专用目录 `/opt/process-copilot`。部署过程不停止、不清理、不重建服务器上的其它 Compose project、容器或卷。
 
@@ -24,7 +24,7 @@ host:18090 -> caddy:8080 -> web:3000
 
 - 服务器：`wunoos`（公网 IP `119.8.167.61`）
 - 发布根目录：`/opt/process-copilot`
-- 当前 release：`/opt/process-copilot/releases/20260828T0435Z`
+- 当前 release：`/opt/process-copilot/releases/20260828T0515Z`
 - 稳定入口：`/opt/process-copilot/current`
 - Compose project：`process-copilot`
 - 宿主监听：`0.0.0.0:18090`

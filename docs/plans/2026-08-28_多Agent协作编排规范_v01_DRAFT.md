@@ -30,11 +30,11 @@
 | 事实 | 当前状态 | 事实源/证据 |
 |---|---|---|
 | 数据修正与复核 | 已完成，23 tests | `services/ml/tests/`；命令见 [实施计划](2026-08-28_连续化工过程偏移副驾驶_实施计划_v01_DRAFT.md) Task 2 |
-| 后端修正与复核 | 已完成，19 tests | `apps/api/tests/`；同一实施计划 Task 3 |
+| 后端修正与复核 | 已完成，22 tests | `apps/api/tests/`；同一实施计划 Task 3 |
 | 前端真实链路 | 已完成，27 tests | `apps/web/tests/live-api-chain.test.ts`、`apps/web/tests/container-integration.test.ts` |
 | 共享契约 | 已存在，父 Agent 负责冻结与冲突消解 | [`packages/contracts/openapi.yaml`](../../packages/contracts/openapi.yaml)、[`packages/contracts/schemas/domain.schema.json`](../../packages/contracts/schemas/domain.schema.json) |
 | Figma 设计系统 | 文件已创建，待独立审阅和代码对齐 | [WunoOS - 连续化工过程偏移副驾驶](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)；本地规则见 [`design-system/连续化工过程偏移副驾驶/MASTER.md`](../../design-system/连续化工过程偏移副驾驶/MASTER.md) |
-| 基础设施 | 五服务镜像已构建并部署，远端 release `20260828T0435Z` 全部 healthy | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
+| 基础设施 | 五服务镜像已构建并部署，远端 release `20260828T0515Z` 全部 healthy | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
 | 远端 E2E | 已通过 | [`tests/e2e/smoke.sh`](../../tests/e2e/smoke.sh)；覆盖真实 run/event、两阶段时序、幂等 409、人工确认、审计和非法 SSE 游标 |
 | 产品边界 | 公开仿真 Demo、读侧建议、人工确认留痕 | [`README.md`](../../README.md)、[`docs/submission/数据说明_v01_DRAFT.md`](../submission/数据说明_v01_DRAFT.md) |
 
@@ -54,7 +54,7 @@
 | W5 | 设计 | Figma 页面/组件/变量、代码 token 对齐、状态与截图台账 | Figma 文件、`design-system/连续化工过程偏移副驾驶/**`、`packages/ui/src/tokens.css`、`packages/ui/src/index.ts` | W0 的页面/状态范围 | Figma 文件与代码 token 已创建；页面资产仍需独立补齐 |
 | W6 | 基础设施 | Compose、镜像、健康检查、CI、部署/备份/回滚 | `infra/**`、`.github/workflows/ci.yml`、`docs/deployment.md` | W3/W4 可构建 | 已部署，五服务 healthy |
 | W7 | 安全 | 只读边界、凭证/日志/网络检查、依赖和容器硬化审阅 | 默认不直接写文件；修复回交给对应文件所有者 | W3/W4/W6 | 已完成独立审阅与修正 |
-| W8 | QA | 契约、单元、组件、E2E、故障注入、连续演示复验 | `tests/e2e/**`；报告使用 Agent 消息或父 Agent 指定位置 | W0/W1/W2/W3/W4/W6 | 69 项测试及远端 E2E 已通过 |
+| W8 | QA | 契约、单元、组件、E2E、故障注入、连续演示复验 | `tests/e2e/**`；报告使用 Agent 消息或父 Agent 指定位置 | W0/W1/W2/W3/W4/W6 | 72 项测试及远端 E2E 已通过 |
 | W9 | 文档 | 数据说明、部署说明、作品说明、运行手册、协作规范 | `docs/submission/**`、`docs/deployment.md`、本文件（本轮仅本文件） | W1/W3/W6/W8 证据 | 已按部署与验收证据收口 |
 | W10 | 演示 | 3 分钟脚本、固定场景、演示前检查和失败兜底 | `docs/submission/三分钟Demo脚本_v01_DRAFT.md`、演示记录不回写业务代码 | W4/W8/W9 | 脚本已完成，连续现场彩排待执行 |
 
@@ -210,7 +210,7 @@ W1/W2 必须已完成并提供 hash，W5 设计审阅可与 W4 并行但在最�
 | 冻结窗口 | 冻结对象 | 开始条件 | 解冻条件 |
 |---|---|---|---|
 | F0 契约冻结 | `packages/contracts/**`、生成 API 类型 | W0 发布契约版本和 operationId 清单 | 父 Agent 明确记录版本变更；受影响 W3/W4 重跑测试 |
-| F1 数据/模型产物冻结 | `data/processed/**`、`data/manifests/**` | W1/W2 22 tests 与重复 hash 均 GREEN | 发现数据诚实性或可复现性缺陷，并由 P 重新开窗 |
+| F1 数据/模型产物冻结 | `data/processed/**`、`data/manifests/**` | W1/W2 23 tests 与重复 hash 均 GREEN | 发现数据诚实性或可复现性缺陷，并由 P 重新开窗 |
 | F2 UI token 冻结 | `packages/ui/**`、Figma 变量和本地 design-system 规则 | S 提供截图/metadata 对齐证据 | P 批准变更；F5 之后只能走版本化变更 |
 | F3 发布冻结 | `infra/**`、Dockerfile、应用依赖锁文件 | 本地镜像和 Compose health GREEN | 发布后回滚或下一 release；不得在远端运行时热改 |
 | F4 最终 E2E 冻结 | `apps/**`、`packages/contracts/**`、`data/processed/**` | QA 开始独立审阅 | P0/P1 修复后全套回归通过 |
@@ -298,17 +298,16 @@ docker compose -p process-copilot-test -f infra/compose.yaml down
 ### 10.1 已完成
 
 - **D/M：** 数据格式、故障边界、窗口规则、PCA/分类/贡献和确定性产物已修正复核；23 tests 通过。
-- **A：** 健康/ready、场景、回放、SSE、幂等、事件、人工决策、审计、错误和 OpenAPI 对齐已修正复核；19 tests 通过。
+- **A：** 健康/ready、场景、回放、长期 SSE 心跳、幂等、事件、人工决策、审计、降级标识、错误和 OpenAPI 对齐已修正复核；22 tests 通过。
 - **F：** 真实 scenario/run/event/decision/record 链路、两阶段 UI、网络降级边界和贡献值单位已完成；27 tests、typecheck、lint、production build 通过。
-- **I：** release `20260828T0435Z` 已部署至 `wunoos`；Web、API、worker、PostgreSQL、Caddy 全部 healthy，远端 E2E 通过。
+- **I：** release `20260828T0515Z` 已部署至 `wunoos`；Web、API、worker、PostgreSQL、Caddy 全部 healthy，远端 E2E 与 17 秒真实 SSE 心跳检查通过。
 - **X/Q：** 容器、凭证、日志、数据诚实性与接口边界已独立审阅；Claude Code 结论为 `PASS WITH RISKS`，其中三处过时文档已在本轮修正。
 - **S（资产创建）：** Figma 文件已创建；不等于组件、变量、状态、截图和代码 token 已独立审阅通过。
 
 ### 10.2 正在运行
 
-- **P/A：** 按 Claude Code 验收残余项补强 SSE 心跳连接语义和模板缺失时的降级证据标识；每个修复独立 commit、独立回归。
-- **F：** 修复 390px 视口下关闭侧栏仍造成文档横向滚动的问题，并重新做 390/768/桌面视觉复核。
 - **C：** 同步最终测试数、部署 release、E2E 证据与访问边界。
+- **V：** 准备使用同一冻结场景进行现场连续彩排。
 
 ### 10.3 待启动
 
@@ -318,10 +317,9 @@ docker compose -p process-copilot-test -f infra/compose.yaml down
 
 ### 10.4 下一波具体派发
 
-1. **当前并行：** A 只改 `apps/api/**`；F 只改 `apps/web/**`；C 只改文档。每个问题单独 commit，不交叉暂存。
-2. **代码 GREEN 后：** 运行 ML/API/Web、契约、infra 与远端 E2E；任何 API 语义变化都重新生成并校验前端类型。
-3. **远端复验后：** 记录新 release、五服务健康状态和安全访问方式；不放行公网高位端口。
-4. **现场前：** 补齐 Figma 页面级资产并连续彩排 5 次；最后核对 Definition of Done、数据诚实性和对外措辞。
+1. **已完成：** A/F/C 分离写入且逐问题 commit；ML/API/Web、契约、infra、远端 E2E 与真实 SSE 心跳均 GREEN。
+2. **现场前：** 补齐 Figma 页面级资产并连续彩排 5 次；最后核对 Definition of Done、数据诚实性和对外措辞。
+3. **基础设施后续：** 在明确授权后做备份/回滚演练；公网高位端口继续不放行。
 
 ## 11. Definition of Done
 
