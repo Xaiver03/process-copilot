@@ -126,6 +126,7 @@ paths:
     get:
       summary: Stream replay telemetry and events
       operationId: streamRun
+      x-sse-message-schema: "#/components/schemas/SSEMessage"
       parameters:
         - $ref: "#/components/parameters/RunId"
         - name: Last-Event-ID
@@ -139,7 +140,7 @@ paths:
           content:
             text/event-stream:
               schema:
-                type: string
+                $ref: "#/components/schemas/SSEMessage"
         "404":
           $ref: "#/components/responses/Problem"
         "400":
@@ -175,6 +176,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventDetail"
         "404":
+          $ref: "#/components/responses/Problem"
+  /api/v1/events/{eventId}/ask:
+    post:
+      summary: Ask a question about an anomaly event
+      operationId: askEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskEventRequest"
+      responses:
+        "200":
+          description: AI answer grounded in the event evidence.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIAnswer"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
           $ref: "#/components/responses/Problem"
   /api/v1/events/{eventId}/decision:
     post:
@@ -226,6 +252,152 @@ paths:
         "401":
           $ref: "#/components/responses/Problem"
         "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/overview:
+    get:
+      summary: Get AI and worker operational overview
+      operationId: getAdminOverview
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Current inference, model, worker and data status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/ai/status:
+    get:
+      summary: Get online inference and AI status
+      operationId: getAIStatus
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Current AI runtime status without credentials.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIStatus"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/ai/config:
+    get:
+      summary: Get language model configuration metadata
+      operationId: getAIConfig
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Configuration with API key presence only.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIConfig"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+    put:
+      summary: Update language model configuration
+      operationId: updateAIConfig
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAIConfigRequest"
+      responses:
+        "200":
+          description: Updated configuration metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIConfig"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/ai/test:
+    post:
+      summary: Test the configured language model connection
+      operationId: testAIConnection
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AIConnectionTestRequest"
+      responses:
+        "200":
+          description: Deterministic connection test result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIConnectionTestResponse"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/ai/interactions:
+    get:
+      summary: List recorded AI interactions
+      operationId: listAIInteractions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Paginated AI interaction records.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIInteractionPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+  /api/v1/admin/audit:
+    get:
+      summary: List administrative configuration audit entries
+      operationId: listAdminAudit
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Paginated, secret-free audit records.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuditPage"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
           $ref: "#/components/responses/Problem"
   /api/v1/auth/me:
     get:
@@ -283,6 +455,27 @@ components:
       schema:
         type: string
         maxLength: 128
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   responses:
     Problem:
       description: Request could not be completed.
@@ -320,9 +513,10 @@ components:
       properties:
         scenarioId: {type: string}
         speed: {type: number, enum: [1, 5, 10, 20], default: 10}
+        inferenceMode: {type: string, enum: [online, template], default: template}
     ReplayRun:
       type: object
-      required: [id, scenarioId, state, speed, currentSample, createdAt]
+      required: [id, scenarioId, state, speed, currentSample, createdAt, inferenceMode, modelVersion]
       properties:
         id: {type: string, format: uuid}
         scenarioId: {type: string}
@@ -330,6 +524,8 @@ components:
         speed: {type: number}
         currentSample: {type: integer, minimum: 0}
         createdAt: {type: string, format: date-time}
+        inferenceMode: {type: string, enum: [online, template]}
+        modelVersion: {type: string}
     RunControlRequest:
       type: object
       required: [action]
@@ -441,6 +637,193 @@ components:
             modelVersion: {type: string}
             dataSourceDisclosure:
               const: Public simulation data, not real Guizhou plant data.
+    InferenceSnapshot:
+      type: object
+      required: [runId, sampleIndex, t2, spe, anomalyScore, alarmState, modelVersion, latencyMs]
+      properties:
+        runId: {type: string, format: uuid}
+        sampleIndex: {type: integer, minimum: 0}
+        t2: {type: number}
+        spe: {type: number}
+        anomalyScore: {type: number}
+        alarmState: {type: string, enum: [normal, warning, critical]}
+        modelVersion: {type: string}
+        latencyMs: {type: number, minimum: 0}
+    SSEMessage:
+      type: object
+      description: One JSON payload carried by the run text/event-stream response.
+      required: [type, sequence, runId, emittedAt]
+      properties:
+        type:
+          type: string
+          enum: [state, inference, anomaly_opened, diagnosis_updated, completed, failed, heartbeat]
+        sequence: {type: integer, minimum: 0}
+        runId: {type: string, format: uuid}
+        emittedAt: {type: string, format: date-time}
+        sampleIndex: {type: integer, minimum: 0}
+        state: {enum: [ready, playing, paused, completed, failed]}
+        inference:
+          $ref: "#/components/schemas/InferenceSnapshot"
+        eventId: {type: string, format: uuid}
+        diagnosisState: {enum: [pending, provisional, updated]}
+        message: {type: string}
+        errorCode: {type: string}
+    AskEventRequest:
+      type: object
+      required: [question]
+      properties:
+        question: {type: string, minLength: 1, maxLength: 500}
+    AIAnswer:
+      type: object
+      required: [answer, mode, model, evidenceRefs, latencyMs, traceId]
+      properties:
+        answer: {type: string}
+        mode: {type: string, enum: [llm_enhanced, template, degraded]}
+        model: {type: string}
+        evidenceRefs:
+          type: array
+          items: {type: string}
+        latencyMs: {type: number, minimum: 0}
+        traceId: {type: string}
+    ServiceStatus:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [ready, degraded, offline, unknown]}
+        version: {type: string}
+        latencyMs: {type: number, minimum: 0}
+        reason: {type: string}
+    AIStatus:
+      type: object
+      required: [inferenceMode, worker, industrialModel, languageModel, dataBuildHash]
+      properties:
+        inferenceMode: {type: string, enum: [online, template]}
+        worker:
+          $ref: "#/components/schemas/ServiceStatus"
+        industrialModel:
+          $ref: "#/components/schemas/ServiceStatus"
+        languageModel:
+          $ref: "#/components/schemas/ServiceStatus"
+        dataBuildHash: {type: string}
+    AdminOverview:
+      type: object
+      required: [inferenceMode, worker, industrialModel, languageModel, dataBuildHash, recentLLMCalls, degradedReasons]
+      properties:
+        inferenceMode: {type: string, enum: [online, template]}
+        worker:
+          $ref: "#/components/schemas/ServiceStatus"
+        industrialModel:
+          $ref: "#/components/schemas/ServiceStatus"
+        languageModel:
+          $ref: "#/components/schemas/ServiceStatus"
+        dataBuildHash: {type: string}
+        recentLLMCalls:
+          type: array
+          items:
+            $ref: "#/components/schemas/AIInteraction"
+        degradedReasons:
+          type: array
+          items: {type: string}
+    AIConfig:
+      type: object
+      required: [provider, baseUrl, model, enabled, timeoutMs, maxTokens, temperature, promptVersion, fallbackPolicy, apiKeyConfigured]
+      properties:
+        provider: {type: string}
+        baseUrl: {type: string, format: uri}
+        model: {type: string}
+        enabled: {type: boolean}
+        timeoutMs: {type: integer, minimum: 1, maximum: 120000}
+        maxTokens: {type: integer, minimum: 1, maximum: 32768}
+        temperature: {type: number, minimum: 0, maximum: 2}
+        promptVersion: {type: string}
+        fallbackPolicy: {type: string, enum: [template, degraded]}
+        apiKeyConfigured: {type: boolean}
+    UpdateAIConfigRequest:
+      type: object
+      properties:
+        provider: {type: string, minLength: 1}
+        baseUrl: {type: string, format: uri}
+        model: {type: string, minLength: 1}
+        enabled: {type: boolean}
+        timeoutMs: {type: integer, minimum: 1, maximum: 120000}
+        maxTokens: {type: integer, minimum: 1, maximum: 32768}
+        temperature: {type: number, minimum: 0, maximum: 2}
+        promptVersion: {type: string, minLength: 1}
+        fallbackPolicy: {type: string, enum: [template, degraded]}
+        apiKey: {type: string, minLength: 1, writeOnly: true}
+        clearApiKey: {type: boolean, default: false}
+    AIConnectionTestRequest:
+      type: object
+      properties:
+        question: {type: string, minLength: 1, maxLength: 500}
+    AIConnectionTestResponse:
+      type: object
+      required: [ok, mode, provider, model, latencyMs, traceId]
+      properties:
+        ok: {type: boolean}
+        mode: {type: string, enum: [llm_enhanced, degraded]}
+        provider: {type: string}
+        model: {type: string}
+        latencyMs: {type: number, minimum: 0}
+        traceId: {type: string}
+        error: {type: string}
+    AIInteraction:
+      type: object
+      required: [id, eventId, question, answer, mode, model, evidenceRefs, latencyMs, traceId, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        eventId: {type: string, format: uuid}
+        question: {type: string}
+        answer: {type: string}
+        mode: {type: string, enum: [llm_enhanced, template, degraded]}
+        model: {type: string}
+        evidenceRefs:
+          type: array
+          items: {type: string}
+        latencyMs: {type: number, minimum: 0}
+        traceId: {type: string}
+        createdAt: {type: string, format: date-time}
+    AIInteractionPage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AIInteraction"
+        total: {type: integer, minimum: 0}
+    AdminAuditEntry:
+      type: object
+      required: [id, actor, action, resourceType, resourceId, createdAt, traceId, requestId, changeSummary]
+      properties:
+        id: {type: string, format: uuid}
+        actor: {type: string}
+        action: {type: string}
+        resourceType: {type: string}
+        resourceId: {type: string}
+        createdAt: {type: string, format: date-time}
+        traceId: {type: string}
+        requestId: {type: string}
+        changeSummary:
+          type: object
+          required: [changedFields, previousVersion, currentVersion]
+          properties:
+            changedFields:
+              type: array
+              items: {type: string}
+            previousVersion: {type: string}
+            currentVersion: {type: string}
+            apiKeyChanged: {type: boolean}
+          additionalProperties: false
+    AdminAuditPage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAuditEntry"
+        total: {type: integer, minimum: 0}
     DecisionRequest:
       type: object
       required: [decision, note]
