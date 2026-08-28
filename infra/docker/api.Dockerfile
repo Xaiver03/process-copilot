@@ -6,14 +6,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DEFAULT_TIMEOUT=120 \
     UV_COMPILE_BYTECODE=1 \
     UV_HTTP_TIMEOUT=120 \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/apps/api/.venv/bin:$PATH"
 WORKDIR /app
 
 RUN groupadd --system --gid 10001 process \
     && useradd --system --uid 10001 --gid process --home-dir /app --shell /usr/sbin/nologin process
 
-COPY apps/api/pyproject.toml apps/api/uv.lock /app/
-COPY apps/api/process_copilot_api /app/process_copilot_api
+COPY services/ml/pyproject.toml /app/services/ml/pyproject.toml
+COPY services/ml/process_copilot_ml /app/services/ml/process_copilot_ml
+COPY apps/api/pyproject.toml apps/api/uv.lock /app/apps/api/
+COPY apps/api/process_copilot_api /app/apps/api/process_copilot_api
+WORKDIR /app/apps/api
 RUN python -m pip install --retries 5 uv==0.10.7 \
     && uv sync --frozen --no-dev \
     && chown -R process:process /app

@@ -75,6 +75,12 @@ if ! grep -q 'data/processed' "$ROOT_DIR/infra/docker/api.Dockerfile"; then
   exit 1
 fi
 
+if ! grep -q 'process-copilot-ml' "$ROOT_DIR/apps/api/pyproject.toml" \
+  || ! grep -q 'services/ml' "$ROOT_DIR/infra/docker/api.Dockerfile"; then
+  printf 'api and worker images must install the local industrial model package\n' >&2
+  exit 1
+fi
+
 up_line="$(grep -nE 'docker compose .* up -d --build --wait([[:space:]]|$)' "$ROOT_DIR/infra/scripts/deploy.sh" | head -n1 | cut -d: -f1 || true)"
 switch_line="$(grep -nF 'ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"' "$ROOT_DIR/infra/scripts/deploy.sh" | head -n1 | cut -d: -f1 || true)"
 if [[ -z "$up_line" || -z "$switch_line" || "$switch_line" -le "$up_line" ]]; then
