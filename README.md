@@ -88,6 +88,9 @@ docs/submission/          作品、数据与 Demo 材料
 
 ## 交付入口
 
+- [黑客松路演 PPTX / PDF](04_交付成品/README.md)
+- [黑客松路演叙事稿](docs/submission/序安黑客松路演叙事_v01_DRAFT.md)
+- [黑客松路演实施计划](docs/plans/2026-08-28_序安黑客松路演PPT实施计划.md)
 - [作品说明](docs/submission/作品说明_v01_DRAFT.md)
 - [三分钟 Demo 脚本](docs/submission/三分钟Demo脚本_v01_DRAFT.md)
 - [连续化工 AI 判别与“工业小郎中”论文启示](docs/research/2026-08-28_连续化工AI判别与工业小郎中论文启示_v01_DRAFT.md)
