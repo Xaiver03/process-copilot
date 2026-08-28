@@ -119,12 +119,12 @@ export function HumanDecision({
   onSubmit,
 }: {
   operatorName: string;
-  operatorRole: "operator" | "shift_lead";
+  operatorRole: "operator" | "shift_lead" | "admin";
   onSubmit: (decision: DecisionRequest) => Promise<void>;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const shiftLead = operatorRole === "shift_lead";
+  const shiftLead = operatorRole === "shift_lead" || operatorRole === "admin";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

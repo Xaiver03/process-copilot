@@ -91,6 +91,8 @@ export const demoRun: ReplayRun = {
   speed: 10,
   currentSample: 180,
   createdAt: "2026-08-28T08:20:00+08:00",
+  inferenceMode: "template",
+  modelVersion: "tep-pca-classifier-demo-0.1",
 };
 
 export const demoEvents: AnomalyEvent[] = [

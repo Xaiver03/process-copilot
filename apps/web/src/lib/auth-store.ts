@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export type OperatorRole = "operator" | "shift_lead";
+export type OperatorRole = "operator" | "shift_lead" | "admin";
 
 export interface AuthSession {
   token: string;
@@ -12,8 +12,8 @@ export interface AuthSession {
   expiresAt: string;
 }
 
-export type AdminSession = Omit<AuthSession, "role"> & { role: "admin" };
-export type AnyAuthSession = AuthSession | AdminSession;
+export type AdminSession = AuthSession & { role: "admin" };
+export type AnyAuthSession = AuthSession;
 
 const STORAGE_KEY = "copilot-auth";
 const CHANGE_EVENT = "copilot-auth-change";
@@ -66,7 +66,7 @@ export function subscribeSession(listener: () => void): () => void {
 
 export const AUTH_STORAGE_KEY = STORAGE_KEY;
 
-export function useSession(): AuthSession | null {
+export function useSession(): AnyAuthSession | null {
   const [session, setSession] = useState<AuthSession | null>(null);
   useEffect(() => {
     setSession(readSession() as AuthSession | null);

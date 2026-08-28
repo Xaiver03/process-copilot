@@ -189,7 +189,7 @@ export async function startScenarioWithFallback(
   scenarioId: string,
   speed: NonNullable<CreateRunRequest["speed"]> = 10,
 ): Promise<ApiResult<{ run: ReplayRun; event: AnomalyEvent }>> {
-  const runResult = await createRunWithFallback({ scenarioId, speed });
+  const runResult = await createRunWithFallback({ scenarioId, speed, inferenceMode: "template" });
   if (runResult.mode === "static-demo") {
     return {
       data: { run: runResult.data, event: demoEvent },

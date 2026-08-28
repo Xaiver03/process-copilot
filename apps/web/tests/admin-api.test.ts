@@ -45,6 +45,7 @@ describe("admin API client", () => {
       promptVersion: "v1",
       fallbackPolicy: "template" as const,
       apiKeyConfigured: true,
+      version: 1,
     };
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify(config), { status: 200 })));
     vi.stubGlobal("fetch", fetchMock);
