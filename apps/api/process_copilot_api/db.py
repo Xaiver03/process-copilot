@@ -43,7 +43,8 @@ class DecisionRow(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     event_id: Mapped[str] = mapped_column(String(36), index=True)
     decision: Mapped[str] = mapped_column(String(16))
-    operator_name: Mapped[str] = mapped_column(String(80))
+    operator_name: Mapped[str] = mapped_column(String(160))
+    operator_role: Mapped[str] = mapped_column(String(16), default="unknown")
     note: Mapped[str] = mapped_column(String(1000))
     created_at: Mapped[Any] = mapped_column(DateTime, nullable=False)
     model_version: Mapped[str] = mapped_column(String(128))
@@ -60,6 +61,16 @@ class AuditRow(Base):
     actor: Mapped[str] = mapped_column(String(80))
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     trace_id: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[Any] = mapped_column(DateTime, nullable=False)
+
+
+class OperatorRow(Base):
+    __tablename__ = "operators"
+
+    username: Mapped[str] = mapped_column(String(80), primary_key=True)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(80), nullable=False)
     created_at: Mapped[Any] = mapped_column(DateTime, nullable=False)
 
 

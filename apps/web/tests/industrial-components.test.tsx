@@ -39,20 +39,36 @@ describe("工业状态组件", () => {
     expect(screen.getByRole("table", { name: "关键变量证据数据表" })).toBeInTheDocument();
   });
 
-  it("人工确认要求操作者与说明，并提交结构化决策", async () => {
+  it("班长可以确认偏移并说明建议采纳情况", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(<HumanDecision onSubmit={onSubmit} />);
+    render(
+      <HumanDecision operatorName="当班班长（shift-lead）" operatorRole="shift_lead" onSubmit={onSubmit} />,
+    );
 
+    expect(screen.getByText("当班班长（shift-lead）")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("研判结论"), "confirm");
-    await user.type(screen.getByLabelText("操作者"), "王工");
+    await user.selectOptions(screen.getByLabelText("建议采纳情况"), "partially_followed");
     await user.type(screen.getByLabelText("研判说明"), "先检查冷却水入口温度与阀位反馈。 ");
     await user.click(screen.getByRole("button", { name: "确认并形成记录" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       decision: "confirm",
-      operatorName: "王工",
+      decisionMethod: "partially_followed",
       note: "先检查冷却水入口温度与阀位反馈。",
     });
+  });
+
+  it("普通操作员只能升级上报，不出现确认与驳回选项", () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(
+      <HumanDecision operatorName="中控操作员 01（operator-01）" operatorRole="operator" onSubmit={onSubmit} />,
+    );
+
+    const decisionSelect = screen.getByLabelText("研判结论") as HTMLSelectElement;
+    const options = Array.from(decisionSelect.options).map((option) => option.value);
+    expect(options).toEqual(["escalate"]);
+    expect(decisionSelect.value).toBe("escalate");
+    expect(screen.getByText(/操作员权限：仅可升级上报/)).toBeInTheDocument();
   });
 });

@@ -25,6 +25,7 @@ import {
   type ApiResult,
 } from "@/lib/api-client";
 import { demoEvent, demoRun } from "@/lib/demo-data";
+import { useSession } from "@/lib/auth-store";
 import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate } from "@/lib/presentation";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
@@ -233,6 +234,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
   const resource = useApiResource<EventDetail>(() => getEventWithFallback(eventId), eventId);
   const [recordHref, setRecordHref] = useState("");
   const [decisionMode, setDecisionMode] = useState<"live" | "static-demo" | null>(null);
+  const session = useSession();
   return (
     <div className="page-stack event-detail-page">
       <ResourceBoundary {...resource}>{(result) => {
@@ -266,8 +268,19 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                 <section className="side-panel"><span className="kicker">Top-3</span><h2>故障候选</h2><ol className="candidate-list">{event.candidates.map((candidate, index) => { const display = formatFaultCandidate(candidate); return <li key={`${candidate.faultId}-${index}`}><span><b>{display.code}</b>{display.label}</span><strong>{display.probability}</strong></li>; })}</ol></section>
                 <ContributionChart evidence={event.evidence} />
                 <section className="side-panel"><span className="kicker">安全规则建议</span><h2>检查与动作</h2><h3>优先检查</h3><ul>{event.recommendation.checks.map((item) => <li key={item}>{item}</li>)}</ul><h3>建议动作</h3><ul>{event.recommendation.actions.map((item) => <li key={item}>{item}</li>)}</ul></section>
-                {recordHref ? <section className="decision-success" role="status"><CheckCircle weight="fill" aria-hidden="true" /><div><strong>事件记录已形成</strong><span>{decisionMode === "static-demo" ? "静态 Demo 记录未写入服务器。" : "记录已写入审计服务。"}</span><Link href={recordHref}>打开审计记录</Link></div></section> : (
-                  <HumanDecision onSubmit={async (payload) => { const decision = await submitDecisionWithFallback(eventId, payload); setDecisionMode(decision.mode); setRecordHref(`/records/${decision.mode === "static-demo" ? "demo-record" : decision.data.id}`); }} />
+                {recordHref ? <section className="decision-success" role="status"><CheckCircle weight="fill" aria-hidden="true" /><div><strong>事件记录已形成</strong><span>{decisionMode === "static-demo" ? "静态 Demo 记录未写入服务器。" : "记录已写入审计服务。"}</span><Link href={recordHref}>打开审计记录</Link></div></section> : session ? (
+                  <HumanDecision
+                    operatorName={`${session.displayName}（${session.username}）`}
+                    operatorRole={session.role}
+                    onSubmit={async (payload) => { const decision = await submitDecisionWithFallback(eventId, payload); setDecisionMode(decision.mode); setRecordHref(`/records/${decision.mode === "static-demo" ? "demo-record" : decision.data.id}`); }}
+                  />
+                ) : (
+                  <section className="side-panel login-prompt" role="status">
+                    <span className="kicker">人工确认点</span>
+                    <h2>研判需要登录</h2>
+                    <p>人工决策必须绑定预置操作员身份，记录写入审计服务后不可篡改。</p>
+                    <Link className="primary-button link-button" href={`/login?next=/events/${eventId}`}>登录操作员账号</Link>
+                  </section>
                 )}
               </aside>
             </div>

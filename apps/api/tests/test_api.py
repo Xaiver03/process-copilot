@@ -42,6 +42,63 @@ def client(tmp_path: Path):
         yield test_client
 
 
+def login_token(client: TestClient, username: str, password: str) -> str:
+    response = client.post(
+        "/api/v1/auth/login", json={"username": username, "password": password}
+    )
+    assert response.status_code == 200, response.text
+    return response.json()["token"]
+
+
+@pytest.fixture()
+def lead_headers(client: TestClient):
+    token = login_token(client, "shift-lead", "demo-lead-2026")
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_login_issues_token_and_me_reports_role(client: TestClient):
+    token = login_token(client, "operator-01", "demo-op-2026")
+    me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me.status_code == 200
+    assert me.json()["role"] == "operator"
+
+    bad = client.post(
+        "/api/v1/auth/login", json={"username": "operator-01", "password": "wrong"}
+    )
+    assert bad.status_code == 401
+    assert bad.json()["code"] == "invalid_credentials"
+
+    anonymous = client.get("/api/v1/auth/me")
+    assert anonymous.status_code == 401
+    assert anonymous.json()["code"] == "missing_token"
+
+
+def test_decision_requires_authentication_and_role(client: TestClient):
+    run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
+    event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
+    url = f"/api/v1/events/{event['id']}/decision"
+
+    anonymous = client.post(url, json={"decision": "confirm", "note": "确认"})
+    assert anonymous.status_code == 401
+
+    op_token = login_token(client, "operator-01", "demo-op-2026")
+    operator_forbidden = client.post(
+        url,
+        json={"decision": "confirm", "note": "确认"},
+        headers={"Authorization": f"Bearer {op_token}"},
+    )
+    assert operator_forbidden.status_code == 403
+    assert operator_forbidden.json()["code"] == "role_forbidden"
+
+    escalated = client.post(
+        url,
+        json={"decision": "escalate", "note": "上报班长"},
+        headers={"Authorization": f"Bearer {op_token}"},
+    )
+    assert escalated.status_code == 201
+    assert escalated.json()["operatorRole"] == "operator"
+
+
 def test_health_and_readiness_expose_trace_id(client: TestClient):
     health = client.get("/healthz", headers={"X-Trace-ID": "trace-health"})
     assert health.status_code == 200
@@ -260,7 +317,7 @@ def test_create_run_is_idempotent(client: TestClient):
     assert first.json()["speed"] == 5
 
 
-def test_idempotency_rejects_same_key_with_different_request(client: TestClient):
+def test_idempotency_rejects_same_key_with_different_request(client: TestClient, lead_headers):
     first = client.post(
         "/api/v1/runs",
         json={"scenarioId": "tep-fault-05", "speed": 5},
@@ -292,13 +349,13 @@ def test_idempotency_rejects_same_key_with_different_request(client: TestClient)
     event_id = client.get(f"/api/v1/runs/{run_id}/events").json()[0]["id"]
     decided = client.post(
         f"/api/v1/events/{event_id}/decision",
-        json={"decision": "confirm", "operatorName": "工程师", "note": "确认"},
-        headers={"Idempotency-Key": "conflict-decision"},
+        json={"decision": "confirm", "note": "确认"},
+        headers={"Idempotency-Key": "conflict-decision", **lead_headers},
     )
     decision_conflict = client.post(
         f"/api/v1/events/{event_id}/decision",
-        json={"decision": "reject", "operatorName": "工程师", "note": "误报"},
-        headers={"Idempotency-Key": "conflict-decision"},
+        json={"decision": "reject", "note": "误报"},
+        headers={"Idempotency-Key": "conflict-decision", **lead_headers},
     )
     assert decided.status_code == 201
     assert decision_conflict.status_code == 409
@@ -319,7 +376,7 @@ def test_concurrent_same_idempotency_key_returns_one_run(client: TestClient):
     assert len({response.json()["id"] for response in responses}) == 1
 
 
-def test_concurrent_control_and_decision_idempotency_are_replayed(client: TestClient):
+def test_concurrent_control_and_decision_idempotency_are_replayed(client: TestClient, lead_headers):
     run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
     run_id = run["id"]
 
@@ -342,8 +399,8 @@ def test_concurrent_control_and_decision_idempotency_are_replayed(client: TestCl
         with TestClient(client.app) as concurrent_client:
             return concurrent_client.post(
                 f"/api/v1/events/{event_id}/decision",
-                json={"decision": "confirm", "operatorName": "工程师", "note": "确认"},
-                headers={"Idempotency-Key": "concurrent-decision"},
+                json={"decision": "confirm", "note": "确认"},
+                headers={"Idempotency-Key": "concurrent-decision", **lead_headers},
             )
 
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -402,7 +459,7 @@ def test_production_sse_defaults_to_long_lived_heartbeat_configuration(tmp_path:
     assert app.state.sse_heartbeat_count is None
 
 
-def test_event_detail_decision_and_record_are_auditable(client: TestClient):
+def test_event_detail_decision_and_record_are_auditable(client: TestClient, lead_headers):
     run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
     events = client.get(f"/api/v1/runs/{run['id']}/events")
     assert events.status_code == 200
@@ -417,33 +474,36 @@ def test_event_detail_decision_and_record_are_auditable(client: TestClient):
 
     decision_request = {
         "decision": "confirm",
-        "operatorName": "值班工程师",
         "note": "按证据顺序检查冷却水回路",
     }
     decision = client.post(
         f"/api/v1/events/{event['id']}/decision",
         json=decision_request,
-        headers={"Idempotency-Key": "decision-1", "X-Trace-ID": "trace-decision"},
+        headers={"Idempotency-Key": "decision-1", "X-Trace-ID": "trace-decision", **lead_headers},
     )
     duplicate = client.post(
         f"/api/v1/events/{event['id']}/decision",
         json=decision_request,
-        headers={"Idempotency-Key": "decision-1"},
+        headers={"Idempotency-Key": "decision-1", **lead_headers},
     )
     assert decision.status_code == 201
     assert duplicate.status_code == 201
     assert duplicate.json() == decision.json()
+    assert decision.json()["operatorRole"] == "shift_lead"
+    assert "shift-lead" in decision.json()["operatorName"]
     record = client.get(f"/api/v1/records/{decision.json()['id']}")
     assert record.status_code == 200
     assert record.json()["traceId"] == "trace-decision"
+    assert record.json()["operatorRole"] == "shift_lead"
 
 
-def test_rejected_decision_uses_anomaly_event_contract_state(client: TestClient):
+def test_rejected_decision_uses_anomaly_event_contract_state(client: TestClient, lead_headers):
     run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
     event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
     decision = client.post(
         f"/api/v1/events/{event['id']}/decision",
-        json={"decision": "reject", "operatorName": "工程师", "note": "误报"},
+        json={"decision": "reject", "note": "误报"},
+        headers=lead_headers,
     )
     assert decision.status_code == 201
     detail = client.get(f"/api/v1/events/{event['id']}")

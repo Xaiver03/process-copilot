@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
@@ -19,6 +19,14 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from .catalog import DataCatalog
+from .auth import (
+    LoginRequestModel,
+    LoginResponse,
+    authenticate,
+    current_operator,
+    require_role,
+    seed_operators,
+)
 from .db import AnomalyEventRow, AuditRow, Database, DecisionRow, IdempotencyRow, ReplayRunRow
 from .schemas import (
     AnomalyEvent,
@@ -258,6 +266,7 @@ def create_app(
     app.state.catalog = DataCatalog(data_dir or _default_data_dir())
     app.state.sse_heartbeat_interval_seconds = sse_heartbeat_interval_seconds
     app.state.sse_heartbeat_count = sse_heartbeat_count
+    seed_operators(app.state.database)
 
     @app.middleware("http")
     async def trace_middleware(request: Request, call_next: Any) -> Any:
@@ -298,6 +307,21 @@ def create_app(
                 _problem(request, "internal_error", "The request could not be completed")
             ),
         )
+
+    @app.post("/api/v1/auth/login", response_model=LoginResponse, operation_id="login")
+    def login(body: LoginRequestModel) -> LoginResponse:
+        try:
+            return authenticate(app.state.database, body.username, body.password)
+        except PermissionError:
+            raise APIError(401, "invalid_credentials", "Username or password is incorrect")
+
+    @app.get("/api/v1/auth/me", operation_id="me")
+    def me(operator: Any = Depends(current_operator)) -> dict[str, str]:
+        return {
+            "username": operator.username,
+            "role": operator.role,
+            "displayName": operator.display_name,
+        }
 
     @app.get("/healthz", response_model=Health, operation_id="healthcheck")
     def healthcheck() -> Health:
@@ -537,8 +561,15 @@ def create_app(
         request: Request,
         eventId: UUID,
         body: DecisionRequest,
+        operator: Any = Depends(require_role("operator")),
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
     ) -> Any:
+        if body.decision in {"confirm", "reject"} and operator.role != "shift_lead":
+            raise APIError(
+                403,
+                "role_forbidden",
+                "Confirm/reject requires a shift lead; operators may only escalate.",
+            )
         scope = f"decision:{eventId}"
         payload = body.model_dump(mode="json", by_alias=True)
         try:
@@ -552,11 +583,13 @@ def create_app(
                 detail = _event_detail(event)
                 record_id = uuid4()
                 created_at = _now()
+                actor_label = f"{operator.display_name} ({operator.username})"
                 record = DecisionRecord(
                     id=record_id,
                     event_id=eventId,
                     decision=body.decision,
-                    operator_name=body.operator_name,
+                    operator_name=actor_label,
+                    operator_role=operator.role,
                     note=body.note,
                     created_at=created_at.replace(tzinfo=UTC),
                     model_version=detail.model_version,
@@ -567,7 +600,8 @@ def create_app(
                         id=str(record_id),
                         event_id=str(eventId),
                         decision=body.decision,
-                        operator_name=body.operator_name,
+                        operator_name=actor_label,
+                        operator_role=operator.role,
                         note=body.note,
                         created_at=created_at,
                         model_version=detail.model_version,
@@ -580,8 +614,11 @@ def create_app(
                         event_id=str(eventId),
                         record_id=str(record_id),
                         action="human_decision",
-                        actor=body.operator_name,
-                        payload=record.model_dump(mode="json", by_alias=True),
+                        actor=actor_label,
+                        payload={
+                            **record.model_dump(mode="json", by_alias=True),
+                            "decisionMethod": body.decision_method,
+                        },
                         trace_id=request.state.trace_id,
                         created_at=created_at,
                     )
@@ -613,6 +650,7 @@ def create_app(
                 event_id=UUID(row.event_id),
                 decision=row.decision,
                 operator_name=row.operator_name,
+                operator_role=row.operator_role,
                 note=row.note,
                 created_at=row.created_at.replace(tzinfo=UTC),
                 model_version=row.model_version,
@@ -649,13 +687,15 @@ def create_app(
             "/healthz": {"200", "400"},
             "/readyz": {"200", "400", "503"},
             "/api/v1/scenarios": {"200", "400"},
+            "/api/v1/auth/login": {"200", "401", "422"},
+            "/api/v1/auth/me": {"200", "401"},
             "/api/v1/runs": {"201", "404", "409", "422"},
             "/api/v1/runs/{runId}": {"200", "404"},
             "/api/v1/runs/{runId}/control": {"200", "404", "409", "422"},
             "/api/v1/runs/{runId}/stream": {"200", "400", "404"},
             "/api/v1/runs/{runId}/events": {"200", "404"},
             "/api/v1/events/{eventId}": {"200", "404"},
-            "/api/v1/events/{eventId}/decision": {"201", "404", "409", "422"},
+            "/api/v1/events/{eventId}/decision": {"201", "401", "403", "404", "409", "422"},
             "/api/v1/records/{recordId}": {"200", "404"},
         }
         for path, methods in schema["paths"].items():

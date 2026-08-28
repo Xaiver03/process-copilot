@@ -114,23 +114,28 @@ export function EvidencePanel({ evidence }: { evidence: Evidence[] }) {
 }
 
 export function HumanDecision({
+  operatorName,
+  operatorRole,
   onSubmit,
 }: {
+  operatorName: string;
+  operatorRole: "operator" | "shift_lead";
   onSubmit: (decision: DecisionRequest) => Promise<void>;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const shiftLead = operatorRole === "shift_lead";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const payload: DecisionRequest = {
       decision: form.get("decision") as DecisionRequest["decision"],
-      operatorName: String(form.get("operatorName") ?? "").trim(),
+      decisionMethod: form.get("decisionMethod") as DecisionRequest["decisionMethod"],
       note: String(form.get("note") ?? "").trim(),
     };
-    if (!payload.operatorName || !payload.note) {
-      setError("请填写操作者与研判说明。 ");
+    if (!payload.note) {
+      setError("请填写研判说明。 ");
       return;
     }
     setSubmitting(true);
@@ -151,17 +156,27 @@ export function HumanDecision({
         <span className="kicker">人工确认点</span>
         <h2 id="decision-title">形成事件记录</h2>
       </div>
+      <p className="operator-identity">
+        当前操作者：<strong>{operatorName}</strong>
+        <span className={`role-chip role-${operatorRole}`}>
+          {shiftLead ? "班长权限：可确认 / 驳回" : "操作员权限：仅可升级上报"}
+        </span>
+      </p>
       <label>
         研判结论
-        <select name="decision" defaultValue="confirm">
-          <option value="confirm">确认偏移</option>
-          <option value="reject">驳回偏移</option>
+        <select name="decision" defaultValue={shiftLead ? "confirm" : "escalate"}>
+          {shiftLead ? <option value="confirm">确认偏移</option> : null}
+          {shiftLead ? <option value="reject">驳回偏移</option> : null}
           <option value="escalate">升级处理</option>
         </select>
       </label>
       <label>
-        操作者
-        <input name="operatorName" autoComplete="name" required />
+        建议采纳情况
+        <select name="decisionMethod" defaultValue="followed">
+          <option value="followed">按建议执行</option>
+          <option value="partially_followed">部分采纳</option>
+          <option value="overridden">未采纳，改用其他方案</option>
+        </select>
       </label>
       <label>
         研判说明

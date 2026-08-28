@@ -1,5 +1,6 @@
 import type { components } from "./api-schema";
 import { demoEvent, demoEvents, demoRecord, demoRun, demoScenario } from "./demo-data";
+import { readSession, saveSession, clearSession, type AuthSession } from "./auth-store";
 
 type EventDetail = components["schemas"]["EventDetail"];
 type DecisionRecord = components["schemas"]["DecisionRecord"];
@@ -11,6 +12,7 @@ type RunControlRequest = components["schemas"]["RunControlRequest"];
 type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type Health = components["schemas"]["Health"];
 type Problem = components["schemas"]["Problem"];
+type LoginRequest = components["schemas"]["LoginRequest"];
 
 export type DataMode = "live" | "static-demo";
 
@@ -41,6 +43,7 @@ class NetworkUnavailableError extends Error {
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const session = readSession();
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -48,6 +51,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(session ? { Authorization: `Bearer ${session.token}` } : {}),
         ...init?.headers,
       },
     });
@@ -88,6 +92,22 @@ async function withFallback<T>(request: () => Promise<T>, fallback: T): Promise<
       notice: "网络不可达，当前为明确标注的静态 Demo 数据，确认操作不会写入服务器。",
     };
   }
+}
+
+export async function login(payload: LoginRequest): Promise<AuthSession> {
+  const data = await requestJson<components["schemas"]["LoginResponse"]>("/api/v1/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  const session: AuthSession = {
+    token: data.token,
+    username: data.username,
+    role: data.role,
+    displayName: data.displayName,
+    expiresAt: data.expiresAt,
+  };
+  saveSession(session);
+  return session;
 }
 
 export function getScenariosWithFallback(): Promise<ApiResult<Scenario[]>> {
@@ -150,6 +170,9 @@ export async function submitDecisionWithFallback(
         method: "POST",
         headers: { "Idempotency-Key": crypto.randomUUID() },
         body: JSON.stringify(decision),
+      }).catch((error: unknown) => {
+        if (error instanceof ApiProblemError && error.status === 401) clearSession();
+        throw error;
       }),
     { ...demoRecord, ...decision },
   );

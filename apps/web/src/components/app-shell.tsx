@@ -8,11 +8,15 @@ import {
   ListMagnifyingGlass,
   Play,
   ShieldCheck,
+  SignIn,
+  SignOut,
   Waveform,
   X,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+
+import { clearSession, useSession } from "@/lib/auth-store";
 
 export const navigationItems = [
   { href: "/demo", label: "演示引导", icon: Play },
@@ -34,6 +38,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const session = useSession();
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">跳到主要内容</a>
@@ -65,6 +70,16 @@ export function AppShell({
           <button className="sidebar-trigger" type="button" aria-label="打开主导航" aria-controls="app-navigation" aria-expanded={navigationOpen} onClick={() => setNavigationOpen(true)}><List aria-hidden="true" /></button>
           <div><span>TEP 仿真装置</span><strong>连续过程监控工作区</strong></div>
           <span className="source-chip">公开仿真数据</span>
+          {session ? (
+            <div className="operator-badge">
+              <span className={`role-chip role-${session.role}`}>{session.displayName}</span>
+              <button type="button" className="text-link" onClick={clearSession}>
+                <SignOut aria-hidden="true" /> 退出
+              </button>
+            </div>
+          ) : (
+            <Link className="text-link" href="/login"><SignIn aria-hidden="true" /> 操作员登录</Link>
+          )}
         </header>
         <main id="main-content" tabIndex={-1}>{children}</main>
       </div>

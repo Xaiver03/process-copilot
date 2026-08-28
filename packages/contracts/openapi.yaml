@@ -196,11 +196,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DecisionRecord"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
         "404":
           $ref: "#/components/responses/Problem"
         "409":
           $ref: "#/components/responses/Problem"
         "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/auth/login:
+    post:
+      summary: Authenticate a preset operator account
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Bearer token with operator identity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /api/v1/auth/me:
+    get:
+      summary: Current operator identity
+      operationId: me
+      responses:
+        "200":
+          description: Authenticated operator identity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorInfo"
+        "401":
           $ref: "#/components/responses/Problem"
   /api/v1/records/{recordId}:
     get:
@@ -405,10 +443,10 @@ components:
               const: Public simulation data, not real Guizhou plant data.
     DecisionRequest:
       type: object
-      required: [decision, operatorName, note]
+      required: [decision, note]
       properties:
         decision: {enum: [confirm, reject, escalate]}
-        operatorName: {type: string, minLength: 1, maxLength: 80}
+        decisionMethod: {enum: [followed, partially_followed, overridden], default: followed}
         note: {type: string, maxLength: 1000}
     DecisionRecord:
       type: object
@@ -418,10 +456,33 @@ components:
         eventId: {type: string, format: uuid}
         decision: {enum: [confirm, reject, escalate]}
         operatorName: {type: string}
+        operatorRole: {type: string}
         note: {type: string}
         createdAt: {type: string, format: date-time}
         modelVersion: {type: string}
         traceId: {type: string}
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: {type: string, minLength: 1, maxLength: 80}
+        password: {type: string, minLength: 1, maxLength: 128}
+    LoginResponse:
+      type: object
+      required: [token, username, role, displayName, expiresAt]
+      properties:
+        token: {type: string}
+        username: {type: string}
+        role: {enum: [operator, shift_lead]}
+        displayName: {type: string}
+        expiresAt: {type: string, format: date-time}
+    OperatorInfo:
+      type: object
+      required: [username, role, displayName]
+      properties:
+        username: {type: string}
+        role: {enum: [operator, shift_lead]}
+        displayName: {type: string}
     Problem:
       type: object
       required: [code, message, traceId]

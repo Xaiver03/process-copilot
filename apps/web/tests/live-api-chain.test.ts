@@ -53,7 +53,7 @@ describe("真实 API 主链路与降级边界", () => {
 
     const decision = await submitDecisionWithFallback(journey.data.event.id, {
       decision: "confirm",
-      operatorName: "王工",
+      decisionMethod: "followed",
       note: "确认 A 料进料损失。",
     });
     expect(decision.mode).toBe("live");

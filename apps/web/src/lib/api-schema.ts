@@ -174,6 +174,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Authenticate a preset operator account */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current operator identity */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/records/{recordId}": {
         parameters: {
             query?: never;
@@ -300,7 +334,11 @@ export interface components {
         DecisionRequest: {
             /** @enum {unknown} */
             decision: "confirm" | "reject" | "escalate";
-            operatorName: string;
+            /**
+             * @default followed
+             * @enum {unknown}
+             */
+            decisionMethod: "followed" | "partially_followed" | "overridden";
             note: string;
         };
         DecisionRecord: {
@@ -311,11 +349,31 @@ export interface components {
             /** @enum {unknown} */
             decision: "confirm" | "reject" | "escalate";
             operatorName: string;
+            operatorRole?: string;
             note: string;
             /** Format: date-time */
             createdAt: string;
             modelVersion: string;
             traceId: string;
+        };
+        LoginRequest: {
+            username: string;
+            password: string;
+        };
+        LoginResponse: {
+            token: string;
+            username: string;
+            /** @enum {unknown} */
+            role: "operator" | "shift_lead";
+            displayName: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        OperatorInfo: {
+            username: string;
+            /** @enum {unknown} */
+            role: "operator" | "shift_lead";
+            displayName: string;
         };
         Problem: {
             code: string;
@@ -593,9 +651,58 @@ export interface operations {
                     "application/json": components["schemas"]["DecisionRecord"];
                 };
             };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Bearer token with operator identity. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authenticated operator identity. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperatorInfo"];
+                };
+            };
+            401: components["responses"]["Problem"];
         };
     };
     getRecord: {

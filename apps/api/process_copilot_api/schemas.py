@@ -105,7 +105,7 @@ class EventDetail(AnomalyEvent):
 
 class DecisionRequest(ContractModel):
     decision: Literal["confirm", "reject", "escalate"]
-    operator_name: str = Field(min_length=1, max_length=80)
+    decision_method: Literal["followed", "partially_followed", "overridden"] = "followed"
     note: str = Field(max_length=1000)
 
 
@@ -114,6 +114,7 @@ class DecisionRecord(ContractModel):
     event_id: UUID
     decision: Literal["confirm", "reject", "escalate"]
     operator_name: str
+    operator_role: str = "unknown"
     note: str
     created_at: datetime
     model_version: str
