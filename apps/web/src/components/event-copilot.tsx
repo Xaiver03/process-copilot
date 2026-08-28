@@ -4,10 +4,19 @@ import { ArrowRight, PaperPlaneTilt, ShieldCheck } from "@phosphor-icons/react";
 import { FormEvent, useState } from "react";
 
 import type { components } from "@/lib/api-schema";
+import { EventAIClientError, askEventQuestion } from "@/lib/event-ai-client";
 import { answerEventQuestion, writebackPreviewSteps } from "@/lib/event-copilot";
+import { readSession, useAuthSession } from "@/lib/auth-store";
 import { formatFaultCandidate, localizeIndustrialCopy } from "@/lib/presentation";
 
 type EventDetail = components["schemas"]["EventDetail"];
+type AIAnswer = components["schemas"]["AIAnswer"];
+
+type Conversation = {
+  question: string;
+  answer: AIAnswer;
+  local: boolean;
+};
 
 const quickQuestions = [
   "为什么不是传感器故障？",
@@ -17,16 +26,45 @@ const quickQuestions = [
 
 export function EventCopilot({ event }: { event: EventDetail }) {
   const [question, setQuestion] = useState("");
-  const [conversation, setConversation] = useState<{ question: string; answer: string } | null>(null);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryQuestion, setRetryQuestion] = useState("");
   const [draft, setDraft] = useState(localizeIndustrialCopy(event.recommendation.actions[0] ?? "保持当前控制策略并提高监视频率"));
   const [previewed, setPreviewed] = useState(false);
+  const session = useAuthSession();
+  const activeSession = session ?? readSession();
   const topCandidate = event.candidates[0] ? formatFaultCandidate(event.candidates[0]).label : "候选尚未收敛";
 
-  function ask(nextQuestion: string) {
+  async function ask(nextQuestion: string) {
     const trimmed = nextQuestion.trim();
-    if (!trimmed) return;
-    setConversation({ question: trimmed, answer: answerEventQuestion(event, trimmed) });
+    if (!trimmed || loading) return;
     setQuestion("");
+    setRetryQuestion(trimmed);
+    setConversation(null);
+    setError(null);
+    setLoading(true);
+    if (!activeSession) {
+      setConversation({
+        question: trimmed,
+        answer: localTemplateAnswer(event, trimmed),
+        local: true,
+      });
+      setLoading(false);
+      return;
+    }
+    try {
+      const answer = await askEventQuestion(event.id, trimmed);
+      setConversation({ question: trimmed, answer, local: false });
+    } catch (requestError) {
+      setError(
+        requestError instanceof EventAIClientError && requestError.status === 401
+          ? "请先登录后使用在线 AI。"
+          : "在线 AI 请求失败，请重试。",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   function submitQuestion(submitEvent: FormEvent<HTMLFormElement>) {
@@ -46,18 +84,24 @@ export function EventCopilot({ event }: { event: EventDetail }) {
         <p><strong>序安</strong><span>我已锁定异常窗口。当前首要假设是“{topCandidate}”，你可以继续追问原因、风险或现场检查顺序。</span></p>
       </div>
 
+      {!activeSession ? <p className="copilot-auth-notice" role="status">未登录：请先登录后使用在线 AI，当前为本地模板演示。</p> : null}
+
       <div className="copilot-quick-questions" aria-label="快捷追问">
-        {quickQuestions.map((item) => <button type="button" key={item} onClick={() => ask(item)}>{item}</button>)}
+        {quickQuestions.map((item) => <button type="button" key={item} onClick={() => void ask(item)} disabled={loading}>{item}</button>)}
       </div>
 
       {conversation ? <div className="copilot-conversation" aria-live="polite">
         <p className="operator-message"><strong>操作员</strong><span>{conversation.question}</span></p>
-        <p className="assistant-message"><strong>序安</strong><span>{conversation.answer}</span></p>
+        <p className="assistant-message"><strong>序安</strong><span>{conversation.answer.answer}</span></p>
+        <AnswerMetadata answer={conversation.answer} local={conversation.local} />
       </div> : null}
+
+      {loading ? <p className="copilot-request-status" role="status">正在请求在线 AI…</p> : null}
+      {error ? <div className="copilot-request-error" role="alert"><span>{error}</span><button type="button" onClick={() => void ask(retryQuestion)} disabled={loading || !retryQuestion}>重试</button></div> : null}
 
       <form className="copilot-question-form" onSubmit={submitQuestion}>
         <label htmlFor="copilot-question">向序安追问</label>
-        <div><input id="copilot-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="例如：为什么不是传感器故障？" /><button type="submit" aria-label="发送问题" disabled={!question.trim()}><PaperPlaneTilt weight="fill" aria-hidden="true" /></button></div>
+        <div><input id="copilot-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="例如：为什么不是传感器故障？" disabled={loading} /><button type="submit" aria-label="发送问题" disabled={!question.trim() || loading}><PaperPlaneTilt weight="fill" aria-hidden="true" /></button></div>
       </form>
 
       <div className="writeback-preview">
@@ -70,6 +114,22 @@ export function EventCopilot({ event }: { event: EventDetail }) {
       </div>
     </section>
   );
+}
+
+function localTemplateAnswer(event: EventDetail, question: string): AIAnswer {
+  return {
+    answer: answerEventQuestion(event, question),
+    mode: "template",
+    model: "local-template-v0.1",
+    evidenceRefs: event.evidence.map((item) => item.variableId),
+    latencyMs: 0,
+    traceId: "local-template",
+  };
+}
+
+function AnswerMetadata({ answer, local }: { answer: AIAnswer; local: boolean }) {
+  const mode = local ? "本地模板" : answer.mode === "llm_enhanced" ? "在线 AI" : "模板降级";
+  return <div className="copilot-answer-meta"><span>{mode}</span><span>模型：{answer.model}</span><span>证据：{answer.evidenceRefs.join("、") || "未返回"}</span><span>Trace：{answer.traceId}</span></div>;
 }
 
 function BrainMessage() {
