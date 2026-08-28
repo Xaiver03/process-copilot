@@ -14,10 +14,11 @@ export function createProcessHeatmapData(
   currentSample = 500,
   faultOnsetSample = 160,
   totalSamples = 500,
+  highlightedVariables = ["XMEAS(9)", "XMEAS(21)", "XMV(10)"],
 ): ProcessHeatmapPoint[] {
   const visibleSample = Math.max(0, Math.min(currentSample, totalSamples));
   const samplePoints = Array.from({ length: Math.floor(visibleSample / 10) + 1 }, (_, index) => index * 10);
-  const criticalVariableIndices = new Set([8, 20, 50]);
+  const criticalVariableIndices = new Set(highlightedVariables.map((variable) => processVariables.indexOf(variable)).filter((index) => index >= 0));
   return processVariables.flatMap((_, variableIndex) =>
     samplePoints.map((sample) => {
       const baseline = 0.1 + Math.abs(Math.sin(sample / 26 + variableIndex / 7)) * 0.18;
@@ -34,6 +35,7 @@ export function createProcessHeatmapOption(
   currentSample = 500,
   faultOnsetSample = 160,
   totalSamples = 500,
+  highlightedVariables = ["XMEAS(9)", "XMEAS(21)", "XMV(10)"],
 ): EChartsOption & { series: Array<{ type: string; markLine?: unknown; markArea?: unknown }> } {
   const xAxisSamples = Array.from({ length: Math.floor(totalSamples / 10) + 1 }, (_, index) => String(index * 10));
   const faultAxisSample = String(Math.round(faultOnsetSample / 10) * 10);
@@ -58,7 +60,7 @@ export function createProcessHeatmapOption(
     },
     series: [{
       type: "heatmap",
-      data: createProcessHeatmapData(currentSample, faultOnsetSample, totalSamples),
+      data: createProcessHeatmapData(currentSample, faultOnsetSample, totalSamples, highlightedVariables),
       progressive: 4000,
       emphasis: { itemStyle: { borderColor: "#102a3a", borderWidth: 1 } },
       markLine: {

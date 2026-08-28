@@ -25,4 +25,13 @@ describe("过程回放热力图", () => {
     const after = data.find(([sample, variable]) => sample === "190" && variable === 20)?.[2] ?? 0;
     expect(after).toBeGreaterThan(before + 0.3);
   });
+
+  it("按当前场景的证据变量而不是固定冷却水变量高亮", () => {
+    const data = createProcessHeatmapData(200, 160, 500, ["XMEAS(1)", "XMV(3)", "XMEAS(20)"]);
+    const feedBefore = data.find(([sample, variable]) => sample === "150" && variable === 0)?.[2] ?? 0;
+    const feedAfter = data.find(([sample, variable]) => sample === "190" && variable === 0)?.[2] ?? 0;
+    const coolingAfter = data.find(([sample, variable]) => sample === "190" && variable === 20)?.[2] ?? 0;
+    expect(feedAfter).toBeGreaterThan(feedBefore + 0.3);
+    expect(coolingAfter).toBeLessThan(feedAfter);
+  });
 });

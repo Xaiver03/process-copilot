@@ -31,7 +31,7 @@ import {
 import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
 import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, formatScenarioPresentation, localizeIndustrialCopy } from "@/lib/presentation";
-import { advanceReplaySample, createReplayTelemetry, describeReplayStage, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
+import { advanceReplaySample, createReplayTelemetry, describeReplayStage, getReplaySignalDefinitions, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
@@ -214,7 +214,8 @@ export function ReplayScreen() {
   }
   const faultOnsetSample = selectedScenario?.faultOnsetSample ?? 160;
   const replayStage = describeReplayStage(displaySample, faultOnsetSample, journey?.data.event.sampleIndex ?? faultOnsetSample);
-  const telemetry = createReplayTelemetry(displaySample, faultOnsetSample);
+  const replaySignals = getReplaySignalDefinitions(selectedScenario?.faultId ?? 4);
+  const telemetry = createReplayTelemetry(displaySample, faultOnsetSample, selectedScenario?.faultId ?? 4);
   const eventVisible = Boolean(journey && displaySample >= journey.data.event.sampleIndex);
   return (
     <div className="page-stack replay-page">
@@ -235,8 +236,9 @@ export function ReplayScreen() {
         <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
         <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
         <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl>
+        <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p>
       </section> : null}
-      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} />
+      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} evidenceVariables={replaySignals.map(({ id, name }) => ({ id, name }))} />
       {journey && eventVisible ? <section className="capture-banner">
         <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} 捕获{journey.data.event.severity === "critical" ? "严重" : ""}偏移</strong><span>异常分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
         <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>

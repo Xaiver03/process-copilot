@@ -20,10 +20,16 @@ export function ProcessHeatmapChart({
   currentSample = 500,
   faultOnsetSample = 160,
   totalSamples = 500,
+  evidenceVariables = [
+    { id: "XMEAS(9)", name: "反应器温度" },
+    { id: "XMEAS(21)", name: "冷却水出口温度" },
+    { id: "XMV(10)", name: "冷却水流量阀开度" },
+  ],
 }: {
   currentSample?: number;
   faultOnsetSample?: number;
   totalSamples?: number;
+  evidenceVariables?: Array<{ id: string; name: string }>;
 } = {}) {
   return (
     <section className="chart-panel heatmap-panel" aria-labelledby="heatmap-title">
@@ -31,26 +37,22 @@ export function ProcessHeatmapChart({
         <div><span className="kicker">52 路变量总览</span><h2 id="heatmap-title">过程偏移热力图</h2></div>
         <span className="legend-copy"><i className="legend-normal" />正常 <i className="legend-drift" />偏移 <i className="legend-alarm" />严重</span>
       </div>
-      <p className="sr-summary" role="status">样本 {faultOnsetSample} 前为正常基线，之后 XMEAS(9)、XMEAS(21) 与 XMV(10) 的偏移强度明显上升；当前已回放到样本 {currentSample}。</p>
+      <p className="sr-summary" role="status">样本 {faultOnsetSample} 前为正常基线，之后 {evidenceVariables.map((item) => item.id).join("、")} 的偏移强度明显上升；当前已回放到样本 {currentSample}。</p>
       <ReactECharts
-        option={createProcessHeatmapOption(currentSample, faultOnsetSample, totalSamples)}
+        option={createProcessHeatmapOption(currentSample, faultOnsetSample, totalSamples, evidenceVariables.map((item) => item.id))}
         className="heatmap-chart desktop-chart"
         opts={{ renderer: "canvas" }}
         aria-hidden="true"
       />
       <div className="mobile-chart-fallback">
         <strong>移动端摘要</strong>
-        <p>样本 {faultOnsetSample} 前为正常基线；当前已回放到 {currentSample}，重点关注 XMEAS(9)、XMEAS(21) 与 XMV(10)。</p>
+        <p>样本 {faultOnsetSample} 前为正常基线；当前已回放到 {currentSample}，重点关注 {evidenceVariables.map((item) => item.id).join("、")}。</p>
       </div>
       <details className="data-table-disclosure">
         <summary>查看异常变量摘要表</summary>
         <table aria-label="热力图异常变量摘要">
           <thead><tr><th scope="col">变量</th><th scope="col">样本窗口</th><th scope="col">状态</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">XMEAS(9) 反应器温度</th><td>160-210</td><td>严重偏移</td></tr>
-            <tr><th scope="row">XMEAS(21) 冷却水出口温度</th><td>160-210</td><td>严重偏移</td></tr>
-            <tr><th scope="row">XMV(10) 冷却水流量阀</th><td>168-210</td><td>过程偏移</td></tr>
-          </tbody>
+          <tbody>{evidenceVariables.map((item) => <tr key={item.id}><th scope="row">{item.id} {item.name}</th><td>{faultOnsetSample}-{Math.min(totalSamples, faultOnsetSample + 50)}</td><td>显著偏移</td></tr>)}</tbody>
         </table>
       </details>
     </section>

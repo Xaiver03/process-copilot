@@ -58,6 +58,9 @@ describe("回放控制", () => {
     expect(screen.getByRole("combobox", { name: "回放倍速" }).closest("label")).toHaveClass("replay-speed-field");
     await user.click(screen.getByRole("button", { name: "开始回放" }));
     expect(await screen.findByText("回放进行中")).toBeInTheDocument();
+    expect(screen.getByText("XMEAS(1)")).toBeInTheDocument();
+    expect(screen.queryByText("XMEAS(21)")).not.toBeInTheDocument();
+    expect(screen.getByText("场景仿真变量 · 非现场实时遥测")).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: "回放倍速" }), "20");
     expect(await screen.findByRole("option", { name: "20×", selected: true })).toBeInTheDocument();
     const [url, init] = fetchMock.mock.calls[3] as [string, RequestInit];
