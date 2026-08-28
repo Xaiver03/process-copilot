@@ -64,7 +64,10 @@ def test_admin_endpoints_require_admin_role(admin_client) -> None:
     assert client.get("/api/v1/admin/overview").status_code == 401
     assert client.get("/api/v1/admin/overview", headers=operator).status_code == 403
     assert client.get("/api/v1/admin/overview", headers=lead).status_code == 403
-    assert client.get("/api/v1/admin/overview", headers=admin).status_code == 200
+    overview = client.get("/api/v1/admin/overview", headers=admin)
+    assert overview.status_code == 200
+    assert "recentLLMCalls" in overview.json()
+    assert "recentLlmCalls" not in overview.json()
 
 
 def test_admin_can_update_encrypted_config_with_optimistic_version(admin_client) -> None:

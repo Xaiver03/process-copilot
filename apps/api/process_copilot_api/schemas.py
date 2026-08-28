@@ -171,7 +171,7 @@ class AIInteractionPage(ContractModel):
 
 
 class AdminOverview(AIStatus):
-    recent_llm_calls: list[AIInteraction]
+    recent_llm_calls: list[AIInteraction] = Field(alias="recentLLMCalls")
     degraded_reasons: list[str]
 
 
