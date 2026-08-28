@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 import yaml
 from fastapi.testclient import TestClient
+from process_copilot_api.auth import token_secret
 from process_copilot_api.catalog import DataCatalog
 from process_copilot_api.db import AnomalyEventRow, RunInferenceStateRow, RunStreamMessageRow
 from process_copilot_api.main import create_app
@@ -90,6 +91,23 @@ def test_admin_demo_account_exists_without_registration(client: TestClient):
         "/api/v1/auth/register",
         json={"username": "new-user", "password": "not-allowed"},
     ).status_code == 404
+
+
+def test_production_rejects_missing_or_weak_operator_token_secret(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("OPERATOR_TOKEN_SECRET", raising=False)
+    with pytest.raises(RuntimeError, match="OPERATOR_TOKEN_SECRET"):
+        token_secret()
+
+    monkeypatch.setenv("OPERATOR_TOKEN_SECRET", "too-short")
+    with pytest.raises(RuntimeError, match="OPERATOR_TOKEN_SECRET"):
+        token_secret()
+
+    strong = "operator-token-secret-for-production-2026"
+    monkeypatch.setenv("OPERATOR_TOKEN_SECRET", strong)
+    assert token_secret() == strong
 
 
 def test_decision_requires_authentication_and_role(client: TestClient):

@@ -24,6 +24,7 @@ COMPOSE_FILE="$SOURCE_DIR/infra/compose.yaml"
 [[ -n "${POSTGRES_PASSWORD:-}" && "${POSTGRES_PASSWORD}" != "change_me_before_deploy" ]] || die "export a non-default POSTGRES_PASSWORD"
 [[ "$POSTGRES_PASSWORD" =~ ^[A-Za-z0-9._-]{20,128}$ ]] || die "POSTGRES_PASSWORD must be 20-128 env-file-safe characters"
 [[ "${AI_CONFIG_ENCRYPTION_KEY:-}" =~ ^[A-Za-z0-9_-]{43}=$ ]] || die "export a valid Fernet AI_CONFIG_ENCRYPTION_KEY"
+[[ "${OPERATOR_TOKEN_SECRET:-}" =~ ^[A-Za-z0-9._-]{32,128}$ ]] || die "export a 32-128 character OPERATOR_TOKEN_SECRET"
 [[ "${INFERENCE_MODE:-online}" =~ ^(online|template)$ ]] || die "INFERENCE_MODE must be online or template"
 [[ "${LLM_PROVIDER:-disabled}" =~ ^[A-Za-z0-9._-]+$ ]] || die "LLM_PROVIDER contains unsafe env-file characters"
 if [[ "${LLM_PROVIDER:-disabled}" != "disabled" ]]; then
@@ -107,7 +108,7 @@ fi
 
 RUNTIME_ENV="$DEPLOY_DIR/shared/runtime.env"
 mkdir -p "$(dirname "$RUNTIME_ENV")"
-printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_PORT=%s\nCOMPOSE_PROJECT_NAME=%s\nINFERENCE_MODE=%s\nLLM_PROVIDER=%s\nLLM_BASE_URL=%s\nLLM_MODEL=%s\nLLM_API_KEY=%s\nLLM_TIMEOUT_SECONDS=%s\nLLM_MAX_TOKENS=%s\nLLM_PROMPT_VERSION=%s\nAI_CONFIG_ENCRYPTION_KEY=%s\n' \
+printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_PORT=%s\nCOMPOSE_PROJECT_NAME=%s\nINFERENCE_MODE=%s\nLLM_PROVIDER=%s\nLLM_BASE_URL=%s\nLLM_MODEL=%s\nLLM_API_KEY=%s\nLLM_TIMEOUT_SECONDS=%s\nLLM_MAX_TOKENS=%s\nLLM_PROMPT_VERSION=%s\nAI_CONFIG_ENCRYPTION_KEY=%s\nOPERATOR_TOKEN_SECRET=%s\n' \
   "${POSTGRES_USER:-process_copilot}" \
   "${POSTGRES_DB:-process_copilot}" \
   "$POSTGRES_PASSWORD" \
@@ -121,7 +122,8 @@ printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_POR
   "${LLM_TIMEOUT_SECONDS:-8}" \
   "${LLM_MAX_TOKENS:-500}" \
   "${LLM_PROMPT_VERSION:-event-copilot-v01}" \
-  "$AI_CONFIG_ENCRYPTION_KEY" > "$RUNTIME_ENV"
+  "$AI_CONFIG_ENCRYPTION_KEY" \
+  "$OPERATOR_TOKEN_SECRET" > "$RUNTIME_ENV"
 chmod 600 "$RUNTIME_ENV"
 
 pushd "$RELEASE_DIR" >/dev/null

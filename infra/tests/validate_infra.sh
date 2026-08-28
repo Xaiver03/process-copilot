@@ -60,7 +60,8 @@ for setting in \
   'LLM_MODEL:' \
   'LLM_TIMEOUT_SECONDS:' \
   'LLM_MAX_TOKENS:' \
-  'AI_CONFIG_ENCRYPTION_KEY:'; do
+  'AI_CONFIG_ENCRYPTION_KEY:' \
+  'OPERATOR_TOKEN_SECRET:'; do
   if ! grep -q "$setting" <<<"$compose_config"; then
     printf 'missing online AI runtime setting: %s\n' "$setting" >&2
     exit 1
@@ -170,7 +171,8 @@ if ! grep -q 'shared/runtime.env' "$ROOT_DIR/infra/scripts/deploy.sh" \
 fi
 
 for setting in INFERENCE_MODE LLM_PROVIDER LLM_BASE_URL LLM_MODEL LLM_API_KEY \
-  LLM_TIMEOUT_SECONDS LLM_MAX_TOKENS LLM_PROMPT_VERSION AI_CONFIG_ENCRYPTION_KEY; do
+  LLM_TIMEOUT_SECONDS LLM_MAX_TOKENS LLM_PROMPT_VERSION AI_CONFIG_ENCRYPTION_KEY \
+  OPERATOR_TOKEN_SECRET; do
   if ! grep -q "$setting" "$ROOT_DIR/infra/scripts/deploy.sh"; then
     printf 'deploy runtime env must preserve %s\n' "$setting" >&2
     exit 1

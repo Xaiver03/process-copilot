@@ -73,9 +73,11 @@ def _verify_password(password: str, stored: str) -> bool:
 
 
 def token_secret() -> str:
-    secret = os.getenv("OPERATOR_TOKEN_SECRET")
-    if secret:
+    secret = os.getenv("OPERATOR_TOKEN_SECRET", "")
+    if len(secret) >= 32:
         return secret
+    if os.getenv("APP_ENV", "development").strip().lower() == "production":
+        raise RuntimeError("OPERATOR_TOKEN_SECRET must contain at least 32 characters")
     return "process-copilot-demo-secret-do-not-use-in-production"
 
 

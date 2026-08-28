@@ -29,6 +29,7 @@ x-api-environment: &api-environment
   LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-500}
   LLM_PROMPT_VERSION: ${LLM_PROMPT_VERSION:-event-copilot-v01}
   AI_CONFIG_ENCRYPTION_KEY: ${AI_CONFIG_ENCRYPTION_KEY:-}
+  OPERATOR_TOKEN_SECRET: ${OPERATOR_TOKEN_SECRET:-}
 
 services:
   caddy:
