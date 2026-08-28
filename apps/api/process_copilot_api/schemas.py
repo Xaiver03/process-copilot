@@ -121,6 +121,124 @@ class DecisionRecord(ContractModel):
     trace_id: str
 
 
+class AskEventRequest(ContractModel):
+    question: str = Field(min_length=1, max_length=500)
+
+
+class AIAnswer(ContractModel):
+    answer: str
+    mode: Literal["llm_enhanced", "template", "degraded"]
+    model: str
+    evidence_refs: list[str]
+    latency_ms: float = Field(ge=0)
+    trace_id: str
+
+
+class ServiceStatus(ContractModel):
+    status: Literal["ready", "degraded", "offline", "unknown"]
+    version: str | None = None
+    latency_ms: float | None = Field(default=None, ge=0)
+    reason: str | None = None
+
+
+class AIStatus(ContractModel):
+    inference_mode: Literal["online", "template"]
+    worker: ServiceStatus
+    industrial_model: ServiceStatus
+    language_model: ServiceStatus
+    data_build_hash: str
+
+
+class AIInteraction(ContractModel):
+    id: UUID
+    event_id: UUID
+    question: str
+    answer: str
+    mode: Literal["llm_enhanced", "template", "degraded"]
+    model: str
+    evidence_refs: list[str]
+    latency_ms: float = Field(ge=0)
+    trace_id: str
+    created_at: datetime
+
+
+class AIInteractionPage(ContractModel):
+    items: list[AIInteraction]
+    total: int = Field(ge=0)
+
+
+class AdminOverview(AIStatus):
+    recent_llm_calls: list[AIInteraction]
+    degraded_reasons: list[str]
+
+
+class AIConfig(ContractModel):
+    provider: str
+    base_url: str
+    model: str
+    enabled: bool
+    timeout_ms: int = Field(ge=1, le=120_000)
+    max_tokens: int = Field(ge=1, le=32_768)
+    temperature: float = Field(ge=0, le=2)
+    prompt_version: str
+    fallback_policy: Literal["template", "degraded"]
+    api_key_configured: bool
+    version: int = Field(ge=1)
+
+
+class UpdateAIConfigRequest(ContractModel):
+    provider: str | None = Field(default=None, min_length=1)
+    base_url: str | None = None
+    model: str | None = Field(default=None, min_length=1)
+    enabled: bool | None = None
+    timeout_ms: int | None = Field(default=None, ge=1, le=120_000)
+    max_tokens: int | None = Field(default=None, ge=1, le=32_768)
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    prompt_version: str | None = Field(default=None, min_length=1)
+    fallback_policy: Literal["template", "degraded"] | None = None
+    api_key: str | None = Field(default=None, min_length=1)
+    clear_api_key: bool = False
+    expected_version: int | None = Field(default=None, ge=0)
+
+
+class AIConnectionTestRequest(ContractModel):
+    question: str = Field(default="请用一句话确认连接正常。", min_length=1, max_length=500)
+
+
+class AIConnectionTestResponse(ContractModel):
+    ok: bool
+    mode: Literal["llm_enhanced", "degraded"]
+    provider: str
+    model: str
+    latency_ms: float = Field(ge=0)
+    trace_id: str
+    error: str | None = None
+
+
+class AdminAuditChangeSummary(ContractModel):
+    changed_fields: list[str]
+    previous_version: str
+    current_version: str
+    api_key_changed: bool | None = None
+
+
+class AdminAuditEntry(ContractModel):
+    id: UUID
+    actor: str
+    action: str
+    resource_type: str
+    resource_id: str
+    created_at: datetime
+    trace_id: str
+    request_id: str
+    change_summary: AdminAuditChangeSummary
+
+
+class AdminAuditPage(ContractModel):
+    items: list[AdminAuditEntry]
+    total: int = Field(ge=0)
+
+
 class Problem(ContractModel):
     code: str
     message: str
