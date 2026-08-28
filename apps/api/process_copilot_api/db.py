@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Float, Index, Integer, String, create_engine, text
+from sqlalchemy import JSON, Boolean, DateTime, Float, Index, Integer, String, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -56,10 +56,43 @@ class AIInteractionRow(Base):
     operator: Mapped[str] = mapped_column(String(80), nullable=False)
     question: Mapped[str] = mapped_column(String(500), nullable=False)
     answer: Mapped[str] = mapped_column(String(4000), nullable=False)
+    evidence_refs: Mapped[list[str]] = mapped_column(JSON, default=list)
     mode: Mapped[str] = mapped_column(String(24), nullable=False)
     model: Mapped[str] = mapped_column(String(128), nullable=False)
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     trace_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    created_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
+
+
+class AIConfigurationRow(Base):
+    __tablename__ = "ai_configurations"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    provider: Mapped[str] = mapped_column(String(80), nullable=False)
+    base_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    model: Mapped[str] = mapped_column(String(160), nullable=False)
+    api_key_ciphertext: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    fallback_mode: Mapped[str] = mapped_column(String(24), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
+
+
+class AdminAuditRow(Base):
+    __tablename__ = "admin_audit_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    actor: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    resource_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    change_summary: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    trace_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    request_id: Mapped[str] = mapped_column(String(128), nullable=False)
     created_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
 
 
