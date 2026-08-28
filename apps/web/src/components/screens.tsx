@@ -225,7 +225,7 @@ export function ReplayScreen() {
         <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / REPLAY_TOTAL_SAMPLES * 100)}%` }} /></div>
         <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl>
       </section> : null}
-      <ProcessHeatmapChart currentSample={journey ? displaySample : REPLAY_TOTAL_SAMPLES} faultOnsetSample={faultOnsetSample} />
+      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} />
       {journey && eventVisible ? <section className="capture-banner">
         <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} 捕获{journey.data.event.severity === "critical" ? "严重" : ""}偏移</strong><span>异常分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
         <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>

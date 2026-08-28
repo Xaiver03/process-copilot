@@ -29,16 +29,16 @@ export function ProcessHeatmapChart({
         <div><span className="kicker">52 路变量总览</span><h2 id="heatmap-title">过程偏移热力图</h2></div>
         <span className="legend-copy"><i className="legend-normal" />正常 <i className="legend-drift" />偏移 <i className="legend-alarm" />严重</span>
       </div>
-      <p className="sr-summary" role="status">样本 160 后，XMEAS(9)、XMEAS(21) 与 XMV(5) 的偏移强度明显上升。图表使用位置、文字摘要和颜色共同表达。</p>
+      <p className="sr-summary" role="status">样本 {faultOnsetSample} 前为正常基线，之后 XMEAS(9)、XMEAS(21) 与 XMV(10) 的偏移强度明显上升；当前已回放到样本 {currentSample}。</p>
       <ReactECharts
-        option={createProcessHeatmapOption()}
+        option={createProcessHeatmapOption(currentSample, faultOnsetSample)}
         className="heatmap-chart desktop-chart"
         opts={{ renderer: "canvas" }}
         aria-hidden="true"
       />
       <div className="mobile-chart-fallback">
         <strong>移动端摘要</strong>
-        <p>当前重点关注 XMEAS(9)、XMEAS(21) 与 XMV(5)。完整 52 变量热力图请在 768px 以上屏幕查看。</p>
+        <p>样本 {faultOnsetSample} 前为正常基线；当前已回放到 {currentSample}，重点关注 XMEAS(9)、XMEAS(21) 与 XMV(10)。</p>
       </div>
       <details className="data-table-disclosure">
         <summary>查看异常变量摘要表</summary>
@@ -47,7 +47,7 @@ export function ProcessHeatmapChart({
           <tbody>
             <tr><th scope="row">XMEAS(9) 反应器温度</th><td>160-210</td><td>严重偏移</td></tr>
             <tr><th scope="row">XMEAS(21) 冷却水出口温度</th><td>160-210</td><td>严重偏移</td></tr>
-            <tr><th scope="row">XMV(5) 压缩机回流阀</th><td>168-210</td><td>过程偏移</td></tr>
+            <tr><th scope="row">XMV(10) 冷却水流量阀</th><td>168-210</td><td>过程偏移</td></tr>
           </tbody>
         </table>
       </details>
