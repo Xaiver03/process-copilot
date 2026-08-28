@@ -22,11 +22,19 @@ describe("真实 API 主链路与降级边界", () => {
       .mockResolvedValueOnce(jsonResponse({
         id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         scenarioId: "tep-f06-a-feed-loss",
-        state: "playing",
+        state: "ready",
         speed: 10,
-        currentSample: 160,
+        currentSample: 0,
         createdAt: "2026-08-28T09:00:00+08:00",
       }, 201))
+      .mockResolvedValueOnce(jsonResponse({
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        scenarioId: "tep-f06-a-feed-loss",
+        state: "playing",
+        speed: 10,
+        currentSample: 0,
+        createdAt: "2026-08-28T09:00:00+08:00",
+      }))
       .mockResolvedValueOnce(jsonResponse([{
         id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         runId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -50,6 +58,7 @@ describe("真实 API 主链路与降级边界", () => {
     const journey = await startScenarioWithFallback("tep-f06-a-feed-loss", 10);
     expect(journey.mode).toBe("live");
     expect(journey.data.run.id).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    expect(journey.data.run.state).toBe("playing");
     expect(journey.data.event.id).toBe("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
 
     const decision = await submitDecisionWithFallback(journey.data.event.id, {
@@ -59,8 +68,10 @@ describe("真实 API 主链路与降级边界", () => {
     });
     expect(decision.mode).toBe("live");
     expect(decision.data.id).toBe("cccccccc-cccc-4ccc-8ccc-cccccccccccc");
-    expect(fetchMock.mock.calls[1]?.[0]).toContain("/api/v1/runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/events");
-    expect(fetchMock.mock.calls[2]?.[0]).toContain("/api/v1/events/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/decision");
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("/api/v1/runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/control");
+    expect(JSON.parse(String((fetchMock.mock.calls[1]?.[1] as RequestInit).body))).toMatchObject({ action: "play", speed: 10 });
+    expect(fetchMock.mock.calls[2]?.[0]).toContain("/api/v1/runs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/events");
+    expect(fetchMock.mock.calls[3]?.[0]).toContain("/api/v1/events/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/decision");
   });
 
   it("HTTP 404 抛出 Problem，绝不回退为静态事件", async () => {

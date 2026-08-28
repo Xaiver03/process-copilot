@@ -198,11 +198,22 @@ export async function startScenarioWithFallback(
     };
   }
 
-  const eventsResult = await listRunEventsWithFallback(runResult.data.id);
+  const startedRunResult = runResult.data.state === "playing"
+    ? runResult
+    : await controlRunWithFallback(runResult.data.id, { action: "play", speed });
+  if (startedRunResult.mode === "static-demo") {
+    return {
+      data: { run: startedRunResult.data, event: demoEvent },
+      mode: startedRunResult.mode,
+      notice: startedRunResult.notice,
+    };
+  }
+
+  const eventsResult = await listRunEventsWithFallback(startedRunResult.data.id);
   const event = eventsResult.data[0];
   if (!event) throw new Error("回放已创建，但尚未生成可研判事件，请重试。");
   return {
-    data: { run: runResult.data, event },
+    data: { run: startedRunResult.data, event },
     mode: eventsResult.mode,
     notice: eventsResult.notice,
   };
