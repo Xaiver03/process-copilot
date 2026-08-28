@@ -212,7 +212,7 @@ textarea { resize: vertical; }
   align-items: center;
   padding: 0 4px;
   color: var(--wuno-text-secondary);
-  font-size: var(--font-caption);
+  font-size: var(--font-caption, var(--font-support));
   line-height: 1.45;
 }
 .copilot-answer-meta span { overflow-wrap: anywhere; }
