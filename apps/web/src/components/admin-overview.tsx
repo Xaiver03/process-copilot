@@ -16,6 +16,12 @@ const serviceLabels: Record<ServiceState, string> = {
   unknown: "未知",
 };
 
+const interactionModeLabels: Record<AdminOverview["recentLLMCalls"][number]["mode"], string> = {
+  llm_enhanced: "在线增强",
+  template: "模板降级",
+  degraded: "服务降级",
+};
+
 function ServiceCard({ title, service }: { title: string; service: AdminOverview["worker"] }) {
   return (
     <article className={styles.card}>
@@ -24,7 +30,7 @@ function ServiceCard({ title, service }: { title: string; service: AdminOverview
         <span className={`${styles.badge} ${styles[service.status]}`}>{serviceLabels[service.status]}</span>
       </div>
       <strong>{service.version ?? "版本未上报"}</strong>
-      <code>{service.latencyMs === undefined ? "延迟未上报" : `${service.latencyMs} ms`}</code>
+      <code>{service.latencyMs == null ? "延迟未上报" : `${service.latencyMs} ms`}</code>
       {service.reason ? <p className={styles.secondary}>{service.reason}</p> : null}
     </article>
   );
@@ -72,7 +78,7 @@ export function AdminOverviewPage() {
         <article className={styles.card}>
           <div className={styles.cardHead}><span>推理模式</span></div>
           <strong>{data.inferenceMode === "online" ? "在线 AI" : "模板降级"}</strong>
-          <code>{data.dataBuildHash}</code>
+          <code>{data.dataBuildHash === "unavailable" ? "数据版本未上报" : data.dataBuildHash}</code>
         </article>
         <ServiceCard title="任务 Worker" service={data.worker} />
         <ServiceCard title="工业模型" service={data.industrialModel} />
@@ -95,7 +101,7 @@ export function AdminOverviewPage() {
                   {data.recentLLMCalls.map((item) => (
                     <tr key={item.id}>
                       <td>{formatAdminTime(item.createdAt)}</td>
-                      <td><span className={`${styles.badge} ${item.mode === "llm_enhanced" ? styles.ready : styles.degraded}`}>{item.mode}</span></td>
+                      <td><span className={`${styles.badge} ${item.mode === "llm_enhanced" ? styles.ready : styles.degraded}`}>{interactionModeLabels[item.mode]}</span></td>
                       <td>{item.model}</td>
                       <td>{item.latencyMs} ms</td>
                       <td><code>{item.traceId}</code></td>

@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ usePathname: () => "/admin/ai" }));
 
 const mocks = vi.hoisted(() => ({
+  getAdminOverview: vi.fn(),
   getAIConfig: vi.fn(),
   getAIStatus: vi.fn(),
   updateAIConfig: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("@/lib/admin-api", async () => {
 import { AdminAccess } from "@/components/admin-shell";
 import { AdminAIConfig } from "@/components/admin-ai-config";
 import { AdminInteractionsPage } from "@/components/admin-interactions";
+import { AdminOverviewPage } from "@/components/admin-overview";
 import { saveSession } from "@/lib/auth-store";
 
 const adminSession = {
@@ -50,6 +52,26 @@ describe("admin 权限和 AI 配置", () => {
     window.localStorage.clear();
     vi.clearAllMocks();
     mocks.getAIConfig.mockResolvedValue(config);
+    mocks.getAdminOverview.mockResolvedValue({
+      inferenceMode: "online",
+      worker: { status: "ready", version: "worker", latencyMs: null },
+      industrialModel: { status: "ready", version: "model-v1", latencyMs: null },
+      languageModel: { status: "offline", version: null, latencyMs: null, reason: "语言模型增强未启用" },
+      dataBuildHash: "unavailable",
+      recentLLMCalls: [{
+        id: "interaction-1",
+        eventId: "event-1",
+        question: "为什么？",
+        answer: "模板回答",
+        mode: "template",
+        model: "template-v0.1",
+        evidenceRefs: [],
+        latencyMs: 0,
+        traceId: "trace-1",
+        createdAt: "2026-08-28T00:00:00Z",
+      }],
+      degradedReasons: ["语言模型增强未启用"],
+    });
     mocks.getAIStatus.mockResolvedValue({
       inferenceMode: "online",
       worker: { status: "ready" },
@@ -116,6 +138,17 @@ describe("admin 权限和 AI 配置", () => {
     render(<AdminAccess><AdminAIConfig /></AdminAccess>);
     expect(await screen.findByText(/在线 AI 当前已禁用/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "测试连接" })).toBeDisabled();
+  });
+
+  it("运行概览将空值和调用模式显示为中文业务状态", async () => {
+    render(<AdminOverviewPage />);
+
+    expect(await screen.findByRole("heading", { name: "AI 运行概览" })).toBeInTheDocument();
+    expect(screen.getAllByText("延迟未上报")).toHaveLength(3);
+    expect(screen.getByText("数据版本未上报")).toBeInTheDocument();
+    expect(screen.getByText("模板降级", { selector: "span" })).toBeInTheDocument();
+    expect(screen.queryByText("null ms")).not.toBeInTheDocument();
+    expect(screen.queryByText("unavailable")).not.toBeInTheDocument();
   });
 
   it("CSS module 对桌面、中屏和 390px 视口保持局部滚动而非页面溢出", () => {
