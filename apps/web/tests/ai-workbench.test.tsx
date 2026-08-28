@@ -7,7 +7,7 @@ vi.mock("@/components/charts", () => ({
   ProcessHeatmapChart: () => <div>过程热力图</div>,
 }));
 
-import { EventDetailScreen } from "@/components/screens";
+import { EventDetailScreen, OverviewScreen } from "@/components/screens";
 
 describe("AI 可感知事件研判", () => {
   afterEach(() => {
@@ -34,5 +34,22 @@ describe("AI 可感知事件研判", () => {
     expect(await screen.findByText("不只报异常，还给出故障假设与变量证据")).toBeInTheDocument();
     expect(screen.getByText(/检测样本 160/)).toBeInTheDocument();
     expect(screen.getByText(/诊断样本 180/)).toBeInTheDocument();
+  });
+});
+
+describe("AI 装置总览", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("突出 AI 当前判断、优先原因和人工确认入口", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    render(<OverviewScreen />);
+
+    expect(await screen.findByText("AI 当前判断")).toBeInTheDocument();
+    expect(screen.getByText("为什么优先处理")).toBeInTheDocument();
+    expect(screen.getByText("AI 异常分数")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /查看 AI 研判依据/ })).toBeInTheDocument();
   });
 });

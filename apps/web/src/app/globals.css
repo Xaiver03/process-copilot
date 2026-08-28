@@ -68,6 +68,7 @@ button, select, input, textarea, summary, .text-link, .table-link { min-height: 
 .metric-strip span, .metric-strip small { color: var(--wuno-text-secondary); font-size: var(--font-support); }
 .metric-strip strong { font-family: var(--font-mono); font-size: 23px; font-variant-numeric: tabular-nums; }
 .metric-strip .metric-alert { color: #a52f42; font-family: var(--font-sans); font-size: 18px; }
+.metric-strip .metric-hypothesis { font-family: var(--font-sans); font-size: 18px; line-height: 1.35; }
 .overview-grid { display: grid; grid-template-columns: minmax(0, 8fr) minmax(300px, 3fr); gap: 24px; align-items: stretch; }
 .chart-panel, .event-rail, .side-panel, .compact-chart, .decision-form, .record-summary, .audit-timeline, .table-panel { border: 1px solid var(--wuno-border-subtle); border-radius: 12px; background: var(--wuno-surface-panel); }
 .chart-panel { padding: 16px; overflow: hidden; }
@@ -88,6 +89,12 @@ tbody th { font-weight: 700; }
 .event-rail { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
 .event-rail > strong { font-size: 18px; line-height: 1.35; }
 .event-rail > p { margin: 0; color: var(--wuno-text-secondary); font-size: var(--font-support); line-height: 1.65; }
+.event-rail .event-ai-summary { padding-bottom: 16px; border-bottom: 1px solid var(--wuno-border-subtle); }
+.event-ai-summary strong { color: var(--wuno-text-primary); }
+.priority-reasons { display: grid; gap: 0; margin: 0; }
+.priority-reasons div { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; min-height: 52px; align-items: center; border-bottom: 1px solid var(--wuno-border-subtle); }
+.priority-reasons dt { color: var(--wuno-primary-700); font-size: var(--font-support); font-weight: 800; }
+.priority-reasons dd { margin: 0; color: var(--wuno-text-secondary); font-size: var(--font-support); line-height: 1.45; }
 .event-rail .primary-button { margin-top: auto; }
 .primary-button, .secondary-button, .control-button { min-height: 44px; border-radius: 8px; font-weight: 800; }
 .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 16px; border: 1px solid var(--wuno-primary-700); background: var(--wuno-primary-700); color: white; }

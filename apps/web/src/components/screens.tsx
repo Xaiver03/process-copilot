@@ -98,26 +98,31 @@ export function DemoScreen() {
 
 export function OverviewScreen() {
   const resource = useApiResource<Scenario[]>(getScenariosWithFallback, "scenarios");
+  const overviewCandidate = formatFaultCandidate(demoEvent.candidates[0]);
   return (
     <div className="page-stack">
-      <PageHeader kicker="运营总览" title="装置过程状态" summary="先看偏移与数据新鲜度，再进入单个事件完成研判。" />
+      <PageHeader kicker="AI 运营总览" title="装置过程状态" summary="先看 AI 发现的偏移、当前故障假设和待确认事件，再进入证据页完成人工研判。" />
       <ResourceBoundary {...resource}>{(result) => (
         <>
           <ModeNotice mode={result.mode} notice={result.notice} />
           <section className="metric-strip" aria-label="关键运行指标">
-            <div><span>过程状态</span><strong className="metric-alert">严重偏移</strong><small>样本 176</small></div>
-            <div><span>异常分数</span><strong>0.87</strong><small>阈值 0.62</small></div>
-            <div><span>待研判事件</span><strong>1</strong><small>总事件 3</small></div>
-            <div><span>公开场景</span><strong>{result.data.length}</strong><small>TEP 仿真</small></div>
+            <div><span>装置状态</span><strong className="metric-alert">严重偏移</strong><small>AI 锁定样本 {demoEvent.detectionSample}</small></div>
+            <div><span>AI 异常分数</span><strong>{demoEvent.anomalyScore.toFixed(2)}</strong><small>持续性条件已满足</small></div>
+            <div><span>AI 当前假设</span><strong className="metric-hypothesis">冷却水入口温度</strong><small>Top-1 · {overviewCandidate.probability}</small></div>
+            <div><span>待人工确认</span><strong>1</strong><small>AI 已完成证据整理</small></div>
           </section>
           <div className="overview-grid">
             <ProcessHeatmapChart />
-            <aside className="event-rail">
-              <div className="section-heading"><div><span className="kicker">当前优先</span><h2>待研判事件</h2></div></div>
-              <StatusTag state="critical" label="严重偏移" />
-              <strong>冷却水回路响应异常</strong>
-              <p>Top-1 候选：反应器冷却水入口温度阶跃，置信度 74%。</p>
-              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/demo"}>{result.mode === "static-demo" ? "进入静态研判" : "启动真实主链路"} <ArrowRight aria-hidden="true" /></Link>
+              <aside className="event-rail">
+              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>为什么优先处理</h2></div></div>
+              <p className="event-ai-summary">三项关键变量在同一时间窗内共同偏离，AI 将<strong>{overviewCandidate.label}</strong>排为当前首要故障假设。</p>
+              <dl className="priority-reasons">
+                <div><dt>发现</dt><dd>样本 {demoEvent.detectionSample} 锁定偏移</dd></div>
+                <div><dt>判断</dt><dd>Top-1 概率 {overviewCandidate.probability}</dd></div>
+                <div><dt>解释</dt><dd>{demoEvent.evidence[0].variableId} 贡献最高</dd></div>
+                <div><dt>下一步</dt><dd>等待当班人员确认</dd></div>
+              </dl>
+              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/demo"}>查看 AI 研判依据 <ArrowRight aria-hidden="true" /></Link>
             </aside>
           </div>
         </>
