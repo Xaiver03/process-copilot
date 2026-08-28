@@ -8,6 +8,10 @@
     "test": "pnpm --recursive --if-present test",
     "lint": "pnpm --recursive --if-present lint",
     "typecheck": "pnpm --recursive --if-present typecheck",
-    "lint:contracts": "pnpm --package=@redocly/cli@1.34.5 dlx redocly lint packages/contracts/openapi.yaml"
+    "lint:contracts": "pnpm --package=@redocly/cli@1.34.5 dlx redocly lint packages/contracts/openapi.yaml",
+    "test:e2e:journeys": "playwright test -c tests/e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.0"
   }
 }
