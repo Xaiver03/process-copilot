@@ -3,6 +3,7 @@
 import {
   ClipboardText,
   Gauge,
+  GearSix,
   HardDrives,
   List,
   ListMagnifyingGlass,
@@ -53,7 +54,9 @@ export function AppShell({
           <span><strong>序安</strong><small>PROCESS SENTINEL</small></span>
         </Link>
         <nav aria-label="主导航">
-          {navigationItems.map(({ href, label, icon: Icon }) => {
+          {[...navigationItems, ...(session?.role === "admin"
+            ? [{ href: "/admin", label: "管理后台", icon: GearSix }]
+            : [])].map(({ href, label, icon: Icon }) => {
             const active = isCurrentRoute(currentPath, href);
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setNavigationOpen(false)}>

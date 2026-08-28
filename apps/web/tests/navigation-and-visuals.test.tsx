@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { productTokens } from "@process-copilot/ui";
 
 import { AppShell, navigationItems } from "@/components/app-shell";
+import { saveSession } from "@/lib/auth-store";
 import { StatePanel } from "@/components/state-panel";
 import {
   createEvidenceTrendOption,
@@ -44,6 +45,26 @@ describe("应用框架与路由", () => {
     expect(screen.getByRole("complementary")).toHaveClass("sidebar-open");
     await user.click(screen.getByRole("button", { name: "关闭主导航" }));
     expect(screen.getByRole("complementary")).not.toHaveClass("sidebar-open");
+  });
+
+  it("仅向系统管理员显示管理后台入口", async () => {
+    const expiresAt = "2099-01-01T00:00:00Z";
+    const { rerender } = render(<AppShell currentPath="/overview"><p>内容</p></AppShell>);
+    expect(screen.queryByRole("link", { name: "管理后台" })).not.toBeInTheDocument();
+
+    saveSession({
+      token: "admin-token",
+      username: "system-admin",
+      role: "admin",
+      displayName: "系统管理员",
+      expiresAt,
+    });
+    rerender(<AppShell currentPath="/admin"><p>内容</p></AppShell>);
+
+    expect(await screen.findByRole("link", { name: "管理后台" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });
 
