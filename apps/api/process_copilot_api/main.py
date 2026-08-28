@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from datetime import UTC, datetime
@@ -41,6 +42,8 @@ DEGRADED_FALLBACK_MODEL_VERSION = "degraded-demo-fallback-v0.1"
 DEGRADED_FALLBACK_RISK = (
     "演示降级：事件模板缺失或无效，以下证据为固定占位内容，不代表真实模型计算结果。"
 )
+SSE_HEARTBEAT_COUNT = 3
+SSE_HEARTBEAT_INTERVAL_SECONDS = 0.05
 
 
 class APIError(Exception):
@@ -456,18 +459,37 @@ def create_app(
                 )
             )
             run_payload = _run_response(run)
-            frames: list[str] = [
-                _sse_frame(1, "state", run_payload),
-                _sse_frame(2, "heartbeat", {"status": "ok", "runId": str(runId)}),
+            stream_events = [
+                ("state", run_payload),
+                ("heartbeat", {"status": "ok", "runId": str(runId)}),
+                *[("anomaly", _event_response(event)) for event in event_rows],
             ]
-            frames.extend(
-                _sse_frame(index + 3, "anomaly", _event_response(event))
-                for index, event in enumerate(event_rows)
-            )
+
+        async def event_stream():
+            event_id = 1
+            for event, payload in stream_events:
+                if event_id > cursor:
+                    yield _sse_frame(event_id, event, payload)
+                event_id += 1
+
+            for _ in range(SSE_HEARTBEAT_COUNT - 1):
+                await asyncio.sleep(SSE_HEARTBEAT_INTERVAL_SECONDS)
+                if event_id > cursor:
+                    yield _sse_frame(
+                        event_id,
+                        "heartbeat",
+                        {"status": "ok", "runId": str(runId)},
+                    )
+                event_id += 1
+
         return StreamingResponse(
-            (frame for index, frame in enumerate(frames, start=1) if index > cursor),
+            event_stream(),
             media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     @app.get(

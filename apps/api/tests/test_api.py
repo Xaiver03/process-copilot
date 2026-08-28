@@ -375,6 +375,21 @@ def test_control_and_sse_last_event_id_replay(client: TestClient):
     assert "event: anomaly" in resumed.text
 
 
+def test_sse_stream_emits_bounded_periodic_heartbeats(client: TestClient):
+    run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
+    response = client.get(f"/api/v1/runs/{run['id']}/stream")
+
+    assert response.status_code == 200
+    assert response.headers["connection"] == "keep-alive"
+    assert response.text.count("event: heartbeat") == 3
+    event_ids = [
+        int(line.removeprefix("id: "))
+        for line in response.text.splitlines()
+        if line.startswith("id: ")
+    ]
+    assert event_ids == sorted(set(event_ids))
+
+
 def test_event_detail_decision_and_record_are_auditable(client: TestClient):
     run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
     events = client.get(f"/api/v1/runs/{run['id']}/events")
