@@ -135,3 +135,10 @@ def test_admin_responses_are_paginated_and_auditable(openapi: dict, domain: dict
             "#/components/parameters/Limit",
             "#/components/parameters/Offset",
         } <= references
+
+
+def test_auth_contract_includes_admin_without_registration(openapi: dict) -> None:
+    expected_roles = ["operator", "shift_lead", "admin"]
+    assert schema(openapi, "LoginResponse")["properties"]["role"]["enum"] == expected_roles
+    assert schema(openapi, "OperatorInfo")["properties"]["role"]["enum"] == expected_roles
+    assert "/api/v1/auth/register" not in openapi["paths"]

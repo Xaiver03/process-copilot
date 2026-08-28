@@ -856,7 +856,7 @@ components:
       properties:
         token: {type: string}
         username: {type: string}
-        role: {enum: [operator, shift_lead]}
+        role: {enum: [operator, shift_lead, admin]}
         displayName: {type: string}
         expiresAt: {type: string, format: date-time}
     OperatorInfo:
@@ -864,7 +864,7 @@ components:
       required: [username, role, displayName]
       properties:
         username: {type: string}
-        role: {enum: [operator, shift_lead]}
+        role: {enum: [operator, shift_lead, admin]}
         displayName: {type: string}
     Problem:
       type: object

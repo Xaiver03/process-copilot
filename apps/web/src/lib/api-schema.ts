@@ -646,7 +646,7 @@ export interface components {
             token: string;
             username: string;
             /** @enum {unknown} */
-            role: "operator" | "shift_lead";
+            role: "operator" | "shift_lead" | "admin";
             displayName: string;
             /** Format: date-time */
             expiresAt: string;
@@ -654,7 +654,7 @@ export interface components {
         OperatorInfo: {
             username: string;
             /** @enum {unknown} */
-            role: "operator" | "shift_lead";
+            role: "operator" | "shift_lead" | "admin";
             displayName: string;
         };
         Problem: {
