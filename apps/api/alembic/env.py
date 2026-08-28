@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from logging.config import fileConfig
-from pathlib import Path
 import os
 import sys
+from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -11,9 +11,9 @@ from sqlalchemy import engine_from_config, pool
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
-from process_copilot_api.db import Base  # noqa: E402
 from process_copilot_api import auth  # noqa: F401,E402
 from process_copilot_api import db as models  # noqa: F401,E402
+from process_copilot_api.db import Base  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:

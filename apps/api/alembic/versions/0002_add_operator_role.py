@@ -6,8 +6,8 @@ Revises: 0001_initial
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0002_operator_role"
 down_revision = "0001_initial"
@@ -21,7 +21,9 @@ def upgrade() -> None:
     if "operator_role" not in columns:
         op.add_column(
             "decision_records",
-            sa.Column("operator_role", sa.String(length=16), nullable=False, server_default="unknown"),
+            sa.Column(
+                "operator_role", sa.String(length=16), nullable=False, server_default="unknown"
+            ),
         )
 
 

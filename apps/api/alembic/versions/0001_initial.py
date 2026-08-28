@@ -7,9 +7,8 @@ Create Date: 2026-08-28
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "0001_initial"
 down_revision = None
@@ -27,7 +26,9 @@ def upgrade() -> None:
         sa.Column("current_sample", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("created_at", sa.DateTime(), nullable=False),
     )
-    op.create_index(op.f("ix_replay_runs_scenario_id"), "replay_runs", ["scenario_id"], unique=False)
+    op.create_index(
+        op.f("ix_replay_runs_scenario_id"), "replay_runs", ["scenario_id"], unique=False
+    )
 
     op.create_table(
         "anomaly_events",
@@ -54,7 +55,9 @@ def upgrade() -> None:
         sa.Column("model_version", sa.String(length=64), nullable=False),
         sa.Column("trace_id", sa.String(length=128), nullable=False),
     )
-    op.create_index(op.f("ix_decision_records_event_id"), "decision_records", ["event_id"], unique=False)
+    op.create_index(
+        op.f("ix_decision_records_event_id"), "decision_records", ["event_id"], unique=False
+    )
 
     op.create_table(
         "audits",
