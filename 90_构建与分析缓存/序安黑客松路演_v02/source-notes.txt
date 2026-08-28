@@ -1,0 +1,25 @@
+序安 Process Sentinel 黑客松路演 v02｜来源台账
+记录日期：2026-08-28
+
+一、源 Deck 与叙事
+1. 04_交付成品/序安_Process_Sentinel_黑客松路演_v01_ZH_REVIEW.pptx
+2. 90_构建与分析缓存/序安黑客松路演_v01/source-notes.txt
+3. docs/submission/序安黑客松路演叙事_v01_DRAFT.md
+
+二、现行产品标志
+1. apps/web/public/brand/process-sentinel-mark-v01.png
+2. 尺寸：1254 × 1254 px；SHA-256：9379dcb457c4650cc4b3173341d4ef43a297515fd754217260503e2ecc1f8ca3
+3. 引入提交：1c86bf3 feat(brand): 接入序安过程哨兵标志
+4. v02 只使用该真实源图，不重画、不仿制、不把 Wuno 球体当作产品 Logo。
+
+三、逐字稿
+1. docs/submission/序安黑客松路演逐字稿_v01_REVIEW.md
+2. 逐页文本将嵌入 PPTX 演讲者备注；每页同时保留 [Sources] 来源块。
+
+四、外部公开来源
+1. Tennessee Eastman Process 上游仓库
+   https://github.com/camaramm/tennessee-eastman-profBraatz
+2. 贵州省大数据发展管理局：贵州省行业大模型典型应用案例之十七｜磷化工能耗优化大模型
+   https://dsj.guizhou.gov.cn/ztzl/rdzt/jdal/202601/t20260120_89316875.html
+3. 边界：贵州案例只作为公开产业参照，不表示序安与贵州磷化集团合作或拥有其真实数据。
+

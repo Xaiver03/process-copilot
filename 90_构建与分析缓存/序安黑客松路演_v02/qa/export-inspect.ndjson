@@ -1,0 +1,259 @@
+{"kind":"deck","id":"pr/mefs70","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"序安","textShapes":6}
+{"kind":"shape","id":"sh/utg3698n","slide":1,"bbox":[810,52,390,390]}
+{"kind":"textbox","id":"sh/k3yl0zql","slide":1,"text":"序安","textPreview":"序安","textChars":2,"textLines":1,"bbox":[70,70,180,42]}
+{"kind":"textbox","id":"sh/7qp4be9c","slide":1,"text":"PROCESS SENTINEL","textPreview":"PROCESS SENTINEL","textChars":16,"textLines":1,"bbox":[70,112,280,24]}
+{"kind":"textbox","id":"sh/65g3298r","slide":1,"text":"让过程异常\n在事故之前被看见","textPreview":"让过程异常 | 在事故之前被看见","textChars":14,"textLines":2,"bbox":[70,198,680,190]}
+{"kind":"textbox","id":"sh/ts7md4r2","slide":1,"text":"连续化工过程偏移副驾驶","textPreview":"连续化工过程偏移副驾驶","textChars":11,"textLines":1,"bbox":[70,420,620,46]}
+{"kind":"textbox","id":"sh/sryl4zqx","slide":1,"text":"先发现偏移 · 再交付证据 · 最后由人确认","textPreview":"先发现偏移 · 再交付证据 · 最后由人确认","textChars":22,"textLines":1,"bbox":[70,486,650,36]}
+{"kind":"textbox","id":"sh/fu94fe98","slide":1,"text":"黑客松路演 · 2026.08 · REVIEW","textPreview":"黑客松路演 · 2026.08 · REVIEW","textChars":24,"textLines":1,"bbox":[70,642,500,26]}
+{"kind":"image","id":"im/jqxw72dk","slide":1,"name":"","alt":"序安 Process Sentinel 现行眼形过程环标志","bbox":[825,78.5,340,302.99]}
+{"kind":"notes","id":"nt/y90nupkv","slide":1,"text":"[逐字稿]\n大家好，这是“序安·过程哨兵”。它关注的是连续化工现场一个很具体的问题：事故真正形成之前，温度、压力、流量和阀门之间的关系，往往已经开始慢慢偏离。序安要做的，就是把这种偏移更早地指出来，给出证据和检查建议，最后仍然由工程师确认。\n\n[Sources]\n- 内部事实源：README.md；docs/submission/作品说明_v01_DRAFT.md\n- 现行标志：apps/web/public/brand/process-sentinel-mark-v01.png；SHA-256 9379dcb457c4650cc4b3173341d4ef43a297515fd754217260503e2ecc1f8ca3"}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"序安 · 过程哨兵","textShapes":22}
+{"kind":"textbox","id":"sh/p0vy54na","slide":2,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/9072xkry","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/ozy1ofad","slide":2,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/b29kza94","slide":2,"text":"现场堵点不是没有报警，而是 52 路变量同时在说不同的话","textPreview":"现场堵点不是没有报警，而是 52 路变量同时在说不同的话","textChars":28,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/a10jqpsj","slide":2,"text":"单点红灯无法替工程师完成一次跨变量、跨时间、可追溯的判断。","textPreview":"单点红灯无法替工程师完成一次跨变量、跨时间、可追溯的判断。","textChars":29,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"textbox","id":"sh/x4r21kru","slide":2,"text":"52","textPreview":"52","textChars":2,"textLines":1,"bbox":[64,214,235,112]}
+{"kind":"textbox","id":"sh/w3i1sfa9","slide":2,"text":"路过程变量\n41 测量 + 11 操纵","textPreview":"路过程变量 | 41 测量 + 11 操纵","textChars":19,"textLines":2,"bbox":[70,326,245,80]}
+{"kind":"textbox","id":"sh/r65knqtk","slide":2,"text":"进料组成、流量、压力、温度和阀位可能同时变化。异常不是一盏灯，而是一段关系正在失稳。","textPreview":"进料组成、流量、压力、温度和阀位可能同时变化。异常不是一盏灯，而是一段关系正在失稳。","textChars":42,"textLines":1,"bbox":[64,438,310,112]}
+{"kind":"shape","id":"sh/q5wjelsz","slide":2,"bbox":[445,204,62,62]}
+{"kind":"textbox","id":"sh/ove9o7yd","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[445,220,62,24]}
+{"kind":"textbox","id":"sh/9wnqhczy","slide":2,"text":"是不是真偏了？","textPreview":"是不是真偏了？","textChars":7,"textLines":1,"bbox":[535,200,350,34]}
+{"kind":"textbox","id":"sh/mtwrmxg7","slide":2,"text":"区分持续偏移与短时噪声","textPreview":"区分持续偏移与短时噪声","textChars":11,"textLines":1,"bbox":[535,242,480,32]}
+{"kind":"shape","id":"sh/nu58f2hs","slide":2,"bbox":[445,309,62,62]}
+{"kind":"textbox","id":"sh/wjy9sry9","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[445,325,62,24]}
+{"kind":"textbox","id":"sh/xk7qlczu","slide":2,"text":"先看哪三个变量？","textPreview":"先看哪三个变量？","textChars":8,"textLines":1,"bbox":[535,305,350,34]}
+{"kind":"textbox","id":"sh/ahwrqhgj","slide":2,"text":"把 52 路信号压缩成证据","textPreview":"把 52 路信号压缩成证据","textChars":13,"textLines":1,"bbox":[535,347,480,32]}
+{"kind":"shape","id":"sh/bip8jmho","slide":2,"bbox":[445,414,62,62]}
+{"kind":"textbox","id":"sh/cnupgny5","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[445,430,62,24]}
+{"kind":"textbox","id":"sh/do3q9szq","slide":2,"text":"下一步先查什么？","textPreview":"下一步先查什么？","textChars":8,"textLines":1,"bbox":[535,410,350,34]}
+{"kind":"textbox","id":"sh/t8byxkn2","slide":2,"text":"给出可执行的检查顺序","textPreview":"给出可执行的检查顺序","textChars":10,"textLines":1,"bbox":[535,452,480,32]}
+{"kind":"shape","id":"sh/s72xofmh","slide":2,"bbox":[445,519,62,62]}
+{"kind":"textbox","id":"sh/76twva5c","slide":2,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[445,535,62,24]}
+{"kind":"textbox","id":"sh/65kfmpor","slide":2,"text":"谁确认过？","textPreview":"谁确认过？","textChars":5,"textLines":1,"bbox":[535,515,350,34]}
+{"kind":"textbox","id":"sh/hcvy14ne","slide":2,"text":"交班、复盘与审计可追溯","textPreview":"交班、复盘与审计可追溯","textChars":11,"textLines":1,"bbox":[535,557,480,32]}
+{"kind":"shape","id":"sh/gbmxszmt","slide":2,"bbox":[960,226,238,274]}
+{"kind":"textbox","id":"sh/fadgzu58","slide":2,"text":"异常前的十分钟","textPreview":"异常前的十分钟","textChars":7,"textLines":1,"bbox":[986,252,190,34]}
+{"kind":"textbox","id":"sh/u94fqp4n","slide":2,"text":"报警还没替你解释\n变量关系已经变了\n交班记录仍是空白","textPreview":"报警还没替你解释 | 变量关系已经变了 | 交班记录仍是空白","textChars":26,"textLines":3,"bbox":[986,315,190,132]}
+{"kind":"notes","id":"nt/hwbqtkby","slide":2,"text":"[逐字稿]\n现场并不是没有报警。真正难的是，几十路变量可能同时变化，而且每一路单独看都不一定严重。工程师需要回答四个问题：这是真异常还是噪声？先看哪几个变量？下一步先查什么？最后谁做了确认？序安的价值，就是把这些分散的问题整理成一条可追溯的判断链。\n\n[Sources]\n- TEP 变量构成：docs/submission/数据说明_v01_DRAFT.md\n- 现场研判问题定义：docs/submission/作品说明_v01_DRAFT.md"}
+{"kind":"slide","id":"sl/ofy9wn61","slide":3,"title":"序安 · 过程哨兵","textShapes":10}
+{"kind":"textbox","id":"sh/v6l4jq94","slide":3,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/cza94vmx","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/d0jax03i","slide":3,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/298ryl4v","slide":3,"text":"在事故形成前，把持续偏移从噪声里拎出来","textPreview":"在事故形成前，把持续偏移从噪声里拎出来","textChars":19,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/3ah8rqlg","slide":3,"text":"序安先回答“过程是否偏离正常基线”，再让工程师展开原始变量。","textPreview":"序安先回答“过程是否偏离正常基线”，再让工程师展开原始变量。","textChars":30,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"textbox","id":"sh/obq90bml","slide":3,"text":"T² + Q/SPE","textPreview":"T² + Q/SPE","textChars":10,"textLines":1,"bbox":[64,210,360,62]}
+{"kind":"textbox","id":"sh/pcjqtg36","slide":3,"text":"连续越界形成事件","textPreview":"连续越界形成事件","textChars":8,"textLines":1,"bbox":[64,283,350,34]}
+{"kind":"textbox","id":"sh/m5cra54z","slide":3,"text":"不是单点越线就报警。事件需要持续性证据；坏数据不会送入 PCA，也不会开启工艺异常事件。","textPreview":"不是单点越线就报警。事件需要持续性证据；坏数据不会送入 PCA，也不会开启工艺异常事件。","textChars":44,"textLines":1,"bbox":[64,336,360,108]}
+{"kind":"shape","id":"sh/n6ls3alk","slide":3,"bbox":[64,488,360,108]}
+{"kind":"textbox","id":"sh/n2l4fq98","slide":3,"text":"52 路热力格","textPreview":"52 路热力格","textChars":7,"textLines":1,"bbox":[86,510,130,28]}
+{"kind":"textbox","id":"sh/m1c3mlsn","slide":3,"text":"先看异常集中在哪一组，再展开原始值与时间窗。","textPreview":"先看异常集中在哪一组，再展开原始值与时间窗。","textChars":22,"textLines":1,"bbox":[86,546,310,44]}
+{"kind":"shape","id":"sh/943mhgre","slide":3,"bbox":[470,200,744,430]}
+{"kind":"image","id":"im/hon6lgv6","slide":3,"name":"","geometry":"roundRect","bbox":[486,216,712,398]}
+{"kind":"notes","id":"nt/ofy9wn61","slide":3,"text":"[逐字稿]\n第一步不是让大模型直接猜故障，而是先判断过程有没有持续离开正常状态。这里的 T 平方和 SPE，可以简单理解为两把尺子：一把看整体状态偏了多远，一把看变量之间原来的关系有没有被打破。只有偏移持续存在，系统才形成事件；短时波动不会被直接包装成故障。\n\n[Sources]\n- 检测与热力格：docs/submission/作品说明_v01_DRAFT.md\n- 在线 PCA 不变量：services/ml/README.md\n- 产品截图：90_构建与分析缓存/序安黑客松路演_v01/assets/process-replay.png"}
+{"kind":"slide","id":"sl/jyx0ra1s","slide":4,"title":"序安 · 过程哨兵","textShapes":15}
+{"kind":"textbox","id":"sh/h4fa9wfy","slide":4,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/1cj2d8b6","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/0ba143al","slide":4,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/rm1k7yt4","slide":4,"text":"AI 不只给结论，还给候选、Top-3 变量和检查顺序","textPreview":"AI 不只给结论，还给候选、Top-3 变量和检查顺序","textChars":27,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/ql8jytsj","slide":4,"text":"每个判断都能回到事件时间、变量贡献和下一步动作。","textPreview":"每个判断都能回到事件时间、变量贡献和下一步动作。","textChars":24,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"shape","id":"sh/doj29oba","slide":4,"bbox":[64,202,700,422]}
+{"kind":"textbox","id":"sh/3ihk3et8","slide":4,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[820,210,54,30]}
+{"kind":"textbox","id":"sh/ih8ju9sn","slide":4,"text":"候选故障","textPreview":"候选故障","textChars":4,"textLines":1,"bbox":[884,206,270,38]}
+{"kind":"textbox","id":"sh/kbm987y5","slide":4,"text":"排序告诉工程师先验证什么，不代替最终诊断。","textPreview":"排序告诉工程师先验证什么，不代替最终诊断。","textChars":21,"textLines":1,"bbox":[820,250,370,54]}
+{"kind":"textbox","id":"sh/5cva1cfq","slide":4,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[820,330,54,30]}
+{"kind":"textbox","id":"sh/i94r6xgz","slide":4,"text":"Top-3 变量证据","textPreview":"Top-3 变量证据","textChars":10,"textLines":1,"bbox":[884,326,300,38]}
+{"kind":"textbox","id":"sh/jadsz2xk","slide":4,"text":"SPE 贡献 + 共享横轴，解释偏移集中在哪。","textPreview":"SPE 贡献 + 共享横轴，解释偏移集中在哪。","textChars":23,"textLines":1,"bbox":[820,370,370,58]}
+{"kind":"textbox","id":"sh/w72947yt","slide":4,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[820,452,54,30]}
+{"kind":"textbox","id":"sh/x8vaxsfe","slide":4,"text":"固定检查顺序","textPreview":"固定检查顺序","textChars":6,"textLines":1,"bbox":[884,448,280,38]}
+{"kind":"textbox","id":"sh/a5kr2xg3","slide":4,"text":"没有大模型密钥也能运行；大模型只改写表达，不参与阈值或控制决策。","textPreview":"没有大模型密钥也能运行；大模型只改写表达，不参与阈值或控制决策。","textChars":32,"textLines":1,"bbox":[820,492,370,78]}
+{"kind":"shape","id":"sh/v6tsv2xo","slide":4,"bbox":[816,586,360,50]}
+{"kind":"textbox","id":"sh/g36tgryd","slide":4,"text":"20 个样本 / 60 分钟后刷新；已更新 ≠ 已确认","textPreview":"20 个样本 / 60 分钟后刷新；已更新 ≠ 已确认","textChars":27,"textLines":1,"bbox":[834,600,330,24]}
+{"kind":"image","id":"im/m1s7e9k3","slide":4,"name":"","geometry":"roundRect","bbox":[78,216,672,394]}
+{"kind":"notes","id":"nt/jyx0ra1s","slide":4,"text":"[逐字稿]\n发现事件以后，序安不会只说一句“有异常”。它会给出故障候选、最值得先看的三条变量证据，以及固定的检查顺序。工程师可以回到事件发生的时间点，看哪些变量共同变化，再决定先核对原料、仪表还是上游操作。AI 在这里负责缩小范围，不负责替工程师做最终诊断。\n\n[Sources]\n- 两阶段时间轴、20 样本窗口与建议边界：docs/submission/作品说明_v01_DRAFT.md；docs/submission/三分钟Demo脚本_v01_DRAFT.md\n- 产品截图：90_构建与分析缓存/序安黑客松路演_v01/assets/event-analysis.png"}
+{"kind":"slide","id":"sl/i107q5of","slide":5,"title":"序安 · 过程哨兵","textShapes":22}
+{"kind":"textbox","id":"sh/kny587i9","slide":5,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/dgbulwnm","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/cf2tcr61","slide":5,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/z2tcnm5s","slide":5,"text":"主动交互不是聊天，而是推动一次可追溯的人机确认","textPreview":"主动交互不是聊天，而是推动一次可追溯的人机确认","textChars":23,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/yhkbe1o7","slide":5,"text":"系统围绕事件主动组织证据；工程师保留判断权和接管权。","textPreview":"系统围绕事件主动组织证据；工程师保留判断权和接管权。","textChars":26,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"shape","id":"sh/l4bupwny","slide":5,"bbox":[185,380,840,0]}
+{"kind":"shape","id":"sh/032tgr6d","slide":5,"bbox":[220,362,36,36]}
+{"kind":"shape","id":"sh/n6dcr65o","slide":5,"bbox":[430,362,36,36]}
+{"kind":"shape","id":"sh/m5kbi1oj","slide":5,"bbox":[640,362,36,36]}
+{"kind":"shape","id":"sh/w32dkbuh","slide":5,"bbox":[850,362,36,36]}
+{"kind":"textbox","id":"sh/x4vedgvm","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[86,236,52,26]}
+{"kind":"textbox","id":"sh/ahkvi1cb","slide":5,"text":"事件出现","textPreview":"事件出现","textChars":4,"textLines":1,"bbox":[86,272,180,34]}
+{"kind":"textbox","id":"sh/v2twb6dw","slide":5,"text":"锁定时间窗\n标记风险","textPreview":"锁定时间窗 | 标记风险","textChars":10,"textLines":2,"bbox":[86,422,175,70]}
+{"kind":"textbox","id":"sh/k7mxovud","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[296,236,52,26]}
+{"kind":"textbox","id":"sh/58vehgvy","slide":5,"text":"系统提证据","textPreview":"系统提证据","textChars":5,"textLines":1,"bbox":[296,272,180,34]}
+{"kind":"textbox","id":"sh/i54fmlc7","slide":5,"text":"候选故障\nTop-3 变量","textPreview":"候选故障 | Top-3 变量","textChars":13,"textLines":2,"bbox":[296,422,175,70]}
+{"kind":"textbox","id":"sh/j6dwfqds","slide":5,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[506,236,52,26]}
+{"kind":"textbox","id":"sh/sb6xsvu9","slide":5,"text":"系统提动作","textPreview":"系统提动作","textChars":5,"textLines":1,"bbox":[506,272,180,34]}
+{"kind":"textbox","id":"sh/tcfel0vu","slide":5,"text":"检查顺序\n安全边界","textPreview":"检查顺序 | 安全边界","textChars":9,"textLines":2,"bbox":[506,422,175,70]}
+{"kind":"textbox","id":"sh/hgrmpwj2","slide":5,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[716,236,52,26]}
+{"kind":"textbox","id":"sh/gfi5grih","slide":5,"text":"工程师确认","textPreview":"工程师确认","textChars":5,"textLines":1,"bbox":[716,272,180,34]}
+{"kind":"textbox","id":"sh/fe94nm1w","slide":5,"text":"选择结论\n补充备注","textPreview":"选择结论 | 补充备注","textChars":9,"textLines":2,"bbox":[716,422,175,70]}
+{"kind":"textbox","id":"sh/ud0ne10b","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[926,236,52,26]}
+{"kind":"textbox","id":"sh/pkr6tgjy","slide":5,"text":"形成审计","textPreview":"形成审计","textChars":4,"textLines":1,"bbox":[926,272,180,34]}
+{"kind":"textbox","id":"sh/4ji5kbid","slide":5,"text":"人、证据、\n时间可追溯","textPreview":"人、证据、 | 时间可追溯","textChars":11,"textLines":2,"bbox":[926,422,175,70]}
+{"kind":"shape","id":"sh/3i94r61s","slide":5,"bbox":[94,532,1080,84]}
+{"kind":"textbox","id":"sh/2h0ni107","slide":5,"text":"人机分工","textPreview":"人机分工","textChars":4,"textLines":1,"bbox":[120,552,120,28]}
+{"kind":"textbox","id":"sh/5o7mhcju","slide":5,"text":"AI 负责持续读取、组织证据和提示下一步；人负责结合工艺、现场与安全边界作最终判断。","textPreview":"AI 负责持续读取、组织证据和提示下一步；人负责结合工艺、现场与安全边界作最终判断。","textChars":42,"textLines":1,"bbox":[260,551,860,38]}
+{"kind":"notes","id":"nt/i107q5of","slide":5,"text":"[逐字稿]\n序安的主动交互，不是让操作员和一个机器人随便聊天，而是在事件发生后主动组织证据、提出下一步，并推动一次人工确认。系统负责持续读取、解释和留痕；工程师负责结合工艺、现场和安全边界作判断。确认结果、补充备注和时间都会进入审计记录，方便交班和复盘。\n\n[Sources]\n- 人机确认与审计链路：README.md；docs/submission/作品说明_v01_DRAFT.md\n- 边界说明：当前产品不具备自由对话式现场控制，也不自动写回控制系统"}
+{"kind":"slide","id":"sl/x8f69ofe","slide":6,"title":"序安 · 过程哨兵","textShapes":25}
+{"kind":"textbox","id":"sh/50bqpcj2","slide":6,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/yhg7epsj","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/zi98nu94","slide":6,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/87ipkzal","slide":6,"text":"产业已证明闭环优化有价值；序安补的是安全异常研判层","textPreview":"产业已证明闭环优化有价值；序安补的是安全异常研判层","textChars":25,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/98rqt4r6","slide":6,"text":"贵州磷化集团“1468”官方公开案例是产业参照，不是序安客户或数据来源。","textPreview":"贵州磷化集团“1468”官方公开案例是产业参照，不是序安客户或数据来源。","textChars":36,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"textbox","id":"sh/ml07i9sv","slide":6,"text":"贵州磷化集团“1468”公开案例","textPreview":"贵州磷化集团“1468”公开案例","textChars":16,"textLines":1,"bbox":[64,204,520,38]}
+{"kind":"textbox","id":"sh/7m98ru9g","slide":6,"text":"≥2%","textPreview":"≥2%","textChars":3,"textLines":1,"bbox":[64,250,160,62]}
+{"kind":"textbox","id":"sh/oryp8fah","slide":6,"text":"相关装置能耗降低","textPreview":"相关装置能耗降低","textChars":8,"textLines":1,"bbox":[64,315,160,46]}
+{"kind":"textbox","id":"sh/pc76hkr2","slide":6,"text":"≥70%","textPreview":"≥70%","textChars":4,"textLines":1,"bbox":[270,250,160,62]}
+{"kind":"textbox","id":"sh/h4bupgn6","slide":6,"text":"操作频次下降","textPreview":"操作频次下降","textChars":6,"textLines":1,"bbox":[270,315,160,46]}
+{"kind":"textbox","id":"sh/w32twb6l","slide":6,"text":"≥30%","textPreview":"≥30%","textChars":4,"textLines":1,"bbox":[476,250,160,62]}
+{"kind":"textbox","id":"sh/v2tcn650","slide":6,"text":"稳定性提升","textPreview":"稳定性提升","textChars":5,"textLines":1,"bbox":[476,315,160,46]}
+{"kind":"textbox","id":"sh/u1kbu1ov","slide":6,"text":"官方案例：能耗 / 品质 / 设备预测 → APC + RTO 参数优化 → 边缘控制闭环","textPreview":"官方案例：能耗 / 品质 / 设备预测 → APC + RTO 参数优化 → 边缘控制闭环","textChars":45,"textLines":1,"bbox":[64,390,605,58]}
+{"kind":"shape","id":"sh/5svutgni","slide":6,"bbox":[720,206,496,365]}
+{"kind":"textbox","id":"sh/47mt0b6x","slide":6,"text":"序安的差异化位置","textPreview":"序安的差异化位置","textChars":8,"textLines":1,"bbox":[752,236,400,38]}
+{"kind":"shape","id":"sh/j6dcr65c","slide":6,"bbox":[754,300,30,30]}
+{"kind":"textbox","id":"sh/i54bylor","slide":6,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[754,307,30,16]}
+{"kind":"textbox","id":"sh/twfux0ne","slide":6,"text":"偏移提前发现","textPreview":"偏移提前发现","textChars":6,"textLines":1,"bbox":[804,302,340,28]}
+{"kind":"shape","id":"sh/svmt4v6t","slide":6,"bbox":[754,358,30,30]}
+{"kind":"textbox","id":"sh/cbe5g3ih","slide":6,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[754,365,30,16]}
+{"kind":"textbox","id":"sh/dcnm98zm","slide":6,"text":"故障候选 + 变量证据","textPreview":"故障候选 + 变量证据","textChars":11,"textLines":1,"bbox":[804,360,340,28]}
+{"kind":"shape","id":"sh/qpwnet0b","slide":6,"bbox":[754,416,30,30]}
+{"kind":"textbox","id":"sh/bq547yhw","slide":6,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[754,423,30,16]}
+{"kind":"textbox","id":"sh/0fy5k3id","slide":6,"text":"人机接管与确认","textPreview":"人机接管与确认","textChars":7,"textLines":1,"bbox":[804,418,340,28]}
+{"kind":"shape","id":"sh/lg76d8zy","slide":6,"bbox":[754,474,30,30]}
+{"kind":"textbox","id":"sh/ydgnit07","slide":6,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[754,481,30,16]}
+{"kind":"textbox","id":"sh/zep4byhs","slide":6,"text":"审计留痕","textPreview":"审计留痕","textChars":4,"textLines":1,"bbox":[804,476,340,28]}
+{"kind":"shape","id":"sh/gju58ji9","slide":6,"bbox":[64,500,605,115]}
+{"kind":"textbox","id":"sh/1k3mhozu","slide":6,"text":"当前只读","textPreview":"当前只读","textChars":4,"textLines":1,"bbox":[88,524,120,30]}
+{"kind":"textbox","id":"sh/jet8nm1c","slide":6,"text":"未来接入 APC / PLC / DCS：人工授权 → 权限校验 → 联锁/安全边界校验 → 受控控制网关；任一失败即保持只读并留痕。","textPreview":"未来接入 APC / PLC / DCS：人工授权 → 权限校验 → 联锁/安全边界校验 → 受控控制网关；任一失败即保持只读并留痕。","textChars":67,"textLines":1,"bbox":[220,520,420,72]}
+{"kind":"textbox","id":"sh/idk7ehkr","slide":6,"text":"公开产业参照｜不暗示合作｜不使用其真实生产数据","textPreview":"公开产业参照｜不暗示合作｜不使用其真实生产数据","textChars":23,"textLines":1,"bbox":[720,600,496,24]}
+{"kind":"notes","id":"nt/x8f69ofe","slide":6,"text":"[逐字稿]\n贵州磷化集团“1468”装置的官方公开案例已经说明，预测、参数优化和边缘闭环在磷化工里有实际价值。官方公开数字包括能耗降低百分之二以上、操作频次下降百分之七十以上、稳定性提升百分之三十以上。但序安不把自己包装成同一种系统。我们的重点是闭环之前的安全异常研判：更早发现偏移，给出故障候选和变量证据，把人工接管和审计做扎实。这个案例只是公开产业参照，不代表双方合作，也不是序安的数据来源。\n\n[Sources]\n- 贵州省大数据发展管理局，2026-01-20：https://dsj.guizhou.gov.cn/ztzl/rdzt/jdal/202601/t20260120_89316875.html\n- 官方案例公开口径：预测、APC、RTO、边缘控制；相关装置能耗降低 2% 以上、操作频次下降 70% 以上、稳定性提升 30% 以上\n- 边界：该案例仅作产业参照；序安与贵州磷化集团无已知合作或真实数据关系"}
+{"kind":"slide","id":"sl/gnmp4jqx","slide":7,"title":"序安 · 过程哨兵","textShapes":25}
+{"kind":"textbox","id":"sh/nyh4jupo","slide":7,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/cb2tkvap","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/dcbud0ra","slide":7,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/ydkbm5sv","slide":7,"text":"公开数据、冻结构建、版本化模型，让每次判断可复现","textPreview":"公开数据、冻结构建、版本化模型，让每次判断可复现","textChars":24,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/zedcfa9g","slide":7,"text":"我们不把仿真结果包装成真实工厂效果，而是把来源、版本和边界一起交付。","textPreview":"我们不把仿真结果包装成真实工厂效果，而是把来源、版本和边界一起交付。","textChars":34,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"shape","id":"sh/kzmdova1","slide":7,"bbox":[64,204,450,402]}
+{"kind":"textbox","id":"sh/l0vuh0rm","slide":7,"text":"Tennessee Eastman Process","textPreview":"Tennessee Eastman Process","textChars":25,"textLines":1,"bbox":[92,232,370,40]}
+{"kind":"textbox","id":"sh/eh0ba1sr","slide":7,"text":"公开仿真过程","textPreview":"公开仿真过程","textChars":6,"textLines":1,"bbox":[92,280,190,26]}
+{"kind":"textbox","id":"sh/fi9c369c","slide":7,"text":"52","textPreview":"52","textChars":2,"textLines":1,"bbox":[92,320,170,62]}
+{"kind":"textbox","id":"sh/baxkjqlk","slide":7,"text":"变量：41 测量 + 11 操纵","textPreview":"变量：41 测量 + 11 操纵","textChars":16,"textLines":1,"bbox":[92,385,170,46]}
+{"kind":"textbox","id":"sh/a9ojq5kz","slide":7,"text":"21","textPreview":"21","textChars":2,"textLines":1,"bbox":[290,320,170,62]}
+{"kind":"textbox","id":"sh/xcz2l03q","slide":7,"text":"类公开过程扰动","textPreview":"类公开过程扰动","textChars":7,"textLines":1,"bbox":[290,385,170,46]}
+{"kind":"textbox","id":"sh/cbq1sv25","slide":7,"text":"不能推断","textPreview":"不能推断","textChars":4,"textLines":1,"bbox":[92,455,110,26]}
+{"kind":"textbox","id":"sh/n6x0fqlo","slide":7,"text":"真实装置提前量、误报/漏报、经济收益或企业 SOP。","textPreview":"真实装置提前量、误报/漏报、经济收益或企业 SOP。","textChars":26,"textLines":1,"bbox":[92,492,350,72]}
+{"kind":"textbox","id":"sh/25ojml43","slide":7,"text":"ZIP SHA-256","textPreview":"ZIP SHA-256","textChars":11,"textLines":1,"bbox":[570,216,180,26]}
+{"kind":"textbox","id":"sh/p8fih03e","slide":7,"text":"fe3a3b0f…24f4","textPreview":"fe3a3b0f…24f4","textChars":13,"textLines":1,"bbox":[772,208,420,40]}
+{"kind":"shape","id":"sh/o761ov2t","slide":7,"bbox":[570,262,620,0]}
+{"kind":"textbox","id":"sh/f2d0b6lc","slide":7,"text":"buildHash","textPreview":"buildHash","textChars":9,"textLines":1,"bbox":[570,282,180,26]}
+{"kind":"textbox","id":"sh/eh4jil4r","slide":7,"text":"c8920c78…c83b","textPreview":"c8920c78…c83b","textChars":13,"textLines":1,"bbox":[772,274,420,40]}
+{"kind":"shape","id":"sh/id4ju1oz","slide":7,"bbox":[570,328,620,0]}
+{"kind":"textbox","id":"sh/jedkn654","slide":7,"text":"modelVersion","textPreview":"modelVersion","textChars":12,"textLines":1,"bbox":[570,348,180,26]}
+{"kind":"textbox","id":"sh/4fm1wb6p","slide":7,"text":"tep-pca-hgb-5bc36d3f4e6b","textPreview":"tep-pca-hgb-5bc36d3f4e6b","textChars":24,"textLines":1,"bbox":[772,340,420,40]}
+{"kind":"shape","id":"sh/50v2pgna","slide":7,"bbox":[570,394,620,0]}
+{"kind":"textbox","id":"sh/q143ylov","slide":7,"text":"冻结场景","textPreview":"冻结场景","textChars":4,"textLines":1,"bbox":[570,414,180,26]}
+{"kind":"textbox","id":"sh/r2dkrq5g","slide":7,"text":"F01 · F06 · F13","textPreview":"F01 · F06 · F13","textChars":15,"textLines":1,"bbox":[772,406,420,40]}
+{"kind":"shape","id":"sh/s3ml0v61","slide":7,"bbox":[570,460,620,0]}
+{"kind":"textbox","id":"sh/d4f2t0nm","slide":7,"text":"部署证据","textPreview":"部署证据","textChars":4,"textLines":1,"bbox":[570,480,180,26]}
+{"kind":"textbox","id":"sh/e5o32lor","slide":7,"text":"5 个健康服务 + E2E + SSE","textPreview":"5 个健康服务 + E2E + SSE","textChars":19,"textLines":1,"bbox":[772,472,420,40]}
+{"kind":"shape","id":"sh/f6xkvq5c","slide":7,"bbox":[570,526,620,0]}
+{"kind":"textbox","id":"sh/p0zmlk7u","slide":7,"text":"Web 验收基线","textPreview":"Web 验收基线","textChars":8,"textLines":1,"bbox":[570,546,180,26]}
+{"kind":"textbox","id":"sh/ozq5szq9","slide":7,"text":"39 passed + lint + production build","textPreview":"39 passed + lint + production build","textChars":35,"textLines":1,"bbox":[772,538,420,40]}
+{"kind":"notes","id":"nt/gnmp4jqx","slide":7,"text":"[逐字稿]\n这次 Demo 使用 Tennessee Eastman Process，也就是 TEP 公开仿真过程。它提供四十一项测量变量和十一项操纵变量，是公开、可复现的研究数据。我们把数据文件、场景、模型版本、接口契约和测试结果一起冻结下来，因此一次判断可以追到具体数据和具体版本。但它不是贵州真实工厂数据，也不能用来推断真实装置的事故改善或经济收益。\n\n[Sources]\n- TEP 上游：https://github.com/camaramm/tennessee-eastman-profBraatz\n- 数据 hash、变量、窗口与冻结场景：docs/submission/数据说明_v01_DRAFT.md\n- 测试与部署：README.md；docs/deployment.md；build/qa/playwright_截图与响应式验收.json"}
+{"kind":"slide","id":"sl/fu1gfa1s","slide":8,"title":"序安 · 过程哨兵","textShapes":23}
+{"kind":"textbox","id":"sh/l8ja9s3a","slide":8,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/18byd4zy","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/g72x4zyd","slide":8,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/ri9g7uhw","slide":8,"text":"三分钟现场 Demo：从回放走到一条可审计记录","textPreview":"三分钟现场 Demo：从回放走到一条可审计记录","textChars":23,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/6h0fypgb","slide":8,"text":"不切功能清单，只走完一次完整研判。","textPreview":"不切功能清单，只走完一次完整研判。","textChars":17,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"shape","id":"sh/tkby9kzm","slide":8,"bbox":[128,239,125,0]}
+{"kind":"shape","id":"sh/sjix0zy1","slide":8,"bbox":[92,221,48,48]}
+{"kind":"textbox","id":"sh/je9g3ahk","slide":8,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[92,234,48,18]}
+{"kind":"textbox","id":"sh/id0fu50z","slide":8,"text":"选 F01","textPreview":"选 F01","textChars":5,"textLines":1,"bbox":[64,282,115,34]}
+{"kind":"shape","id":"sh/o7ydoret","slide":8,"bbox":[316,239,125,0]}
+{"kind":"shape","id":"sh/98rehwve","slide":8,"bbox":[280,221,48,48]}
+{"kind":"textbox","id":"sh/m5gvmhwn","slide":8,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[280,234,48,18]}
+{"kind":"textbox","id":"sh/n6pwfmd8","slide":8,"text":"开始回放","textPreview":"开始回放","textChars":4,"textLines":1,"bbox":[252,282,115,34]}
+{"kind":"shape","id":"sh/0jydkreh","slide":8,"bbox":[504,239,125,0]}
+{"kind":"shape","id":"sh/1k7edwv2","slide":8,"bbox":[468,221,48,48]}
+{"kind":"textbox","id":"sh/ehgvihwr","slide":8,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[468,234,48,18]}
+{"kind":"textbox","id":"sh/zipwbmdc","slide":8,"text":"看见偏移","textPreview":"看见偏移","textChars":4,"textLines":1,"bbox":[440,282,115,34]}
+{"kind":"shape","id":"sh/kfixwbe1","slide":8,"bbox":[692,239,125,0]}
+{"kind":"shape","id":"sh/lgbepgvm","slide":8,"bbox":[656,221,48,48]}
+{"kind":"textbox","id":"sh/tw7e9gnq","slide":8,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[656,234,48,18]}
+{"kind":"textbox","id":"sh/svydgb65","slide":8,"text":"打开研判","textPreview":"打开研判","textChars":4,"textLines":1,"bbox":[628,282,115,34]}
+{"kind":"shape","id":"sh/7u5w765k","slide":8,"bbox":[880,239,125,0]}
+{"kind":"shape","id":"sh/6twve1oz","slide":8,"bbox":[844,221,48,48]}
+{"kind":"textbox","id":"sh/5sne5wne","slide":8,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[844,234,48,18]}
+{"kind":"textbox","id":"sh/kredcr6t","slide":8,"text":"人工确认","textPreview":"人工确认","textChars":4,"textLines":1,"bbox":[816,282,115,34]}
+{"kind":"shape","id":"sh/jq5w365o","slide":8,"bbox":[1032,221,48,48]}
+{"kind":"textbox","id":"sh/i5wva1o3","slide":8,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1032,234,48,18]}
+{"kind":"textbox","id":"sh/x4ne1wni","slide":8,"text":"审计记录","textPreview":"审计记录","textChars":4,"textLines":1,"bbox":[1004,282,115,34]}
+{"kind":"shape","id":"sh/w3ed8r6x","slide":8,"bbox":[64,346,730,270]}
+{"kind":"textbox","id":"sh/na1sb2lg","slide":8,"text":"现场兜底","textPreview":"现场兜底","textChars":4,"textLines":1,"bbox":[846,350,280,36]}
+{"kind":"textbox","id":"sh/8bat47ml","slide":8,"text":"网络不可达","textPreview":"网络不可达","textChars":5,"textLines":1,"bbox":[846,410,150,28]}
+{"kind":"textbox","id":"sh/9w3uds36","slide":8,"text":"明确进入演示回退，不伪装成功","textPreview":"明确进入演示回退，不伪装成功","textChars":14,"textLines":1,"bbox":[846,442,330,44]}
+{"kind":"textbox","id":"sh/y5sbed4j","slide":8,"text":"LLM 不可用","textPreview":"LLM 不可用","textChars":7,"textLines":1,"bbox":[846,500,150,28]}
+{"kind":"textbox","id":"sh/z61s7il4","slide":8,"text":"确定性建议模板仍可跑完整链路","textPreview":"确定性建议模板仍可跑完整链路","textChars":14,"textLines":1,"bbox":[846,532,330,44]}
+{"kind":"textbox","id":"sh/07atgnmp","slide":8,"text":"Demo：huagong.finlaw.cloud/demo","textPreview":"Demo：huagong.finlaw.cloud/demo","textChars":30,"textLines":1,"bbox":[846,592,340,24]}
+{"kind":"image","id":"im/14neh0na","slide":8,"name":"","geometry":"roundRect","bbox":[78,360,702,242]}
+{"kind":"notes","id":"nt/fu1gfa1s","slide":8,"text":"[逐字稿]\n现场只走一条完整链路。先选 F01 场景并开始回放；看到偏移后打开研判，查看候选故障和三条变量证据；然后由操作员人工确认，最后打开审计记录。网络不可达时，我们进入本地演示回退；语言模型不可用时，确定性的建议模板仍然可以完成链路。无论哪种情况，都不假装成功。\n\n[Sources]\n- 三分钟路径与兜底：docs/submission/三分钟Demo脚本_v01_DRAFT.md\n- 部署入口与 E2E：README.md；docs/deployment.md\n- 产品截图：90_构建与分析缓存/序安黑客松路演_v01/assets/audit-record.png"}
+{"kind":"slide","id":"sl/udsvah03","slide":9,"title":"序安 · 过程哨兵","textShapes":26}
+{"kind":"textbox","id":"sh/xcfy90n6","slide":9,"text":"序安 · 过程哨兵","textPreview":"序安 · 过程哨兵","textChars":9,"textLines":1,"bbox":[64,30,340,24]}
+{"kind":"textbox","id":"sh/1cfmhgne","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1170,30,46,24]}
+{"kind":"textbox","id":"sh/0b65obm9","slide":9,"text":"Process Sentinel · HACKATHON REVIEW","textPreview":"Process Sentinel · HACKATHON REVIEW","textChars":35,"textLines":1,"bbox":[64,680,430,18]}
+{"kind":"textbox","id":"sh/nex4jq5k","slide":9,"text":"落地从一套装置的 4–8 周只读影子模式开始","textPreview":"落地从一套装置的 4–8 周只读影子模式开始","textChars":22,"textLines":1,"bbox":[64,72,1120,58]}
+{"kind":"textbox","id":"sh/mdonql4z","slide":9,"text":"先证明判断质量，再讨论任何控制写回。","textPreview":"先证明判断质量，再讨论任何控制写回。","textChars":18,"textLines":1,"bbox":[64,134,1080,46]}
+{"kind":"textbox","id":"sh/9gzml0nq","slide":9,"text":"4–8 周","textPreview":"4–8 周","textChars":5,"textLines":1,"bbox":[64,220,280,80]}
+{"kind":"textbox","id":"sh/ofq5svm5","slide":9,"text":"只读影子模式","textPreview":"只读影子模式","textChars":6,"textLines":1,"bbox":[64,306,280,38]}
+{"kind":"textbox","id":"sh/bih4na5w","slide":9,"text":"一套装置 · 一条历史数据链路 · 一个班组","textPreview":"一套装置 · 一条历史数据链路 · 一个班组","textChars":22,"textLines":1,"bbox":[64,360,300,82]}
+{"kind":"shape","id":"sh/ah8nu54b","slide":9,"bbox":[64,482,300,108]}
+{"kind":"textbox","id":"sh/oza1gfyh","slide":9,"text":"PoC 期间不做自动写回","textPreview":"PoC 期间不做自动写回","textChars":12,"textLines":1,"bbox":[86,505,255,28]}
+{"kind":"textbox","id":"sh/p0ji9kf2","slide":9,"text":"只评估提前量、误报、漏报和处置时间。","textPreview":"只评估提前量、误报、漏报和处置时间。","textChars":18,"textLines":1,"bbox":[86,544,255,38]}
+{"kind":"shape","id":"sh/2xsjepgb","slide":9,"bbox":[536,354,60,0]}
+{"kind":"textbox","id":"sh/3y107axw","slide":9,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[422,224,60,28]}
+{"kind":"textbox","id":"sh/cnu1kzyd","slide":9,"text":"数据对齐","textPreview":"数据对齐","textChars":4,"textLines":1,"bbox":[422,266,135,34]}
+{"kind":"shape","id":"sh/do3id4fy","slide":9,"bbox":[463,328,52,52]}
+{"kind":"textbox","id":"sh/qlcjipgn","slide":9,"text":"变量字典\n采样时间\n数据质量","textPreview":"变量字典 | 采样时间 | 数据质量","textChars":14,"textLines":3,"bbox":[422,410,135,108]}
+{"kind":"shape","id":"sh/bml0buxs","slide":9,"bbox":[694,354,60,0]}
+{"kind":"textbox","id":"sh/0ru1ozyp","slide":9,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[580,224,60,28]}
+{"kind":"textbox","id":"sh/lsn2h4fa","slide":9,"text":"建立基线","textPreview":"建立基线","textChars":4,"textLines":1,"bbox":[580,266,135,34]}
+{"kind":"shape","id":"sh/98ji147e","slide":9,"bbox":[621,328,52,52]}
+{"kind":"textbox","id":"sh/87a18zqt","slide":9,"text":"历史正常工况\n工况分层\n阈值版本","textPreview":"历史正常工况 | 工况分层 | 阈值版本","textChars":16,"textLines":3,"bbox":[580,410,135,108]}
+{"kind":"shape","id":"sh/76h0zup8","slide":9,"bbox":[852,354,60,0]}
+{"kind":"textbox","id":"sh/ml8j6p8n","slide":9,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[738,224,60,28]}
+{"kind":"textbox","id":"sh/hcji5o7a","slide":9,"text":"专家校验","textPreview":"专家校验","textChars":4,"textLines":1,"bbox":[738,266,135,34]}
+{"kind":"shape","id":"sh/wba1cjqp","slide":9,"bbox":[779,328,52,52]}
+{"kind":"textbox","id":"sh/va103ep4","slide":9,"text":"故障标签\n检查顺序\n安全边界","textPreview":"故障标签 | 检查顺序 | 安全边界","textChars":14,"textLines":3,"bbox":[738,410,135,108]}
+{"kind":"shape","id":"sh/u9sja98z","slide":9,"bbox":[1010,354,60,0]}
+{"kind":"textbox","id":"sh/xgzitk76","slide":9,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[896,224,60,28]}
+{"kind":"textbox","id":"sh/cf6h0fql","slide":9,"text":"影子运行","textPreview":"影子运行","textChars":4,"textLines":1,"bbox":[896,266,135,34]}
+{"kind":"shape","id":"sh/2l4faloj","slide":9,"bbox":[937,328,52,52]}
+{"kind":"textbox","id":"sh/nmdg3q54","slide":9,"text":"持续监测\n人工确认\n审计留痕","textPreview":"持续监测 | 人工确认 | 审计留痕","textChars":14,"textLines":3,"bbox":[896,410,135,108]}
+{"kind":"textbox","id":"sh/onmxcv69","slide":9,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1054,224,60,28]}
+{"kind":"textbox","id":"sh/pofy50nu","slide":9,"text":"验收决策","textPreview":"验收决策","textChars":4,"textLines":1,"bbox":[1054,266,135,34]}
+{"kind":"shape","id":"sh/apofe5of","slide":9,"bbox":[1095,328,52,52]}
+{"kind":"textbox","id":"sh/bqxg7q50","slide":9,"text":"指标复盘\n边界评审\n下一阶段","textPreview":"指标复盘 | 边界评审 | 下一阶段","textChars":14,"textLines":3,"bbox":[1054,410,135,108]}
+{"kind":"textbox","id":"sh/cr6xgv6l","slide":9,"text":"交付基座：数据 manifest · 模型版本 · API 契约 · 前后端 · 容器部署 · 备份与回滚","textPreview":"交付基座：数据 manifest · 模型版本 · API 契约 · 前后端 · 容器部署 · 备份与回滚","textChars":53,"textLines":1,"bbox":[422,566,770,32]}
+{"kind":"notes","id":"nt/udsvah03","slide":9,"text":"[逐字稿]\n第一阶段建议从一套装置、一条历史数据链路和一个班组开始，做四到八周只读影子模式。先完成数据对齐和正常基线，再由专家校验故障标签与检查顺序，随后持续运行并记录人工确认。验收先看判断时间、误报、漏报和处置时间，不做自动写回。只有这些指标经过现场验证，才讨论下一阶段。\n\n[Sources]\n- PoC 路径：docs/submission/作品说明_v01_DRAFT.md；README.md\n- 部署、备份与回滚：docs/deployment.md\n- 影子模式期间的真实指标必须由现场数据重新定义，不能由 TEP Demo 外推"}
+{"kind":"slide","id":"sl/m90b6t0r","slide":10,"title":"下一步","textShapes":6}
+{"kind":"textbox","id":"sh/xc3mho32","slide":10,"text":"下一步","textPreview":"下一步","textChars":3,"textLines":1,"bbox":[72,80,200,32]}
+{"kind":"textbox","id":"sh/cbu58j2h","slide":10,"text":"用一个班组，\n把判断时间变成\n可验证的工程指标","textPreview":"用一个班组， | 把判断时间变成 | 可验证的工程指标","textChars":23,"textLines":3,"bbox":[72,158,730,248]}
+{"kind":"textbox","id":"sh/zelojyl8","slide":10,"text":"选择一套装置 · 接一条历史数据链路 · 定义一组 PoC 验收口径","textPreview":"选择一套装置 · 接一条历史数据链路 · 定义一组 PoC 验收口径","textChars":34,"textLines":1,"bbox":[72,456,820,42]}
+{"kind":"shape","id":"sh/ydcnatkn","slide":10,"bbox":[72,548,758,72]}
+{"kind":"textbox","id":"sh/l036l83y","slide":10,"text":"序安的承诺：先把证据和责任链做扎实，再谈自动控制。","textPreview":"序安的承诺：先把证据和责任链做扎实，再谈自动控制。","textChars":25,"textLines":1,"bbox":[98,566,710,36]}
+{"kind":"textbox","id":"sh/kzu5c32t","slide":10,"text":"Process Sentinel · 序安·过程哨兵","textPreview":"Process Sentinel · 序安·过程哨兵","textChars":26,"textLines":1,"bbox":[902,600,286,28]}
+{"kind":"textbox","id":"sh/725onyl4","slide":10,"text":"REVIEW · 2026.08","textPreview":"REVIEW · 2026.08","textChars":16,"textLines":1,"bbox":[902,638,286,22]}
+{"kind":"image","id":"im/fm9sbalk","slide":10,"name":"","alt":"序安 Process Sentinel 现行眼形过程环标志","bbox":[914.19,72,244.63,218]}
+{"kind":"notes","id":"nt/m90b6t0r","slide":10,"text":"[逐字稿]\n我们的请求很简单：选择一套装置，接入一条历史数据链路，和一个班组一起定义 PoC 的验收口径。序安承诺先把证据和责任链做扎实，再谈自动控制。今天的 Demo 是只读的；未来即使进入生产，也必须经过人工授权、权限校验、工艺上下限、联锁校验、二次确认和受控网关。让过程异常在事故之前被看见，也让每一次判断都经得起复盘。谢谢。\n\n[Sources]\n- 行动建议基于内部 PoC 路径：docs/submission/作品说明_v01_DRAFT.md\n- 现行标志：apps/web/public/brand/process-sentinel-mark-v01.png；SHA-256 9379dcb457c4650cc4b3173341d4ef43a297515fd754217260503e2ecc1f8ca3"}

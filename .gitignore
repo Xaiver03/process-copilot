@@ -23,3 +23,7 @@ apps/api/process_copilot.db
 
 # System files
 .DS_Store
+.~*.pptx
+
+# Local artifact runtimes
+90_构建与分析缓存/**/runtime-bin/
