@@ -51,6 +51,21 @@ assessment = monitor.process(values, sample_index=sample_index)
 
 `assessment` 同时包含数据质量、T²、SPE、异常分数、贡献变量索引和事件状态。调用方应持久化模型版本、阈值版本、工况和变量字典；当前类本身不做网络 IO、数据库写入或控制系统写回。
 
+## 逐样本在线推理引擎
+
+`OnlineInferenceEngine.from_artifacts(model_dir, variable_dictionary_path)` 加载冻结的 PCA/HGB 模型和变量字典；随后用 `process(sample_index=index, values=values)` 逐样本推理。`values` 可以是 52 维序列，也可以是包含额外字段的 mapping。mapping 只读取严格有序的 `XMEAS(1..41)`、`XMV(1..11)`；`faultOnsetSample`、`activeFaultId`、文件名中的 fault ID、预计算 `t2/spe/anomalyScore/candidate*` 等字段永远不会进入模型。
+
+每次调用返回 `OnlineInferenceResult`：
+
+- `sample_index`、`t2`、`spe`、`anomaly_score`、`alarm_state`、`latency_ms`
+- `quality` 和 `evidence`（SPE Top-3 贡献变量）
+- `initial_candidates`：告警真正锁存时，若已有完整 20 样本窗口则给出候选
+- `updated_candidates`：锁存后再收到 20 个有效且连续样本时只产生一次候选更新
+- `transition`：`detected`、`updated`、`closed` 或 `None`
+- `model_version`
+
+`event_start_sample` 是首次越过进入阈值的候选起点；`opened_sample` 是持续性计数满足后真正对外开事件的样本。在线事件延迟应使用 `opened_sample`。坏数据和样本缺口不会送入 PCA、不会计入 20 样本候选窗口，并会打断尚未确认的持续性；倒序或重复样本直接拒绝。
+
 ## 冻结 Demo 盲测基线
 
 下面的结果使用仓库内冻结的 `pca_detector.joblib`，按样本顺序回放 3 个 TEP 场景。监测时不读取 `faultOnsetSample`，完成后才用它计算事件级指标。默认参数为进入连续 3 个样本、退出连续 5 个样本、提前容忍 0 个样本；预测事件的起点使用真正开事件的 `opened_sample`。
