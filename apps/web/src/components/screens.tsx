@@ -30,7 +30,7 @@ import {
 } from "@/lib/api-client";
 import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
-import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate } from "@/lib/presentation";
+import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, localizeIndustrialCopy } from "@/lib/presentation";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
@@ -255,14 +255,26 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
             <PageHeader kicker="AI 事件研判" title={topCandidate?.label ?? `偏移事件 ${event.id}`} summary={`AI 已完成偏移发现、故障候选排序和变量证据对齐，当前等待${eventStateLabel[event.state] === "待研判" ? "人工确认" : "查看人工结论"}。`} />
             <ModeNotice mode={result.mode} notice={result.notice} />
             <ol className="ai-stepper" aria-label="AI 研判主链路">
-              <li><Pulse aria-hidden="true" /><span>01</span><strong>AI 发现</strong><small>锁定异常窗口</small></li>
-              <li><Brain aria-hidden="true" /><span>02</span><strong>AI 判断</strong><small>排序故障候选</small></li>
-              <li><ChartLineUp aria-hidden="true" /><span>03</span><strong>AI 解释</strong><small>对齐变量证据</small></li>
-              <li><ListChecks aria-hidden="true" /><span>04</span><strong>AI 建议</strong><small>生成检查顺序</small></li>
-              <li className="is-human"><UserFocus aria-hidden="true" /><span>05</span><strong>人工确认</strong><small>决定并留痕</small></li>
+              <li><Pulse aria-hidden="true" /><span>01</span><strong>发现</strong><small>锁定异常窗口</small></li>
+              <li><Brain aria-hidden="true" /><span>02</span><strong>判断</strong><small>排序故障候选</small></li>
+              <li><ChartLineUp aria-hidden="true" /><span>03</span><strong>解释</strong><small>对齐变量证据</small></li>
+              <li><ListChecks aria-hidden="true" /><span>04</span><strong>建议</strong><small>生成检查顺序</small></li>
+              <li className="is-human"><UserFocus aria-hidden="true" /><span>05</span><strong>确认</strong><small>决定并留痕</small></li>
             </ol>
 
             <div className="ai-workbench">
+              <section className="ai-panel ai-detection" data-ai-step="1" aria-labelledby="ai-detection-title">
+                <div className="ai-section-header"><div><span className="kicker">步骤 01 · AI 发现</span><h2 id="ai-detection-title">偏移何时被看见</h2></div></div>
+                <p className="ai-sample-window">检测样本 {event.detectionSample} → 诊断样本 {event.diagnosisSample}</p>
+                <dl className="ai-stat-grid">
+                  <div><dt>首次异常分数</dt><dd>{event.anomalyScore.toFixed(2)}</dd></div>
+                  <div><dt>诊断异常分数</dt><dd>{event.diagnosisAnomalyScore.toFixed(2)}</dd></div>
+                  <div><dt>候选刷新延迟</dt><dd>{event.diagnosisDelaySamples}<small> 样本</small></dd></div>
+                  <div><dt>告警锁存</dt><dd>{event.anomalyLatched ? "已锁定" : "未锁定"}</dd></div>
+                </dl>
+                <p className="ai-method-note">持续性和滞回规则先过滤瞬时噪声，再由 PCA T² / SPE 判断过程是否偏离正常空间。</p>
+              </section>
+
               <section className="ai-panel ai-conclusion" data-ai-step="2" aria-labelledby="ai-conclusion-title">
                 <div className="ai-section-header">
                   <div><span className="kicker">步骤 02 · AI 判断</span><h2 id="ai-conclusion-title">AI 研判结论</h2></div>
@@ -278,21 +290,9 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                 </ol>
               </section>
 
-              <section className="ai-panel ai-detection" data-ai-step="1" aria-labelledby="ai-detection-title">
-                <div className="ai-section-header"><div><span className="kicker">步骤 01 · AI 发现</span><h2 id="ai-detection-title">偏移何时被看见</h2></div></div>
-                <p className="ai-sample-window">检测样本 {event.detectionSample} → 诊断样本 {event.diagnosisSample}</p>
-                <dl className="ai-stat-grid">
-                  <div><dt>首次异常分数</dt><dd>{event.anomalyScore.toFixed(2)}</dd></div>
-                  <div><dt>诊断异常分数</dt><dd>{event.diagnosisAnomalyScore.toFixed(2)}</dd></div>
-                  <div><dt>候选刷新延迟</dt><dd>{event.diagnosisDelaySamples}<small> 样本</small></dd></div>
-                  <div><dt>告警锁存</dt><dd>{event.anomalyLatched ? "已锁定" : "未锁定"}</dd></div>
-                </dl>
-                <p className="ai-method-note">持续性和滞回规则先过滤瞬时噪声，再由 PCA T² / SPE 判断过程是否偏离正常空间。</p>
-              </section>
-
               <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title">
                 <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">AI 为什么这样判断</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
-                <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${item.variableName}`).join("、")}共同指向当前故障假设。</p>
+                <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`).join("、")}共同指向当前故障假设。</p>
                 <EvidenceTrendChart evidence={event.evidence} />
                 <div className="ai-evidence-detail"><EvidencePanel evidence={event.evidence} /><ContributionChart evidence={event.evidence} /></div>
               </section>
@@ -300,9 +300,9 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
               <aside className="ai-side-stack">
                 <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title">
                   <div className="ai-section-header"><div><span className="kicker">步骤 04 · AI 建议</span><h2 id="ai-recommendation-title">AI 建议下一步</h2></div></div>
-                  <p className="ai-risk-copy"><strong>风险：</strong>{event.recommendation.risk}</p>
-                  <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{item}</li>)}</ol></div>
-                  <div className="ai-action-group"><h3>再处置</h3><ol>{event.recommendation.actions.map((item) => <li key={item}>{item}</li>)}</ol></div>
+                  <p className="ai-risk-copy"><strong>风险：</strong>{localizeIndustrialCopy(event.recommendation.risk)}</p>
+                  <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
+                  <div className="ai-action-group"><h3>再处置</h3><ol>{event.recommendation.actions.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
                   <p className="ai-safety-boundary">只读建议，不会向 DCS、PLC 或其他控制系统自动写回。</p>
                 </section>
 

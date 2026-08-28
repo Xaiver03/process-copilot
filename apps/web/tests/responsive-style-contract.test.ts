@@ -36,4 +36,11 @@ describe("工业驾驶舱响应式样式契约", () => {
     expect(css).toMatch(/@media \(max-width:\s*900px\)[\s\S]*?\.ai-workbench\s*\{[^}]*grid-template-columns:\s*1fr/);
     expect(css).not.toMatch(/\.event-detail-page[\s\S]*?\.investigation-grid/);
   });
+
+  it("手机端将五步 AI 流程收为短标签，避免文字被截成省略号", () => {
+    expect(css).toMatch(/@media \(max-width:\s*480px\)[\s\S]*?\.ai-stepper\s*\{[^}]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\)[^}]*overflow-x:\s*visible/);
+    expect(css).toMatch(/@media \(max-width:\s*480px\)[\s\S]*?\.ai-stepper small\s*\{[^}]*display:\s*none/);
+    expect(css).toMatch(/@media \(max-width:\s*480px\)[\s\S]*?\.ai-stepper li > span\s*\{[^}]*display:\s*none/);
+    expect(css).toMatch(/@media \(max-width:\s*480px\)[\s\S]*?\.ai-stepper strong\s*\{[^}]*font-size:\s*var\(--font-support\)/);
+  });
 });

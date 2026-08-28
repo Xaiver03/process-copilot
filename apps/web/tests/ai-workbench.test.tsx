@@ -24,6 +24,7 @@ describe("AI 可感知事件研判", () => {
     expect(screen.getByText("AI 建议下一步")).toBeInTheDocument();
     expect(screen.getByText("人工确认点")).toBeInTheDocument();
     await waitFor(() => expect(container.querySelectorAll("[data-ai-step]")).toHaveLength(5));
+    expect(Array.from(container.querySelectorAll("[data-ai-step]"), (node) => node.getAttribute("data-ai-step"))).toEqual(["1", "2", "3", "4", "5"]);
   });
 
   it("明确展示 AI 相对固定阈值规则多做的判断", async () => {
