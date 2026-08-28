@@ -49,7 +49,7 @@ export function DemoJourney() {
       <h1>选择场景并创建真实回放</h1>
       <p>创建 run 后立即读取该 run 的事件，研判和记录全程使用后端返回 ID。</p>
       {scenarios ? <ModeNotice mode={scenarios.mode} notice={scenarios.notice} /> : null}
-      <label>
+      <label className="demo-scenario-field">
         演示场景
         <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={!scenarios || busy}>
           {scenarios?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}

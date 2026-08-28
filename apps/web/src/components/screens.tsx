@@ -181,12 +181,12 @@ export function ReplayScreen() {
       {scenarios.error ? <div className="form-error" role="alert"><p>{scenarios.error}</p><button className="text-link" type="button" onClick={scenarios.retry}>重试读取场景</button></div> : null}
       {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
       <section className="replay-control" aria-label="回放控制">
-        <label>场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}</select></label>
+        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}</select></label>
         <button className="control-button" type="button" onClick={startReplay} disabled={busy || !selectedId} aria-label="开始回放">
           {busy ? <Clock aria-hidden="true" /> : <Play aria-hidden="true" weight="fill" />}<span>{busy ? "创建回放中" : "开始回放"}</span>
         </button>
         <button className="control-button" type="button" disabled={!journey || busy} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
-        <label>倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
+        <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
         <div className="sample-readout"><span>{journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong>{journey?.data.run.currentSample ?? 0}</strong><small>/ 500</small></div>
       </section>
       <ProcessHeatmapChart />

@@ -51,6 +51,8 @@ describe("回放控制", () => {
     render(<ReplayScreen />);
 
     await screen.findByRole("option", { name: "A 料进料损失" });
+    expect(screen.getByRole("combobox", { name: "回放场景" }).closest("label")).toHaveClass("replay-scenario-field");
+    expect(screen.getByRole("combobox", { name: "回放倍速" }).closest("label")).toHaveClass("replay-speed-field");
     await user.click(screen.getByRole("button", { name: "开始回放" }));
     expect(await screen.findByText("回放进行中")).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: "回放倍速" }), "20");
