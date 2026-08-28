@@ -29,12 +29,13 @@
 
 | 事实 | 当前状态 | 事实源/证据 |
 |---|---|---|
-| 数据修正与复核 | 已完成，22 tests | `services/ml/tests/`；命令见 [实施计划](2026-08-28_连续化工过程偏移副驾驶_实施计划_v01_DRAFT.md) Task 2 |
-| 后端修正与复核 | 已完成，17 tests | `apps/api/tests/`；同一实施计划 Task 3 |
-| 前端真实链路 | 进行中 | `apps/web/tests/live-api-chain.test.ts`、`apps/web/tests/container-integration.test.ts` |
+| 数据修正与复核 | 已完成，23 tests | `services/ml/tests/`；命令见 [实施计划](2026-08-28_连续化工过程偏移副驾驶_实施计划_v01_DRAFT.md) Task 2 |
+| 后端修正与复核 | 已完成，19 tests | `apps/api/tests/`；同一实施计划 Task 3 |
+| 前端真实链路 | 已完成，27 tests | `apps/web/tests/live-api-chain.test.ts`、`apps/web/tests/container-integration.test.ts` |
 | 共享契约 | 已存在，父 Agent 负责冻结与冲突消解 | [`packages/contracts/openapi.yaml`](../../packages/contracts/openapi.yaml)、[`packages/contracts/schemas/domain.schema.json`](../../packages/contracts/schemas/domain.schema.json) |
 | Figma 设计系统 | 文件已创建，待独立审阅和代码对齐 | [WunoOS - 连续化工过程偏移副驾驶](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)；本地规则见 [`design-system/连续化工过程偏移副驾驶/MASTER.md`](../../design-system/连续化工过程偏移副驾驶/MASTER.md) |
-| 基础设施 | Compose、硬化和部署前检查已校验；镜像构建与远端部署未完成 | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
+| 基础设施 | 五服务镜像已构建并部署，远端 release `20260828T0435Z` 全部 healthy | [`infra/compose.yaml`](../../infra/compose.yaml)、[`infra/tests/validate_infra.sh`](../../infra/tests/validate_infra.sh)、[`docs/deployment.md`](../deployment.md) |
+| 远端 E2E | 已通过 | [`tests/e2e/smoke.sh`](../../tests/e2e/smoke.sh)；覆盖真实 run/event、两阶段时序、幂等 409、人工确认、审计和非法 SSE 游标 |
 | 产品边界 | 公开仿真 Demo、读侧建议、人工确认留痕 | [`README.md`](../../README.md)、[`docs/submission/数据说明_v01_DRAFT.md`](../submission/数据说明_v01_DRAFT.md) |
 
 所有 Agent 开始前先阅读项目 [`README.md`](../../README.md)、本规范和自己边界内的文件；涉及产品设计时还必须阅读 [`方案设计_v01_DRAFT.md`](2026-08-28_连续化工过程偏移副驾驶_方案设计_v01_DRAFT.md) 与设计系统 Master。
@@ -49,13 +50,13 @@
 | W1 | 数据 | TEP 原始包校验、分层 Parquet、变量字典、manifest | `data/manifests/**`、`data/processed/**`、必要的原始数据只读引用 | W0 的数据字段约定 | 已完成 |
 | W2 | 模型 | PCA T²/SPE、Top-3 贡献、故障分类、模板建议、确定性场景 | `services/ml/**` | W1 的数据产物 | 已完成 |
 | W3 | API | FastAPI、回放状态机、SSE、决策/审计、降级和幂等 | `apps/api/**` | W0、W1/W2 的产物格式 | 已完成 |
-| W4 | 前端 | Next.js 驾驶舱、真实 API/SSE 链路、全状态、响应式和可访问性 | `apps/web/**` | W0、W3；设计 token 可先用已冻结版本 | 进行中 |
-| W5 | 设计 | Figma 页面/组件/变量、代码 token 对齐、状态与截图台账 | Figma 文件、`design-system/连续化工过程偏移副驾驶/**`、`packages/ui/src/tokens.css`、`packages/ui/src/index.ts` | W0 的页面/状态范围 | Figma 已创建，审阅待启动 |
-| W6 | 基础设施 | Compose、镜像、健康检查、CI、部署/备份/回滚 | `infra/**`、`.github/workflows/ci.yml`、`docs/deployment.md` | W3/W4 可构建 | 基线已完成，构建/远端待完成 |
-| W7 | 安全 | 只读边界、凭证/日志/网络检查、依赖和容器硬化审阅 | 默认不直接写文件；修复回交给对应文件所有者 | W3/W4/W6 | 待启动 |
-| W8 | QA | 契约、单元、组件、E2E、故障注入、连续演示复验 | `tests/e2e/**`；报告使用 Agent 消息或父 Agent 指定位置 | W0/W1/W2/W3/W4/W6 | 待启动 |
-| W9 | 文档 | 数据说明、部署说明、作品说明、运行手册、协作规范 | `docs/submission/**`、`docs/deployment.md`、本文件（本轮仅本文件） | W1/W3/W6/W8 证据 | 本规范编写中，其它材料待收口 |
-| W10 | 演示 | 3 分钟脚本、固定场景、演示前检查和失败兜底 | `docs/submission/三分钟Demo脚本_v01_DRAFT.md`、演示记录不回写业务代码 | W4/W8/W9 | 待启动 |
+| W4 | 前端 | Next.js 驾驶舱、真实 API/SSE 链路、全状态、响应式和可访问性 | `apps/web/**` | W0、W3；设计 token 可先用已冻结版本 | 已完成，视觉复核收尾中 |
+| W5 | 设计 | Figma 页面/组件/变量、代码 token 对齐、状态与截图台账 | Figma 文件、`design-system/连续化工过程偏移副驾驶/**`、`packages/ui/src/tokens.css`、`packages/ui/src/index.ts` | W0 的页面/状态范围 | Figma 文件与代码 token 已创建；页面资产仍需独立补齐 |
+| W6 | 基础设施 | Compose、镜像、健康检查、CI、部署/备份/回滚 | `infra/**`、`.github/workflows/ci.yml`、`docs/deployment.md` | W3/W4 可构建 | 已部署，五服务 healthy |
+| W7 | 安全 | 只读边界、凭证/日志/网络检查、依赖和容器硬化审阅 | 默认不直接写文件；修复回交给对应文件所有者 | W3/W4/W6 | 已完成独立审阅与修正 |
+| W8 | QA | 契约、单元、组件、E2E、故障注入、连续演示复验 | `tests/e2e/**`；报告使用 Agent 消息或父 Agent 指定位置 | W0/W1/W2/W3/W4/W6 | 69 项测试及远端 E2E 已通过 |
+| W9 | 文档 | 数据说明、部署说明、作品说明、运行手册、协作规范 | `docs/submission/**`、`docs/deployment.md`、本文件（本轮仅本文件） | W1/W3/W6/W8 证据 | 已按部署与验收证据收口 |
+| W10 | 演示 | 3 分钟脚本、固定场景、演示前检查和失败兜底 | `docs/submission/三分钟Demo脚本_v01_DRAFT.md`、演示记录不回写业务代码 | W4/W8/W9 | 脚本已完成，连续现场彩排待执行 |
 
 ### 3.2 各工作线的可执行边界
 
@@ -296,32 +297,31 @@ docker compose -p process-copilot-test -f infra/compose.yaml down
 
 ### 10.1 已完成
 
-- **D/M：** 数据格式、故障边界、窗口规则、PCA/分类/贡献和确定性产物已修正复核；已知本线 22 tests 通过。
-- **A：** 健康/ready、场景、回放、SSE、幂等、事件、人工决策、审计、错误和 OpenAPI 对齐已修正复核；已知本线 17 tests 通过。
-- **I（基线）：** `infra/compose.yaml`、Caddy、Dockerfile、部署/回滚脚本和 `infra/tests/validate_infra.sh` 已有安全边界与配置校验；不等于镜像和远端发布完成。
+- **D/M：** 数据格式、故障边界、窗口规则、PCA/分类/贡献和确定性产物已修正复核；23 tests 通过。
+- **A：** 健康/ready、场景、回放、SSE、幂等、事件、人工决策、审计、错误和 OpenAPI 对齐已修正复核；19 tests 通过。
+- **F：** 真实 scenario/run/event/decision/record 链路、两阶段 UI、网络降级边界和贡献值单位已完成；27 tests、typecheck、lint、production build 通过。
+- **I：** release `20260828T0435Z` 已部署至 `wunoos`；Web、API、worker、PostgreSQL、Caddy 全部 healthy，远端 E2E 通过。
+- **X/Q：** 容器、凭证、日志、数据诚实性与接口边界已独立审阅；Claude Code 结论为 `PASS WITH RISKS`，其中三处过时文档已在本轮修正。
 - **S（资产创建）：** Figma 文件已创建；不等于组件、变量、状态、截图和代码 token 已独立审阅通过。
 
 ### 10.2 正在运行
 
-- **F：** 前端真实链路修正。当前唯一目标是从 `apps/web` 通过生成 API 类型连接真实 API/SSE，并保持 `live-api-chain`、容器集成、全状态和响应式测试可验证。
+- **P/A：** 按 Claude Code 验收残余项补强 SSE 心跳连接语义和模板缺失时的降级证据标识；每个修复独立 commit、独立回归。
+- **F：** 修复 390px 视口下关闭侧栏仍造成文档横向滚动的问题，并重新做 390/768/桌面视觉复核。
+- **C：** 同步最终测试数、部署 release、E2E 证据与访问边界。
 
 ### 10.3 待启动
 
-- **P：** 契约版本、当前工作树和跨服务接口的冻结确认。
-- **S：** Figma metadata/screenshot、对比度、变量绑定、状态覆盖和 `packages/ui` 对齐审阅。
-- **I：** 在 W4 GREEN 后完成本地 `docker compose build/up/health`，再做 `wunoos` 预检和独立 release 部署。
-- **X：** 凭证、日志、网络、读侧边界、依赖和容器硬化独立审阅。
-- **Q：** 编写并运行 `tests/e2e/**`，完成 SSE 断线、API 暂停、LLM 关闭、重复请求和审计留痕场景。
-- **C：** 依据实际证据收口数据说明、部署说明、作品说明和本协作规范；不得新增无来源指标。
-- **V：** 在 Q GREEN 后连续 5 次演示，记录主链路、离线/降级路径和口播限制。
+- **S：** 补齐 Figma 页面级资产、截图、变量绑定和独立对齐审阅。
+- **V：** 使用同一冻结场景连续彩排 5 次，记录主链路、网络降级路径和口播限制。
+- **I：** 在明确授权后演练一次数据库备份和 rollback；公网安全组保持不变。
 
 ### 10.4 下一波具体派发
 
-1. **立即并行：** F 继续真实链路；S 做设计独立审阅；I 只做 Compose/build 前置检查；X 做只读安全扫描。四条线不得互改文件。
-2. **F GREEN 后：** I 运行本地镜像和容器 health；Q 固化 E2E；P 冻结契约和前端生成类型；任何契约变更必须重新跑 W3/W4。
-3. **本地容器 GREEN 后：** X/Q 做独立审阅和故障注入；S 完成 Figma/代码对齐门；C/V 只使用已通过证据。
-4. **P 复验通过后：** I 以独立 release 执行 `wunoos` 部署；Q 做远端 smoke 和回滚验证；V 使用同一 release 彩排。
-5. **最终上线前：** P 核对 Definition of Done 全项、数据诚实性和对外措辞，明确记录访问入口与限制。
+1. **当前并行：** A 只改 `apps/api/**`；F 只改 `apps/web/**`；C 只改文档。每个问题单独 commit，不交叉暂存。
+2. **代码 GREEN 后：** 运行 ML/API/Web、契约、infra 与远端 E2E；任何 API 语义变化都重新生成并校验前端类型。
+3. **远端复验后：** 记录新 release、五服务健康状态和安全访问方式；不放行公网高位端口。
+4. **现场前：** 补齐 Figma 页面级资产并连续彩排 5 次；最后核对 Definition of Done、数据诚实性和对外措辞。
 
 ## 11. Definition of Done
 

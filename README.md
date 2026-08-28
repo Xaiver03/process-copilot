@@ -1,44 +1,89 @@
 # 连续化工过程偏移副驾驶
 
-状态：`DRAFT`  
-阶段：绿地项目，方案审批中
+状态：`REVIEW`  
+当前 release：`20260828T0435Z`  
+主链路：`过程数据回放 -> 偏移发现 -> 候选刷新 -> Top-3 变量证据 -> 安全建议 -> 人工确认 -> 审计留痕`
 
-## 产品目标
+这不是泛化的“智慧工厂大屏”。它只聚焦连续生产装置的一个动作：当班工程师看到过程偏移后，快速判断“是不是真偏了、先看哪三个变量、下一步先查什么、谁确认过”。
 
-面向连续生产装置的中控室当班工程师，使用 Tennessee Eastman Process 开源数据演示一条完整路径：
+## 已完成
 
-`过程数据回放 -> 偏移发现 -> 故障研判 -> 关键变量证据 -> 处置建议 -> 人工确认与留痕`
+- TEP 数据基座：原始包校验、Parquet 分层、变量字典、manifest 和冻结场景。
+- 模型基线：PCA T²/SPE 偏移检测、SPE 变量贡献、三类 Demo 候选分类和确定性建议模板。
+- 诚实的两阶段时间轴：首次异常点立即锁定事件；候选和证据在预注册的 20 个样本后刷新。`已更新` 不表示 `已确认`。
+- FastAPI + PostgreSQL：场景、回放、SSE、事件、幂等人工决策、审计记录和真实 readiness。
+- Next.js 驾驶舱：真实 scenario/run/event/decision/record 链路、网络降级、响应式和可访问性。
+- WunoOS/WUWUI 设计系统：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
+- Docker Compose：Web、API、worker、PostgreSQL、Caddy 五个健康服务，含发布、备份和回滚脚本。
 
-产品首期只提供读侧分析和处置建议，不自动回写 DCS、PLC 或其他控制系统。
+## 数据与产品边界
 
-## 当前边界
+- 上游：[camaramm/tennessee-eastman-profBraatz](https://github.com/camaramm/tennessee-eastman-profBraatz)
+- ZIP SHA-256：`fe3a3b0f096c9bd3f90fd33bfea0d54e0626d1e4dda7df0eb9daea7e103a24f4`
+- buildHash：`c8920c786aea6d7171d27629e0be703a6222b383ba3672a930cb2328ede6c83b`
+- modelVersion：`tep-pca-hgb-5bc36d3f4e6b`
+- 场景：`F01 Feed composition step deviation`、`F06 A-feed loss`、`F13 Reaction kinetics slow drift`
+- 这是公开仿真数据，不是贵州企业真实生产数据；不能据此声称生产误报率、漏报率、提前量或收益。
+- 系统只提供读侧证据与建议，没有 DCS、PLC、联锁或控制回路写回能力。
 
-- 这是从零开始的新项目，尚无既有前端、后端、数据库或部署环境。
-- 当前只创建需求、架构和实施计划；方案审批后再生成应用代码并连接服务器。
-- Demo 使用公开仿真数据验证产品路径，不宣称等同于贵州磷化工真实生产数据。
-- 视觉实现继承 WunoOS-WUWUI 核心 token，并为工业驾驶舱补充产品级语义 token。
+详细口径见 [数据说明](docs/submission/数据说明_v01_DRAFT.md)。
 
-## 目录规划
+## 快速验证
 
-```text
-03_连续化工过程偏移副驾驶/
-├── README.md
-├── docs/
-│   └── plans/
-├── design-system/
-├── apps/                  # 审批后创建
-│   ├── web/
-│   └── api/
-├── packages/              # 审批后创建
-│   └── contracts/
-├── data/                  # 审批后创建
-├── infra/                 # 审批后创建
-└── tests/                 # 审批后创建
+需要 Node 22、pnpm 9.15.4、Python 3.12、uv 和 Docker Compose。
+
+```bash
+pnpm install --frozen-lockfile
+make test
+make lint
+make build
 ```
 
-## 上游资料
+数据重建必须显式使用 `make data-force`。运行中的 E2E：
 
-- 数据研究：[`../02_AI与贵州特色产业数据研究/`](../02_AI与贵州特色产业数据研究/README.md)
-- 黑客松选题建议：[`../02_AI与贵州特色产业数据研究/05_结论与选题/能源与先进制造_黑客松选题建议_v01_DRAFT.md`](../02_AI与贵州特色产业数据研究/05_结论与选题/能源与先进制造_黑客松选题建议_v01_DRAFT.md)
-- Wuno 设计系统：[`../../04_品牌与市场资产/Wuno_WUWEI品牌市场/01_品牌视觉与媒体/00_设计系统/`](../../04_品牌与市场资产/Wuno_WUWEI品牌市场/01_品牌视觉与媒体/00_设计系统/README.md)
+```bash
+BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
+```
 
+当前父级验收基线：ML `23 passed`、API `19 passed`、Web `27 passed`，共 69 项测试；契约、Ruff、ESLint、TypeScript、Next.js production build 和 infra 检查均通过。
+
+## 运行与部署
+
+- 远端主机：`wunoos`
+- 专用目录：`/opt/process-copilot`
+- Compose project：`process-copilot`
+- 宿主高位端口：`18090`
+- 当前 release：`20260828T0435Z`
+
+服务器内网及 SSH 隧道 E2E 已通过。云安全组尚未放行公网 `18090`；本机安全访问方式：
+
+```bash
+ssh -N -L 127.0.0.1:18091:127.0.0.1:18090 wunoos
+```
+
+然后打开 `http://127.0.0.1:18091/demo`。详见 [部署说明](docs/deployment.md)。
+
+## 核心目录
+
+```text
+apps/web/                 Next.js 驾驶舱
+apps/api/                 FastAPI、PostgreSQL 与 worker
+services/ml/              数据/模型构建管线
+packages/contracts/       OpenAPI 与 domain schema
+packages/ui/              Wuno/WUWUI 产品 token
+data/processed/           冻结数据、模型与场景
+data/manifests/           产物 hash 台账
+infra/                    镜像、Compose、Caddy 与运维脚本
+tests/e2e/                针对任意 BASE_URL 的 smoke
+docs/plans/               方案、实施、Agent 编排和 Claude Code Prompt
+docs/submission/          作品、数据与 Demo 材料
+```
+
+## 交付入口
+
+- [作品说明](docs/submission/作品说明_v01_DRAFT.md)
+- [三分钟 Demo 脚本](docs/submission/三分钟Demo脚本_v01_DRAFT.md)
+- [多 Agent 协作编排规范](docs/plans/2026-08-28_多Agent协作编排规范_v01_DRAFT.md)
+- [Claude Code 独立验收 Prompt](docs/plans/2026-08-28_Claude_Code_独立验收Prompt_v01.md)
+- [Figma 设计系统](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)
+- [上游数据研究](../02_AI与贵州特色产业数据研究/README.md)
