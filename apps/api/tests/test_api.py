@@ -117,6 +117,13 @@ def test_scenarios_are_loaded_from_demo_manifest(client: TestClient):
     assert response.json()[0]["sourceLabel"] == "Tennessee Eastman Process public simulation"
 
 
+def test_create_app_runs_ready_database(tmp_path: Path):
+    data_dir = tmp_path / "processed"
+    data_dir.mkdir()
+    app = create_app(database_url=f"sqlite:///{tmp_path / 'api.db'}", data_dir=data_dir)
+    assert app.state.database.check_ready() is None
+
+
 def test_catalog_reads_agent_generated_scenario_and_event_template(tmp_path: Path):
     scenario_dir = tmp_path / "scenarios" / "tep-f01-feed-ratio-step"
     scenario_dir.mkdir(parents=True)

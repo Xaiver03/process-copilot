@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Float, Integer, String, create_engine, text
+from sqlalchemy import JSON, DateTime, Float, Integer, String, create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -81,6 +81,16 @@ class IdempotencyRow(Base):
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     response: Mapped[dict[str, Any]] = mapped_column(JSON)
     status_code: Mapped[int] = mapped_column(Integer)
+
+
+
+def table_names(engine: Any) -> set[str]:
+    return set(inspect(engine).get_table_names())
+
+
+def column_names(engine: Any, table_name: str) -> set[str]:
+    return {column["name"] for column in inspect(engine).get_columns(table_name)}
+
 
 
 class Database:
