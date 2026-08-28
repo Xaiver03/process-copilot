@@ -74,6 +74,54 @@ def test_upgrade_head_backfills_existing_schema(tmp_path) -> None:
     assert "legacy_marker" in table_names(database.engine)
 
 
+def test_upgrade_head_reconciles_legacy_timestamp_columns(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'legacy-timestamps.db'}"
+
+    database = Database(database_url)
+    database.create_schema()
+    with database.engine.begin() as connection:
+        connection.exec_driver_sql("ALTER TABLE anomaly_events DROP COLUMN created_at")
+        connection.exec_driver_sql("ALTER TABLE idempotency_records DROP COLUMN created_at")
+        connection.execute(
+            text(
+                """
+                INSERT INTO anomaly_events (
+                    id, run_id, sample_index, severity, state, anomaly_score, detail
+                ) VALUES (
+                    'legacy-event', 'legacy-run', 12, 'warning', 'open', 0.7, '{}'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO idempotency_records (
+                    id, fingerprint, response, status_code
+                ) VALUES (
+                    'legacy:request-1', :fingerprint, '{}', 201
+                )
+                """
+            ),
+            {"fingerprint": "0" * 64},
+        )
+
+    upgrade_database(database_url)
+
+    assert "created_at" in column_names(database.engine, "anomaly_events")
+    assert "created_at" in column_names(database.engine, "idempotency_records")
+    with database.engine.connect() as connection:
+        assert connection.scalar(
+            text("SELECT created_at FROM anomaly_events WHERE id = 'legacy-event'")
+        )
+        assert connection.scalar(
+            text(
+                "SELECT created_at FROM idempotency_records "
+                "WHERE id = 'legacy:request-1'"
+            )
+        )
+
+
 def test_upgrade_rejects_partial_online_runtime_schema(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'partial-runtime.db'}"
     database = Database(database_url)
