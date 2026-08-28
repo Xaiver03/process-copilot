@@ -13,10 +13,16 @@ def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
     database.check_ready()
     tables = table_names(database.engine)
     expected_tables = {
+        "admin_audit_events",
+        "ai_configurations",
+        "ai_interactions",
         "operators",
         "decision_records",
         "replay_runs",
+        "run_inference_state",
+        "run_stream_messages",
         "anomaly_events",
+        "audit_events",
         "audits",
         "idempotency_records",
     }
