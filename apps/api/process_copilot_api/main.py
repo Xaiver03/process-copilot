@@ -37,6 +37,10 @@ from .schemas import (
 
 DEFAULT_SOURCE_DISCLOSURE = "Public simulation data, not real Guizhou plant data."
 DEFAULT_SAFETY_BOUNDARY = "Read-only advice. No automatic control write-back."
+DEGRADED_FALLBACK_MODEL_VERSION = "degraded-demo-fallback-v0.1"
+DEGRADED_FALLBACK_RISK = (
+    "演示降级：事件模板缺失或无效，以下证据为固定占位内容，不代表真实模型计算结果。"
+)
 
 
 class APIError(Exception):
@@ -149,7 +153,7 @@ def _fallback_detail(
     scenario: Scenario,
     template: dict[str, Any] | None = None,
 ) -> EventDetail:
-    if template:
+    if isinstance(template, dict) and template:
         try:
             return EventDetail.model_validate(
                 {
@@ -180,7 +184,7 @@ def _fallback_detail(
             unit="%",
             contribution=0.91,
             direction="up",
-            summary="偏离正常工况基线，优先核对流量回路。",
+            summary="演示降级占位证据：偏离正常工况基线，优先核对流量回路。",
             values=[0.32, 0.48, 0.67],
         ),
         EvidenceItem(
@@ -189,7 +193,7 @@ def _fallback_detail(
             unit="kPa",
             contribution=0.74,
             direction="up",
-            summary="与偏移窗口同步上升，作为第二检查点。",
+            summary="演示降级占位证据：与偏移窗口同步上升，作为第二检查点。",
             values=[0.20, 0.42, 0.63],
         ),
         EvidenceItem(
@@ -198,7 +202,7 @@ def _fallback_detail(
             unit="%",
             contribution=0.61,
             direction="down",
-            summary="执行器侧变化与异常方向相反，需现场确认。",
+            summary="演示降级占位证据：执行器侧变化与异常方向相反，需现场确认。",
             values=[0.74, 0.60, 0.45],
         ),
     ]
@@ -219,13 +223,13 @@ def _fallback_detail(
         candidates=candidates,
         evidence=evidence,
         recommendation=Recommendation(
-            mode="template",
-            risk="先确认过程变量与现场仪表状态，再决定是否升级。",
+            mode="degraded",
+            risk=DEGRADED_FALLBACK_RISK,
             checks=["核对进料流量与压力趋势", "确认冷却水阀位和仪表状态"],
             actions=["按 Top-3 变量顺序人工检查", "必要时通知工艺负责人"],
             safety_boundary=DEFAULT_SAFETY_BOUNDARY,
         ),
-        model_version="template-v0.1",
+        model_version=DEGRADED_FALLBACK_MODEL_VERSION,
         data_source_disclosure=DEFAULT_SOURCE_DISCLOSURE,
     )
 

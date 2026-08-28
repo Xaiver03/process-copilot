@@ -167,6 +167,34 @@ def test_development_fallback_also_satisfies_two_stage_event_contract(tmp_path: 
     assert payload["anomalyLatched"] is True
 
 
+def test_missing_event_template_marks_hardcoded_detail_as_degraded(tmp_path: Path):
+    data_dir = tmp_path / "processed"
+    scenario_dir = data_dir / "scenarios" / "tep-f01-feed-ratio-step"
+    scenario_dir.mkdir(parents=True)
+    scenario = {
+        "id": "tep-f01-feed-ratio-step",
+        "name": "Feed composition step deviation",
+        "faultId": 1,
+        "sampleCount": 960,
+        "faultOnsetSample": 160,
+        "sourceLabel": "Tennessee Eastman Process public simulation",
+    }
+    (scenario_dir / "scenario.json").write_text(json.dumps(scenario), encoding="utf-8")
+    (scenario_dir / "event-template.json").write_text("{not-json", encoding="utf-8")
+    app = create_app(database_url=f"sqlite:///{tmp_path / 'api.db'}", data_dir=data_dir)
+
+    with TestClient(app) as test_client:
+        run = test_client.post("/api/v1/runs", json={"scenarioId": scenario["id"]}).json()
+        event_id = test_client.get(f"/api/v1/runs/{run['id']}/events").json()[0]["id"]
+        response = test_client.get(f"/api/v1/events/{event_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["recommendation"]["mode"] == "degraded"
+    assert "degraded" in payload["modelVersion"]
+    assert "演示降级" in payload["recommendation"]["risk"]
+
+
 def test_catalog_aggregates_all_generated_scenario_directories(tmp_path: Path):
     for fault_id in (1, 6, 13):
         scenario_id = f"tep-f{fault_id:02d}"
@@ -355,7 +383,7 @@ def test_event_detail_decision_and_record_are_auditable(client: TestClient):
     detail = client.get(f"/api/v1/events/{event['id']}")
     assert detail.status_code == 200
     assert len(detail.json()["evidence"]) == 3
-    assert detail.json()["recommendation"]["mode"] == "template"
+    assert detail.json()["recommendation"]["mode"] == "degraded"
     assert detail.json()["recommendation"]["safetyBoundary"] == (
         "Read-only advice. No automatic control write-back."
     )
