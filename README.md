@@ -89,7 +89,7 @@ docs/submission/          作品、数据与 Demo 材料
 ## 交付入口
 
 - [黑客松路演 PPTX / PDF](04_交付成品/README.md)
-- [黑客松易拉宝 CMYK REVIEW PDF](04_交付成品/序安_Process_Sentinel_黑客松易拉宝_v04_ZH_CMYK_REVIEW.pdf)
+- [黑客松易拉宝 CMYK REVIEW PDF](04_交付成品/序安_Process_Sentinel_黑客松易拉宝_v05_ZH_CMYK_REVIEW.pdf)
 - [黑客松易拉宝普通观众讲解逐字稿](docs/submission/序安黑客松易拉宝讲解逐字稿_v03_REVIEW.md)
 - [黑客松易拉宝观看距离与字高验收](docs/submission/序安黑客松易拉宝观看距离与字高验收_v01_REVIEW.md)
 - [序安现行标志应用审计](docs/submission/序安品牌标志应用审计_v01_REVIEW.md)
