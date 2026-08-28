@@ -124,12 +124,10 @@ describe("真实 API 主链路与降级边界", () => {
     } satisfies Partial<ApiProblemError>);
   });
 
-  it("只有 fetch TypeError 才进入明确标注的静态 Demo", async () => {
+  it("真实事件深链断网时明确报错，不混入静态事件", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-    const result = await getEventWithFallback("any-event");
-    expect(result.mode).toBe("static-demo");
-    expect(result.notice).toContain("网络不可达");
+    await expect(getEventWithFallback("any-event")).rejects.toThrow("Failed to fetch");
   });
 
   it("普通异常不会触发静态降级", async () => {

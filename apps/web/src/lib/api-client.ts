@@ -1,5 +1,5 @@
 import type { components } from "./api-schema";
-import { demoEvent, demoEvents, demoRecord, demoRun, demoScenario } from "./demo-data";
+import { demoEvent, demoRecord, demoRun, demoScenario } from "./demo-data";
 import { readSession, saveSession, clearSession, type AuthSession } from "./auth-store";
 
 type EventDetail = components["schemas"]["EventDetail"];
@@ -99,6 +99,10 @@ function staticDemoResult<T>(data: T): ApiResult<T> {
   return { data, mode: "static-demo", notice: STATIC_DEMO_NOTICE };
 }
 
+async function liveResult<T>(request: () => Promise<T>): Promise<ApiResult<T>> {
+  return { data: await request(), mode: "live", notice: "已连接只读演示 API" };
+}
+
 export async function login(payload: LoginRequest): Promise<AuthSession> {
   const data = await requestJson<components["schemas"]["LoginResponse"]>("/api/v1/auth/login", {
     method: "POST",
@@ -121,7 +125,7 @@ export function getScenariosWithFallback(): Promise<ApiResult<Scenario[]>> {
 
 export function getEventWithFallback(eventId: string): Promise<ApiResult<EventDetail>> {
   if (eventId === "demo-event") return Promise.resolve(staticDemoResult(demoEvent));
-  return withFallback(() => requestJson<EventDetail>(`/api/v1/events/${eventId}`), demoEvent);
+  return liveResult(() => requestJson<EventDetail>(`/api/v1/events/${eventId}`));
 }
 
 export function createRunWithFallback(payload: CreateRunRequest): Promise<ApiResult<ReplayRun>> {
@@ -152,7 +156,7 @@ export function controlRunWithFallback(runId: string, payload: RunControlRequest
 }
 
 export function listRunEventsWithFallback(runId: string): Promise<ApiResult<AnomalyEvent[]>> {
-  return withFallback(() => requestJson<AnomalyEvent[]>(`/api/v1/runs/${runId}/events`), demoEvents);
+  return liveResult(() => requestJson<AnomalyEvent[]>(`/api/v1/runs/${runId}/events`));
 }
 
 export function getReadinessWithFallback(): Promise<ApiResult<Health>> {
@@ -164,16 +168,16 @@ export function getReadinessWithFallback(): Promise<ApiResult<Health>> {
 
 export function getRecordWithFallback(recordId: string): Promise<ApiResult<DecisionRecord>> {
   if (recordId === "demo-record") return Promise.resolve(staticDemoResult(demoRecord));
-  return withFallback(() => requestJson<DecisionRecord>(`/api/v1/records/${recordId}`), demoRecord);
+  return liveResult(() => requestJson<DecisionRecord>(`/api/v1/records/${recordId}`));
 }
 
 export async function submitDecisionWithFallback(
   eventId: string,
   decision: DecisionRequest,
 ): Promise<ApiResult<DecisionRecord>> {
-  return withFallback(
-    () =>
-      requestJson<DecisionRecord>(`/api/v1/events/${eventId}/decision`, {
+  if (eventId === "demo-event") return staticDemoResult({ ...demoRecord, ...decision });
+  return liveResult(() =>
+    requestJson<DecisionRecord>(`/api/v1/events/${eventId}/decision`, {
         method: "POST",
         headers: { "Idempotency-Key": crypto.randomUUID() },
         body: JSON.stringify(decision),
@@ -181,7 +185,6 @@ export async function submitDecisionWithFallback(
         if (error instanceof ApiProblemError && error.status === 401) clearSession();
         throw error;
       }),
-    { ...demoRecord, ...decision },
   );
 }
 
@@ -209,7 +212,12 @@ export async function startScenarioWithFallback(
     throw new Error(`回放 ${runResult.data.id} 已在服务器创建，但播放控制请求失败；请保留该 run ID 后重试。`);
   }
 
-  const eventsResult = await listRunEventsWithFallback(startedRunResult.data.id);
+  let eventsResult: ApiResult<AnomalyEvent[]>;
+  try {
+    eventsResult = await listRunEventsWithFallback(startedRunResult.data.id);
+  } catch {
+    throw new Error(`回放 ${startedRunResult.data.id} 已进入播放态，但事件读取失败；不会混用静态事件。`);
+  }
   if (eventsResult.mode === "static-demo") {
     throw new Error(`回放 ${startedRunResult.data.id} 已进入播放态，但事件读取失败；不会混用静态事件。`);
   }
