@@ -43,8 +43,10 @@
 
 `../../../04_品牌与市场资产/Wuno_WUWEI品牌市场/07_LaTeX文档工程/02_产品手册/2026-08_连续化工过程偏移副驾驶/`
 
-当前评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v03_ZH_REVIEW.pdf`（12 页，16:9；用户可见品牌与 PDF 元数据统一为“序安 Process Sentinel”，手册使用首屏预览，中央截图目录另保留显式 `_全页` 长图）。
+当前评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v04_ZH_REVIEW.pdf`（14 页，16:9；新增完整管理后台、AI 配置与降级边界、调用记录、配置审计、操作员登录、人机问答、三分钟演示链路及故障演习）。
 
-上一评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v02_ZH_REVIEW.pdf`。
+上一评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v03_ZH_REVIEW.pdf`。
 
-历史评审版：`Wuno_连续化工过程偏移副驾驶_产品手册_v01_ZH_REVIEW.pdf`。历史文件仅用于追溯，不作为当前对外版本；不会直接覆盖已经确认的 `APPROVED` 文件。
+完整现场演习手册：`../docs/submission/序安完整演示演习手册_v01_REVIEW.md`。
+
+历史评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v02_ZH_REVIEW.pdf` 与 `Wuno_连续化工过程偏移副驾驶_产品手册_v01_ZH_REVIEW.pdf`。历史文件仅用于追溯，不作为当前对外版本；不会直接覆盖已经确认的 `APPROVED` 文件。
