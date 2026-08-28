@@ -1,0 +1,138 @@
+import json
+from pathlib import Path
+
+import pytest
+from cryptography.fernet import Fernet
+from fastapi.testclient import TestClient
+from process_copilot_api.db import AIConfigurationRow
+from process_copilot_api.main import create_app
+
+
+@pytest.fixture()
+def admin_client(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "processed"
+    data_dir.mkdir()
+    (data_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "scenarios": [
+                    {
+                        "id": "tep-fault-05",
+                        "name": "冷却水流量偏移",
+                        "faultId": 5,
+                        "sampleCount": 500,
+                        "faultOnsetSample": 120,
+                        "sourceLabel": "Tennessee Eastman Process public simulation",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("AI_CONFIG_ENCRYPTION_KEY", Fernet.generate_key().decode("ascii"))
+    monkeypatch.setenv("LLM_PROVIDER", "disabled")
+    app = create_app(
+        database_url=f"sqlite:///{tmp_path / 'api.db'}",
+        data_dir=data_dir,
+        sse_heartbeat_interval_seconds=0.001,
+        sse_heartbeat_count=1,
+    )
+    with TestClient(app) as client:
+        yield client, app
+
+
+def auth_headers(client: TestClient, username: str, password: str) -> dict[str, str]:
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": username, "password": password},
+    )
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['token']}"}
+
+
+def test_admin_endpoints_require_admin_role(admin_client) -> None:
+    client, _app = admin_client
+    operator = auth_headers(client, "operator-01", "demo-op-2026")
+    lead = auth_headers(client, "shift-lead", "demo-lead-2026")
+    admin = auth_headers(client, "system-admin", "demo-admin-2026")
+
+    assert client.get("/api/v1/admin/overview").status_code == 401
+    assert client.get("/api/v1/admin/overview", headers=operator).status_code == 403
+    assert client.get("/api/v1/admin/overview", headers=lead).status_code == 403
+    assert client.get("/api/v1/admin/overview", headers=admin).status_code == 200
+
+
+def test_admin_can_update_encrypted_config_with_optimistic_version(admin_client) -> None:
+    client, app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+    initial = client.get("/api/v1/admin/ai/config", headers=headers)
+    assert initial.status_code == 200
+    assert initial.json()["version"] == 1
+    assert initial.json()["apiKeyConfigured"] is False
+
+    updated = client.put(
+        "/api/v1/admin/ai/config",
+        headers={**headers, "Idempotency-Key": "config-update-1"},
+        json={
+            "enabled": True,
+            "provider": "openai-compatible",
+            "baseUrl": "https://provider.example/v1",
+            "model": "demo-model",
+            "timeoutMs": 8000,
+            "maxTokens": 500,
+            "temperature": 0.2,
+            "promptVersion": "event-copilot-v01",
+            "fallbackPolicy": "template",
+            "apiKey": "provider-secret",
+            "expectedVersion": 1,
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["version"] == 2
+    assert updated.json()["apiKeyConfigured"] is True
+    assert "apiKey" not in updated.json()
+
+    with app.state.database.session() as session:
+        row = session.get(AIConfigurationRow, "default")
+        assert row is not None
+        assert row.api_key_ciphertext != "provider-secret"
+        assert "provider-secret" not in row.api_key_ciphertext
+
+    stale = client.put(
+        "/api/v1/admin/ai/config",
+        headers=headers,
+        json={"model": "stale-model", "expectedVersion": 1},
+    )
+    assert stale.status_code == 409
+    assert stale.json()["code"] == "ai_config_version_conflict"
+
+    audit = client.get("/api/v1/admin/audit", headers=headers)
+    assert audit.status_code == 200
+    assert audit.json()["total"] == 1
+    serialized = json.dumps(audit.json(), ensure_ascii=False)
+    assert "provider-secret" not in serialized
+
+
+def test_connection_test_is_audited_and_rate_limited(admin_client) -> None:
+    client, _app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+
+    for _ in range(3):
+        response = client.post(
+            "/api/v1/admin/ai/test",
+            headers=headers,
+            json={"question": "连接是否正常？"},
+        )
+        assert response.status_code == 200
+        assert response.json()["mode"] == "degraded"
+        assert response.json()["ok"] is False
+
+    limited = client.post(
+        "/api/v1/admin/ai/test",
+        headers=headers,
+        json={"question": "第四次测试"},
+    )
+    assert limited.status_code == 429
+
+    audit = client.get("/api/v1/admin/audit", headers=headers).json()
+    assert audit["total"] == 3

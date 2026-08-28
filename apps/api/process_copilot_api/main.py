@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from collections import defaultdict
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, Header, Request
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
@@ -18,6 +19,8 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from .ai_config import AIConfigPatch, AIConfigService, AIConfigValidationError
+from .ai_config_store import AIConfigConflictError, SQLAlchemyAIConfigRepository
 from .auth import (
     ROLE_ORDER,
     LoginRequestModel,
@@ -28,9 +31,33 @@ from .auth import (
     seed_operators,
 )
 from .catalog import DataCatalog
-from .db import AnomalyEventRow, AuditRow, Database, DecisionRow, IdempotencyRow, ReplayRunRow
+from .crypto import EncryptionKeyError, decrypt_api_key
+from .db import (
+    AdminAuditRow,
+    AIInteractionRow,
+    AnomalyEventRow,
+    AuditRow,
+    Database,
+    DecisionRow,
+    IdempotencyRow,
+    ReplayRunRow,
+    RunInferenceStateRow,
+)
+from .llm import ExplanationEnhancer, LLMSettings
 from .schemas import (
+    AdminAuditChangeSummary,
+    AdminAuditEntry,
+    AdminAuditPage,
+    AdminOverview,
+    AIAnswer,
+    AIConfig,
+    AIConnectionTestRequest,
+    AIConnectionTestResponse,
+    AIInteraction,
+    AIInteractionPage,
+    AIStatus,
     AnomalyEvent,
+    AskEventRequest,
     CreateRunRequest,
     DecisionRecord,
     DecisionRequest,
@@ -43,7 +70,10 @@ from .schemas import (
     ReplayRun,
     RunControlRequest,
     Scenario,
+    ServiceStatus,
+    UpdateAIConfigRequest,
 )
+from .worker import inspect_processed_data
 
 DEFAULT_SOURCE_DISCLOSURE = "Public simulation data, not real Guizhou plant data."
 DEFAULT_SAFETY_BOUNDARY = "Read-only advice. No automatic control write-back."
@@ -120,6 +150,67 @@ def _event_response(row: AnomalyEventRow) -> AnomalyEvent:
 def _event_detail(row: AnomalyEventRow) -> EventDetail:
     event = _event_response(row)
     return EventDetail.model_validate({**(row.detail or {}), **event.model_dump()})
+
+
+def _public_ai_config(config: Any) -> AIConfig:
+    return AIConfig(
+        provider=config.provider,
+        base_url=config.baseUrl,
+        model=config.model,
+        enabled=config.enabled,
+        timeout_ms=config.timeout * 1000,
+        max_tokens=config.maxTokens,
+        temperature=config.temperature,
+        prompt_version=config.promptVersion,
+        fallback_policy=config.fallbackMode,
+        api_key_configured=config.apiKeyConfigured,
+        version=config.version,
+    )
+
+
+def _interaction_response(row: AIInteractionRow) -> AIInteraction:
+    return AIInteraction(
+        id=UUID(row.id),
+        event_id=UUID(row.event_id),
+        question=row.question,
+        answer=row.answer,
+        mode=row.mode,
+        model=row.model,
+        evidence_refs=list(row.evidence_refs or []),
+        latency_ms=row.latency_ms,
+        trace_id=row.trace_id,
+        created_at=row.created_at.replace(tzinfo=UTC),
+    )
+
+
+def _admin_audit_response(row: AdminAuditRow) -> AdminAuditEntry:
+    summary = row.change_summary or {}
+    return AdminAuditEntry(
+        id=UUID(row.id),
+        actor=row.actor,
+        action=row.action,
+        resource_type=row.resource_type,
+        resource_id=row.resource_id,
+        created_at=row.created_at.replace(tzinfo=UTC),
+        trace_id=row.trace_id,
+        request_id=row.request_id,
+        change_summary=AdminAuditChangeSummary(
+            changed_fields=list(summary.get("changedFields", [])),
+            previous_version=str(summary.get("previousVersion", "unknown")),
+            current_version=str(summary.get("currentVersion", "unknown")),
+            api_key_changed=summary.get("apiKeyChanged"),
+        ),
+    )
+
+
+def _data_build_hash(data_dir: Path) -> str:
+    manifest = data_dir / "manifest.json"
+    if not manifest.is_file():
+        return "unavailable"
+    try:
+        return sha256(manifest.read_bytes()).hexdigest()[:16]
+    except OSError:
+        return "unavailable"
 
 
 def _request_fingerprint(payload: Any) -> str:
@@ -268,6 +359,83 @@ def create_app(
     app.state.sse_heartbeat_interval_seconds = sse_heartbeat_interval_seconds
     app.state.sse_heartbeat_count = sse_heartbeat_count
     seed_operators(app.state.database)
+    app.state.ai_config_repository = SQLAlchemyAIConfigRepository(app.state.database)
+    app.state.ai_config_service = AIConfigService(app.state.ai_config_repository)
+    if app.state.ai_config_service.get() is None:
+        app.state.ai_config_service.update(
+            AIConfigPatch(
+                enabled=False,
+                provider="disabled",
+                baseUrl="https://localhost",
+                model="not-configured",
+                timeout=8,
+                maxTokens=500,
+                temperature=0.2,
+                promptVersion="event-copilot-v01",
+                fallbackMode="template",
+            )
+        )
+    app.state.ai_test_attempts = defaultdict(list)
+
+    def runtime_llm_settings() -> LLMSettings:
+        stored = app.state.ai_config_repository.load()
+        if stored is None:
+            return LLMSettings.from_env()
+        config = stored.config
+        api_key = ""
+        if stored.api_key_ciphertext:
+            api_key = decrypt_api_key(stored.api_key_ciphertext)
+        return LLMSettings(
+            provider=config.provider if config.enabled else "disabled",
+            base_url=config.baseUrl.rstrip("/"),
+            model=config.model,
+            api_key=api_key,
+            timeout_seconds=config.timeout,
+            max_tokens=config.maxTokens,
+            prompt_version=config.promptVersion,
+        )
+
+    def current_ai_status() -> AIStatus:
+        config = app.state.ai_config_service.get()
+        worker_status = ServiceStatus(status="unknown", reason="尚无 worker 心跳")
+        with app.state.database.session() as session:
+            latest = session.scalars(
+                select(RunInferenceStateRow)
+                .where(RunInferenceStateRow.heartbeat_at.is_not(None))
+                .order_by(RunInferenceStateRow.heartbeat_at.desc())
+                .limit(1)
+            ).first()
+            if latest is not None:
+                worker_status = ServiceStatus(
+                    status="degraded" if latest.failure_reason else "ready",
+                    version=latest.worker_id,
+                    reason=latest.failure_reason,
+                )
+        snapshot = inspect_processed_data(data_dir or _default_data_dir())
+        industrial_status = ServiceStatus(
+            status="ready" if snapshot["modelReady"] else "degraded",
+            version="tep-pca-hgb-online-v01" if snapshot["modelReady"] else None,
+            reason=None if snapshot["modelReady"] else snapshot["message"],
+        )
+        if config is None or not config.enabled:
+            language_status = ServiceStatus(status="offline", reason="语言模型增强未启用")
+        elif not config.apiKeyConfigured:
+            language_status = ServiceStatus(
+                status="degraded",
+                version=config.model,
+                reason="Provider API Key 尚未配置",
+            )
+        else:
+            language_status = ServiceStatus(status="ready", version=config.model)
+        return AIStatus(
+            inference_mode=os.getenv("INFERENCE_MODE", "online").strip().lower()
+            if os.getenv("INFERENCE_MODE", "online").strip().lower() in {"online", "template"}
+            else "template",
+            worker=worker_status,
+            industrial_model=industrial_status,
+            language_model=language_status,
+            data_build_hash=_data_build_hash(Path(data_dir or _default_data_dir())),
+        )
 
     @app.middleware("http")
     async def trace_middleware(request: Request, call_next: Any) -> Any:
@@ -325,6 +493,299 @@ def create_app(
             "role": operator.role,
             "displayName": operator.display_name,
         }
+
+    @app.get(
+        "/api/v1/admin/ai/status",
+        response_model=AIStatus,
+        operation_id="getAIStatus",
+    )
+    def get_ai_status(
+        _operator: Annotated[Any, Depends(require_role("admin"))],
+    ) -> AIStatus:
+        return current_ai_status()
+
+    @app.get(
+        "/api/v1/admin/overview",
+        response_model=AdminOverview,
+        operation_id="getAdminOverview",
+    )
+    def get_admin_overview(
+        _operator: Annotated[Any, Depends(require_role("admin"))],
+    ) -> AdminOverview:
+        status = current_ai_status()
+        with app.state.database.session() as session:
+            rows = list(
+                session.scalars(
+                    select(AIInteractionRow)
+                    .order_by(AIInteractionRow.created_at.desc())
+                    .limit(5)
+                )
+            )
+        degraded_reasons = [
+            service.reason
+            for service in (status.worker, status.industrial_model, status.language_model)
+            if service.status != "ready" and service.reason
+        ]
+        return AdminOverview(
+            **status.model_dump(),
+            recent_llm_calls=[_interaction_response(row) for row in rows],
+            degraded_reasons=degraded_reasons,
+        )
+
+    @app.get(
+        "/api/v1/admin/ai/config",
+        response_model=AIConfig,
+        operation_id="getAIConfig",
+    )
+    def get_ai_config(
+        _operator: Annotated[Any, Depends(require_role("admin"))],
+    ) -> AIConfig:
+        config = app.state.ai_config_service.get()
+        if config is None:
+            raise APIError(503, "ai_config_unavailable", "AI configuration is unavailable")
+        return _public_ai_config(config)
+
+    @app.put(
+        "/api/v1/admin/ai/config",
+        response_model=AIConfig,
+        operation_id="updateAIConfig",
+    )
+    def update_ai_config(
+        request: Request,
+        body: UpdateAIConfigRequest,
+        operator: Annotated[Any, Depends(require_role("admin"))],
+        idempotency_key: str | None = Header(
+            default=None, alias="Idempotency-Key", max_length=128
+        ),
+    ) -> Any:
+        payload = body.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        with app.state.database.session() as session:
+            previous_response = _idempotent(
+                session,
+                "admin-ai-config",
+                idempotency_key,
+                payload,
+            )
+            if previous_response:
+                return JSONResponse(
+                    status_code=previous_response.status_code,
+                    content=previous_response.response,
+                )
+        previous = app.state.ai_config_service.get()
+        if previous is None:
+            raise APIError(503, "ai_config_unavailable", "AI configuration is unavailable")
+        if body.expected_version is not None and body.expected_version != previous.version:
+            raise APIError(
+                409,
+                "ai_config_version_conflict",
+                "AI configuration was changed by another administrator",
+                {"currentVersion": previous.version},
+            )
+        patch_fields: dict[str, Any] = {}
+        field_mapping = {
+            "enabled": "enabled",
+            "provider": "provider",
+            "base_url": "baseUrl",
+            "model": "model",
+            "max_tokens": "maxTokens",
+            "temperature": "temperature",
+            "prompt_version": "promptVersion",
+            "fallback_policy": "fallbackMode",
+            "api_key": "apiKey",
+            "clear_api_key": "clearApiKey",
+        }
+        for source, target in field_mapping.items():
+            if source in body.model_fields_set:
+                patch_fields[target] = getattr(body, source)
+        if "timeout_ms" in body.model_fields_set:
+            patch_fields["timeout"] = max(1, (body.timeout_ms + 999) // 1000)
+        try:
+            updated = app.state.ai_config_service.update(AIConfigPatch(**patch_fields))
+        except AIConfigConflictError:
+            raise APIError(
+                409,
+                "ai_config_version_conflict",
+                "AI configuration was changed by another administrator",
+            ) from None
+        except (AIConfigValidationError, EncryptionKeyError, TypeError) as exc:
+            raise APIError(422, "invalid_ai_config", str(exc)) from None
+        response = _public_ai_config(updated)
+        changed_fields = sorted(
+            {
+                {
+                    "base_url": "baseUrl",
+                    "max_tokens": "maxTokens",
+                    "prompt_version": "promptVersion",
+                    "fallback_policy": "fallbackPolicy",
+                    "api_key": "apiKeyConfigured",
+                    "clear_api_key": "apiKeyConfigured",
+                }.get(field, field)
+                for field in body.model_fields_set
+                if field != "expected_version"
+            }
+        )
+        created_at = _now()
+        with app.state.database.session() as session:
+            session.add(
+                AdminAuditRow(
+                    id=str(uuid4()),
+                    actor=operator.username,
+                    action="ai_config_updated",
+                    resource_type="ai_configuration",
+                    resource_id="default",
+                    change_summary={
+                        "changedFields": changed_fields,
+                        "previousVersion": str(previous.version),
+                        "currentVersion": str(updated.version),
+                        "apiKeyChanged": bool(
+                            {"api_key", "clear_api_key"} & body.model_fields_set
+                        ),
+                    },
+                    trace_id=request.state.trace_id,
+                    request_id=idempotency_key or request.state.trace_id,
+                    created_at=created_at,
+                )
+            )
+            _save_idempotency(
+                session,
+                "admin-ai-config",
+                idempotency_key,
+                payload,
+                response,
+                200,
+            )
+        return response
+
+    @app.post(
+        "/api/v1/admin/ai/test",
+        response_model=AIConnectionTestResponse,
+        operation_id="testAIConnection",
+    )
+    def test_ai_connection(
+        request: Request,
+        body: AIConnectionTestRequest | None = None,
+        operator: Annotated[Any, Depends(require_role("admin"))] = None,
+    ) -> AIConnectionTestResponse:
+        now_timestamp = datetime.now(UTC).timestamp()
+        attempts = [
+            timestamp
+            for timestamp in app.state.ai_test_attempts[operator.username]
+            if now_timestamp - timestamp < 60
+        ]
+        if len(attempts) >= 3:
+            raise APIError(429, "ai_test_rate_limited", "Connection test limit exceeded")
+        attempts.append(now_timestamp)
+        app.state.ai_test_attempts[operator.username] = attempts
+        question = body.question if body is not None else "请用一句话确认连接正常。"
+        error: str | None = None
+        try:
+            settings = runtime_llm_settings()
+            result = ExplanationEnhancer(settings).enhance(
+                {
+                    "eventId": str(UUID(int=0)),
+                    "sampleIndex": 0,
+                    "severity": "warning",
+                    "anomalyScore": 0,
+                    "modelVersion": "connection-test",
+                    "evidence": [{"variableId": "XMEAS(1)"}],
+                },
+                question,
+                trace_id=request.state.trace_id,
+            )
+            ok = result.mode == "llm_enhanced"
+            mode = "llm_enhanced" if ok else "degraded"
+            error = None if ok else result.fallback_reason or "template_fallback"
+            provider = settings.provider
+            model = settings.model or "not-configured"
+            latency_ms = result.latency_ms
+        except EncryptionKeyError:
+            ok = False
+            mode = "degraded"
+            provider = "unavailable"
+            model = "not-configured"
+            latency_ms = 0
+            error = "encrypted_key_unavailable"
+        response = AIConnectionTestResponse(
+            ok=ok,
+            mode=mode,
+            provider=provider,
+            model=model,
+            latency_ms=latency_ms,
+            trace_id=request.state.trace_id,
+            error=error,
+        )
+        config = app.state.ai_config_service.get()
+        version = str(config.version) if config is not None else "unknown"
+        with app.state.database.session() as session:
+            session.add(
+                AdminAuditRow(
+                    id=str(uuid4()),
+                    actor=operator.username,
+                    action="ai_connection_tested",
+                    resource_type="ai_configuration",
+                    resource_id="default",
+                    change_summary={
+                        "changedFields": [],
+                        "previousVersion": version,
+                        "currentVersion": version,
+                        "apiKeyChanged": False,
+                    },
+                    trace_id=request.state.trace_id,
+                    request_id=request.state.trace_id,
+                    created_at=_now(),
+                )
+            )
+        return response
+
+    @app.get(
+        "/api/v1/admin/ai/interactions",
+        response_model=AIInteractionPage,
+        operation_id="listAIInteractions",
+    )
+    def list_ai_interactions(
+        _operator: Annotated[Any, Depends(require_role("admin"))],
+        limit: int = Query(default=50, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+    ) -> AIInteractionPage:
+        with app.state.database.session() as session:
+            total = session.query(AIInteractionRow).count()
+            rows = list(
+                session.scalars(
+                    select(AIInteractionRow)
+                    .order_by(AIInteractionRow.created_at.desc())
+                    .offset(offset)
+                    .limit(limit)
+                )
+            )
+        return AIInteractionPage(
+            items=[_interaction_response(row) for row in rows],
+            total=total,
+        )
+
+    @app.get(
+        "/api/v1/admin/audit",
+        response_model=AdminAuditPage,
+        operation_id="listAdminAudit",
+    )
+    def list_admin_audit(
+        _operator: Annotated[Any, Depends(require_role("admin"))],
+        limit: int = Query(default=50, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+    ) -> AdminAuditPage:
+        with app.state.database.session() as session:
+            total = session.query(AdminAuditRow).count()
+            rows = list(
+                session.scalars(
+                    select(AdminAuditRow)
+                    .order_by(AdminAuditRow.created_at.desc())
+                    .offset(offset)
+                    .limit(limit)
+                )
+            )
+        return AdminAuditPage(
+            items=[_admin_audit_response(row) for row in rows],
+            total=total,
+        )
 
     @app.get("/healthz", response_model=Health, operation_id="healthcheck")
     def healthcheck() -> Health:
@@ -555,6 +1016,51 @@ def create_app(
             return _event_detail(row)
 
     @app.post(
+        "/api/v1/events/{eventId}/ask",
+        response_model=AIAnswer,
+        operation_id="askEvent",
+    )
+    def ask_event(
+        request: Request,
+        eventId: UUID,
+        body: AskEventRequest,
+        operator: Annotated[Any, Depends(require_role("operator"))],
+    ) -> AIAnswer:
+        with app.state.database.session() as session:
+            row = session.get(AnomalyEventRow, str(eventId))
+            if row is None:
+                raise APIError(404, "event_not_found", "Anomaly event not found")
+            detail = _event_detail(row)
+        try:
+            settings = runtime_llm_settings()
+        except EncryptionKeyError:
+            settings = LLMSettings(provider="disabled")
+        result = ExplanationEnhancer(settings).enhance(
+            detail.model_dump(mode="json", by_alias=True),
+            body.question,
+            trace_id=request.state.trace_id,
+        )
+        interaction_id = uuid4()
+        created_at = _now()
+        with app.state.database.session() as session:
+            session.add(
+                AIInteractionRow(
+                    id=str(interaction_id),
+                    event_id=str(eventId),
+                    operator=operator.username,
+                    question=body.question,
+                    answer=result.answer,
+                    evidence_refs=list(result.evidence_refs),
+                    mode=result.mode,
+                    model=result.model,
+                    latency_ms=result.latency_ms,
+                    trace_id=result.trace_id,
+                    created_at=created_at,
+                )
+            )
+        return AIAnswer.model_validate(result.to_dict())
+
+    @app.post(
         "/api/v1/events/{eventId}/decision",
         response_model=DecisionRecord,
         status_code=201,
@@ -689,7 +1195,7 @@ def create_app(
             "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Problem"}}},
         }
         schema["servers"] = [{"url": "/"}]
-        expected_responses = {
+        expected_responses: dict[Any, set[str]] = {
             "/healthz": {"200", "400"},
             "/readyz": {"200", "400", "503"},
             "/api/v1/scenarios": {"200", "400"},
@@ -701,12 +1207,26 @@ def create_app(
             "/api/v1/runs/{runId}/stream": {"200", "400", "404"},
             "/api/v1/runs/{runId}/events": {"200", "404"},
             "/api/v1/events/{eventId}": {"200", "404"},
+            "/api/v1/events/{eventId}/ask": {"200", "401", "404", "422"},
             "/api/v1/events/{eventId}/decision": {"201", "401", "403", "404", "409", "422"},
             "/api/v1/records/{recordId}": {"200", "404"},
+            "/api/v1/admin/overview": {"200", "401", "403"},
+            "/api/v1/admin/ai/status": {"200", "401", "403"},
+            ("/api/v1/admin/ai/config", "get"): {"200", "401", "403"},
+            ("/api/v1/admin/ai/config", "put"): {
+                "200",
+                "401",
+                "403",
+                "409",
+                "422",
+            },
+            "/api/v1/admin/ai/test": {"200", "401", "403", "422"},
+            "/api/v1/admin/ai/interactions": {"200", "401", "403"},
+            "/api/v1/admin/audit": {"200", "401", "403"},
         }
         for path, methods in schema["paths"].items():
-            for _method, operation in methods.items():
-                expected = expected_responses.get(path)
+            for method, operation in methods.items():
+                expected = expected_responses.get((path, method), expected_responses.get(path))
                 if expected is None:
                     continue
                 generated = operation.get("responses", {})
