@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask a question about an anomaly event */
+        post: operations["askEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/decision": {
         parameters: {
             query?: never;
@@ -185,6 +202,109 @@ export interface paths {
         put?: never;
         /** Authenticate a preset operator account */
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get AI and worker operational overview */
+        get: operations["getAdminOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get online inference and AI status */
+        get: operations["getAIStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get language model configuration metadata */
+        get: operations["getAIConfig"];
+        /** Update language model configuration */
+        put: operations["updateAIConfig"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test the configured language model connection */
+        post: operations["testAIConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai/interactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List recorded AI interactions */
+        get: operations["listAIInteractions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List administrative configuration audit entries */
+        get: operations["listAdminAudit"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -253,6 +373,11 @@ export interface components {
              * @enum {number}
              */
             speed: 1 | 5 | 10 | 20;
+            /**
+             * @default template
+             * @enum {string}
+             */
+            inferenceMode: "online" | "template";
         };
         ReplayRun: {
             /** Format: uuid */
@@ -264,6 +389,9 @@ export interface components {
             currentSample: number;
             /** Format: date-time */
             createdAt: string;
+            /** @enum {string} */
+            inferenceMode: "online" | "template";
+            modelVersion: string;
         };
         RunControlRequest: {
             /** @enum {unknown} */
@@ -330,6 +458,160 @@ export interface components {
             modelVersion: string;
             /** @constant */
             dataSourceDisclosure: "Public simulation data, not real Guizhou plant data.";
+        };
+        InferenceSnapshot: {
+            /** Format: uuid */
+            runId: string;
+            sampleIndex: number;
+            t2: number;
+            spe: number;
+            anomalyScore: number;
+            /** @enum {string} */
+            alarmState: "normal" | "warning" | "critical";
+            modelVersion: string;
+            latencyMs: number;
+        };
+        /** @description One JSON payload carried by the run text/event-stream response. */
+        SSEMessage: {
+            /** @enum {string} */
+            type: "state" | "inference" | "anomaly_opened" | "diagnosis_updated" | "completed" | "failed" | "heartbeat";
+            sequence: number;
+            /** Format: uuid */
+            runId: string;
+            /** Format: date-time */
+            emittedAt: string;
+            sampleIndex?: number;
+            /** @enum {unknown} */
+            state?: "ready" | "playing" | "paused" | "completed" | "failed";
+            inference?: components["schemas"]["InferenceSnapshot"];
+            /** Format: uuid */
+            eventId?: string;
+            /** @enum {unknown} */
+            diagnosisState?: "pending" | "provisional" | "updated";
+            message?: string;
+            errorCode?: string;
+        };
+        AskEventRequest: {
+            question: string;
+        };
+        AIAnswer: {
+            answer: string;
+            /** @enum {string} */
+            mode: "llm_enhanced" | "template" | "degraded";
+            model: string;
+            evidenceRefs: string[];
+            latencyMs: number;
+            traceId: string;
+        };
+        ServiceStatus: {
+            /** @enum {string} */
+            status: "ready" | "degraded" | "offline" | "unknown";
+            version?: string;
+            latencyMs?: number;
+            reason?: string;
+        };
+        AIStatus: {
+            /** @enum {string} */
+            inferenceMode: "online" | "template";
+            worker: components["schemas"]["ServiceStatus"];
+            industrialModel: components["schemas"]["ServiceStatus"];
+            languageModel: components["schemas"]["ServiceStatus"];
+            dataBuildHash: string;
+        };
+        AdminOverview: {
+            /** @enum {string} */
+            inferenceMode: "online" | "template";
+            worker: components["schemas"]["ServiceStatus"];
+            industrialModel: components["schemas"]["ServiceStatus"];
+            languageModel: components["schemas"]["ServiceStatus"];
+            dataBuildHash: string;
+            recentLLMCalls: components["schemas"]["AIInteraction"][];
+            degradedReasons: string[];
+        };
+        AIConfig: {
+            provider: string;
+            /** Format: uri */
+            baseUrl: string;
+            model: string;
+            enabled: boolean;
+            timeoutMs: number;
+            maxTokens: number;
+            temperature: number;
+            promptVersion: string;
+            /** @enum {string} */
+            fallbackPolicy: "template" | "degraded";
+            apiKeyConfigured: boolean;
+        };
+        UpdateAIConfigRequest: {
+            provider?: string;
+            /** Format: uri */
+            baseUrl?: string;
+            model?: string;
+            enabled?: boolean;
+            timeoutMs?: number;
+            maxTokens?: number;
+            temperature?: number;
+            promptVersion?: string;
+            /** @enum {string} */
+            fallbackPolicy?: "template" | "degraded";
+            apiKey?: string;
+            /** @default false */
+            clearApiKey: boolean;
+        };
+        AIConnectionTestRequest: {
+            question?: string;
+        };
+        AIConnectionTestResponse: {
+            ok: boolean;
+            /** @enum {string} */
+            mode: "llm_enhanced" | "degraded";
+            provider: string;
+            model: string;
+            latencyMs: number;
+            traceId: string;
+            error?: string;
+        };
+        AIInteraction: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            eventId: string;
+            question: string;
+            answer: string;
+            /** @enum {string} */
+            mode: "llm_enhanced" | "template" | "degraded";
+            model: string;
+            evidenceRefs: string[];
+            latencyMs: number;
+            traceId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AIInteractionPage: {
+            items: components["schemas"]["AIInteraction"][];
+            total: number;
+        };
+        AdminAuditEntry: {
+            /** Format: uuid */
+            id: string;
+            actor: string;
+            action: string;
+            resourceType: string;
+            resourceId: string;
+            /** Format: date-time */
+            createdAt: string;
+            traceId: string;
+            requestId: string;
+            changeSummary: {
+                changedFields: string[];
+                previousVersion: string;
+                currentVersion: string;
+                apiKeyChanged?: boolean;
+            };
+        };
+        AdminAuditPage: {
+            items: components["schemas"]["AdminAuditEntry"][];
+            total: number;
         };
         DecisionRequest: {
             /** @enum {unknown} */
@@ -399,6 +681,8 @@ export interface components {
         RunId: string;
         EventId: string;
         IdempotencyKey: string;
+        Limit: number;
+        Offset: number;
     };
     requestBodies: never;
     headers: never;
@@ -572,7 +856,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "text/event-stream": string;
+                    "text/event-stream": components["schemas"]["SSEMessage"];
                 };
             };
             400: components["responses"]["Problem"];
@@ -623,6 +907,34 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    askEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskEventRequest"];
+            };
+        };
+        responses: {
+            /** @description AI answer grounded in the event evidence. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIAnswer"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     decideEvent: {
@@ -682,6 +994,181 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getAdminOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current inference, model, worker and data status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverview"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getAIStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current AI runtime status without credentials. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIStatus"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getAIConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Configuration with API key presence only. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIConfig"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    updateAIConfig: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAIConfigRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated configuration metadata. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIConfig"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    testAIConnection: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AIConnectionTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Deterministic connection test result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIConnectionTestResponse"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listAIInteractions: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated AI interaction records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIInteractionPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listAdminAudit: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated, secret-free audit records. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuditPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
         };
     };
     me: {
