@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,10 @@ from sqlalchemy.pool import StaticPool
 
 class Base(DeclarativeBase):
     pass
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class ReplayRunRow(Base):
@@ -117,6 +122,7 @@ class AnomalyEventRow(Base):
     state: Mapped[str] = mapped_column(String(16), default="open")
     anomaly_score: Mapped[float] = mapped_column(Float)
     detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    created_at: Mapped[Any] = mapped_column(DateTime, nullable=False, default=_utcnow)
 
 
 class DecisionRow(Base):

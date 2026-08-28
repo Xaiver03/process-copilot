@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from process_copilot_api.db import Database, column_names, table_names
+from process_copilot_api.db import AnomalyEventRow, Database, column_names, table_names
 from process_copilot_api.migrations import upgrade_database
 
 
@@ -28,6 +28,19 @@ def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
     }
     assert expected_tables.issubset(tables)
     assert "operator_role" in column_names(database.engine, "decision_records")
+
+    with database.session() as session:
+        session.add(
+            AnomalyEventRow(
+                id="event-after-migration",
+                run_id="run-after-migration",
+                sample_index=160,
+                severity="warning",
+                state="open",
+                anomaly_score=0.8,
+                detail={},
+            )
+        )
 
 
 def test_upgrade_head_backfills_existing_schema(tmp_path) -> None:
