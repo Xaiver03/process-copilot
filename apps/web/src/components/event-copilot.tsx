@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle, PaperPlaneTilt, ShieldCheck } from "@phosphor-icons/react";
+import { ArrowRight, PaperPlaneTilt, ShieldCheck } from "@phosphor-icons/react";
 import { FormEvent, useState } from "react";
 
 import type { components } from "@/lib/api-schema";
@@ -64,9 +64,9 @@ export function EventCopilot({ event }: { event: EventDetail }) {
         <div className="writeback-heading"><div><ShieldCheck aria-hidden="true" /><div><strong>受控写回预演</strong><span>查看生产版如何把建议安全送到 PLC/DCS</span></div></div><span className="demo-only-tag">仅预演</span></div>
         <label htmlFor="writeback-draft">拟议处置动作</label>
         <textarea id="writeback-draft" value={draft} onChange={(event) => { setDraft(event.target.value); setPreviewed(false); }} />
-        <ol>{writebackPreviewSteps.map((step) => <li key={step}><CheckCircle aria-hidden="true" />{step}</li>)}</ol>
+        <ol aria-label="生产版待执行流程">{writebackPreviewSteps.map((step, index) => <li key={step}><span className="pending-step-number" aria-hidden="true">{index + 1}</span>{step}</li>)}</ol>
         <button className="secondary-button" type="button" onClick={() => setPreviewed(true)} disabled={!draft.trim()}>预演写回 <ArrowRight aria-hidden="true" /></button>
-        {previewed ? <div className="writeback-result" role="status"><CheckCircle weight="fill" aria-hidden="true" /><p><strong>预演通过，未发送</strong><span>当前 Demo 不连接 PLC/DCS。生产版仍需二次人工确认，才会交给受控网关执行。</span></p></div> : null}
+        {previewed ? <div className="writeback-result" role="status"><ShieldCheck weight="fill" aria-hidden="true" /><p><strong>草案已生成，未校验、未发送</strong><span>当前 Demo 不连接 PLC/DCS，也没有执行权限、上下限或联锁校验。以上是生产版待执行流程示意。</span></p></div> : null}
       </div>
     </section>
   );

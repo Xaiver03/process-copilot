@@ -222,7 +222,7 @@ textarea { resize: vertical; }
 .writeback-preview textarea { width: 100%; min-height: 76px; resize: vertical; padding: 10px 12px; border: 1px solid var(--wuno-border-subtle); border-radius: 8px; font: inherit; line-height: 1.55; }
 .writeback-preview ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; margin: 0; padding: 0; list-style: none; }
 .writeback-preview li { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 10px; border-radius: 8px; color: var(--wuno-text-secondary); background: white; font-size: var(--font-support); line-height: 1.45; }
-.writeback-preview li svg { width: 18px; height: 18px; color: var(--process-normal); }
+.pending-step-number { display: grid; place-items: center; width: 22px; height: 22px; border: 1px dashed var(--wuno-primary-700); border-radius: 50%; color: var(--wuno-primary-700); font-family: var(--font-mono); font-size: var(--font-support); font-weight: 800; }
 .writeback-preview .secondary-button { justify-self: start; }
 .writeback-result { display: flex; gap: 10px; padding: 12px; border: 1px solid color-mix(in srgb, var(--process-normal) 40%, var(--wuno-border-subtle)); border-radius: 8px; background: color-mix(in srgb, var(--process-normal) 7%, white); }
 .writeback-result > svg { flex: 0 0 auto; width: 24px; height: 24px; color: var(--process-normal); }

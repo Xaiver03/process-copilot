@@ -47,10 +47,10 @@ describe("AI 可感知事件研判", () => {
     await screen.findByRole("heading", { name: "与序安协同研判" });
     await user.type(screen.getByRole("textbox", { name: "向序安追问" }), "为什么不是传感器故障？");
     await user.click(screen.getByRole("button", { name: "发送问题" }));
-    expect(await screen.findByText(/目前不像单点传感器故障：XMEAS\(21\).*XMV\(10\)/)).toBeInTheDocument();
+    expect(await screen.findByText(/当前证据不足以完全排除传感器故障.*XMEAS\(21\).*XMV\(10\)/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "预演写回" }));
-    expect(await screen.findByText("预演通过，未发送")).toBeInTheDocument();
+    expect(await screen.findByText("草案已生成，未校验、未发送")).toBeInTheDocument();
     expect(screen.getByText(/当前 Demo 不连接 PLC\/DCS/)).toBeInTheDocument();
   });
 });

@@ -12,7 +12,12 @@ export function answerEventQuestion(event: EventDetail, question: string): strin
   const normalized = question.trim();
 
   if (/传感器|仪表|测点/.test(normalized)) {
-    return `目前不像单点传感器故障：${evidence.join("、")} 在同一时间窗内同向偏离，且控制量与过程量互相印证。当前首要假设仍是“${candidate}”，但现场仍应先核对仪表状态，排除测点漂移。`;
+    const directionLabels = event.evidence.map((item) => `${item.variableId}${item.direction === "up" ? "上升" : "下降"}`);
+    const directionSet = new Set(event.evidence.map((item) => item.direction));
+    const directionSummary = directionSet.size === 1
+      ? `变化方向一致（${directionLabels.join("、")}）`
+      : `变化方向并不相同（${directionLabels.join("、")}）`;
+    return `当前证据不足以完全排除传感器故障。之所以暂不把它排在首位，是因为 ${evidence.join("、")} 在同一时间窗内共同变化，${directionSummary}，并非只有一个测点跳变。当前首要假设是“${candidate}”，仍需现场核对仪表状态后才能确认。`;
   }
   if (/不处理|不处置|先不管|风险/.test(normalized)) {
     return `若暂不处理，${localizeIndustrialCopy(event.recommendation.risk)} 建议继续锁存告警，并在 10 分钟内完成首轮核对；这不是自动停车指令。`;
