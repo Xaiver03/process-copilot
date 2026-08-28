@@ -30,10 +30,12 @@ import {
 } from "@/lib/api-client";
 import { demoEvent, demoRun } from "@/lib/demo-data";
 import { useSession } from "@/lib/auth-store";
-import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, localizeIndustrialCopy } from "@/lib/presentation";
+import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, formatScenarioPresentation, localizeIndustrialCopy } from "@/lib/presentation";
+import { advanceReplaySample, createReplayTelemetry, describeReplayStage, getReplaySignalDefinitions, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
+import { EventCopilot } from "./event-copilot";
 import { ModeNotice } from "./mode-notice";
 import { StatePanel } from "./state-panel";
 
@@ -114,7 +116,7 @@ export function OverviewScreen() {
           <div className="overview-grid">
             <ProcessHeatmapChart />
               <aside className="event-rail">
-              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>为什么优先处理</h2></div></div>
+              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>优先原因</h2></div></div>
               <p className="event-ai-summary">三项关键变量在同一时间窗内共同偏离，AI 将<strong>{overviewCandidate.label}</strong>排为当前首要故障假设。</p>
               <dl className="priority-reasons">
                 <div><dt>发现</dt><dd>样本 {demoEvent.detectionSample} 锁定偏移</dd></div>
@@ -135,19 +137,46 @@ export function ReplayScreen() {
   const scenarios = useApiResource<Scenario[]>(getScenariosWithFallback, "replay-scenarios");
   const [selectedId, setSelectedId] = useState("");
   const [journey, setJourney] = useState<ApiResult<{ run: ReplayRun; event: AnomalyEvent }> | null>(null);
+  const [displaySample, setDisplaySample] = useState(0);
+  const [replayCompleted, setReplayCompleted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const selectedScenario = scenarios.result?.data.find((scenario) => scenario.id === selectedId);
+  const totalSamples = selectedScenario?.sampleCount ?? REPLAY_TOTAL_SAMPLES;
 
   useEffect(() => {
     if (!selectedId && scenarios.result?.data[0]) setSelectedId(scenarios.result.data[0].id);
   }, [scenarios.result, selectedId]);
+
+  useEffect(() => {
+    if (!journey || journey.data.run.state !== "playing" || replayCompleted) return;
+    const timer = window.setInterval(() => {
+      setDisplaySample((sample) => {
+        const next = advanceReplaySample(sample, normalizeReplaySpeed(journey.data.run.speed), totalSamples);
+        if (next >= totalSamples) {
+          window.clearInterval(timer);
+          setReplayCompleted(true);
+        }
+        return next;
+      });
+    }, REPLAY_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [journey, replayCompleted, totalSamples]);
 
   async function startReplay() {
     if (!selectedId) return;
     setBusy(true);
     setActionError("");
     try {
-      setJourney(await startScenarioWithFallback(selectedId, 10));
+      if (journey?.data.run.state === "paused") {
+        const result = await controlRunWithFallback(journey.data.run.id, { action: "play", speed: normalizeReplaySpeed(journey.data.run.speed) });
+        setJourney({ ...journey, data: { ...journey.data, run: result.data }, mode: result.mode, notice: result.notice });
+      } else {
+        const result = await startScenarioWithFallback(selectedId, 10);
+        setJourney(result);
+        setDisplaySample(result.data.run.currentSample);
+        setReplayCompleted(result.data.run.currentSample >= totalSamples);
+      }
     } catch (cause) {
       setActionError(cause instanceof Error ? cause.message : "回放创建失败");
     } finally {
@@ -183,6 +212,11 @@ export function ReplayScreen() {
       setBusy(false);
     }
   }
+  const faultOnsetSample = selectedScenario?.faultOnsetSample ?? 160;
+  const replayStage = describeReplayStage(displaySample, faultOnsetSample, journey?.data.event.sampleIndex ?? faultOnsetSample);
+  const replaySignals = getReplaySignalDefinitions(selectedScenario?.faultId ?? 4);
+  const telemetry = createReplayTelemetry(displaySample, faultOnsetSample, selectedScenario?.faultId ?? 4);
+  const eventVisible = Boolean(journey && displaySample >= journey.data.event.sampleIndex);
   return (
     <div className="page-stack replay-page">
       <PageHeader kicker="过程回放" title="52 路过程数据回放" summary="热力图先定位变量组，再用事件研判页查看三条对齐证据。" />
@@ -190,16 +224,22 @@ export function ReplayScreen() {
       {scenarios.error ? <div className="form-error" role="alert"><p>{scenarios.error}</p><button className="text-link" type="button" onClick={scenarios.retry}>重试读取场景</button></div> : null}
       {actionError ? <p className="form-error" role="alert">{actionError}</p> : null}
       <section className="replay-control" aria-label="回放控制">
-        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => setSelectedId(event.target.value)} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{scenario.name}</option>)}</select></label>
+        <label className="replay-field replay-scenario-field">场景<select aria-label="回放场景" value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setJourney(null); setDisplaySample(0); setReplayCompleted(false); }} disabled={busy || !scenarios.result}>{scenarios.result?.data.map((scenario) => <option key={scenario.id} value={scenario.id}>{formatScenarioPresentation(scenario).name}</option>)}</select></label>
         <button className="control-button" type="button" onClick={startReplay} disabled={busy || !selectedId} aria-label="开始回放">
           {busy ? <Clock aria-hidden="true" /> : <Play aria-hidden="true" weight="fill" />}<span>{busy ? "创建回放中" : "开始回放"}</span>
         </button>
-        <button className="control-button" type="button" disabled={!journey || busy} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
-        <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
-        <div className="sample-readout"><span>{journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong>{journey?.data.run.currentSample ?? 0}</strong><small>/ 500</small></div>
+        <button className="control-button" type="button" disabled={!journey || busy || replayCompleted} aria-label="暂停回放" onClick={pauseReplay}><Pause aria-hidden="true" weight="fill" /><span>暂停</span></button>
+        <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy || replayCompleted} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
+        <div className="sample-readout"><span>{replayCompleted ? "回放已完成" : journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong data-testid="current-sample">{displaySample}</strong><small>/ {totalSamples}</small></div>
       </section>
-      <ProcessHeatmapChart />
-      {journey ? <section className="capture-banner">
+      {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`}>
+        <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
+        <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
+        {telemetry.length > 0 ? <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl> : <p className="simulation-disclosure">当前场景尚未配置仿真变量，不展示其他故障的替代数据。</p>}
+        <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p>
+      </section> : null}
+      <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} evidenceVariables={replaySignals.map(({ id, name }) => ({ id, name }))} />
+      {journey && eventVisible ? <section className="capture-banner">
         <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} 捕获{journey.data.event.severity === "critical" ? "严重" : ""}偏移</strong><span>异常分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
         <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>
       </section> : null}
@@ -291,11 +331,13 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
               </section>
 
               <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title">
-                <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">AI 为什么这样判断</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
+                <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">原因</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
                 <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`).join("、")}共同指向当前故障假设。</p>
                 <EvidenceTrendChart evidence={event.evidence} />
                 <div className="ai-evidence-detail"><EvidencePanel evidence={event.evidence} /><ContributionChart evidence={event.evidence} /></div>
               </section>
+
+              <EventCopilot event={event} />
 
               <aside className="ai-side-stack">
                 <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title">
@@ -303,7 +345,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                   <p className="ai-risk-copy"><strong>风险：</strong>{localizeIndustrialCopy(event.recommendation.risk)}</p>
                   <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
                   <div className="ai-action-group"><h3>再处置</h3><ol>{event.recommendation.actions.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
-                  <p className="ai-safety-boundary">只读建议，不会向 DCS、PLC 或其他控制系统自动写回。</p>
+                  <p className="ai-safety-boundary"><strong>当前 Demo：</strong>不连接控制网、不向 PLC/DCS 写回。生产部署可在人工授权、权限校验和联锁校验通过后受控写回。</p>
                 </section>
 
                 <div className="ai-human-gate" data-ai-step="5">
@@ -351,15 +393,15 @@ export function SystemScreen() {
   const resource = useApiResource<Health>(getReadinessWithFallback, "readyz");
   return (
     <div className="page-stack">
-      <PageHeader kicker="系统状态" title="数据与模型健康" summary="核对 API、Demo 数据、模型版本和只读边界，不提供控制写入入口。" />
+      <PageHeader kicker="系统状态" title="数据与模型健康" summary="核对接口、演示数据、模型版本，以及当前只读与未来受控写回边界。" />
       <ResourceBoundary {...resource}>{(result) => (
         <>
           <ModeNotice mode={result.mode} notice={result.notice} />
           <section className="system-grid">
             <div><span>应用状态</span><StatusTag state={result.data.status === "ok" ? "normal" : "warning"} label={result.data.status === "ok" ? "就绪" : "降级"} /><p>静态 Demo 可继续完成主链路。</p></div>
-            <div><span>数据来源</span><strong>Tennessee Eastman Process</strong><p>公开仿真数据，不是真实贵州工厂数据。</p></div>
+            <div><span>数据来源</span><strong>田纳西-伊士曼过程（TEP）</strong><p>公开仿真数据，不是真实贵州工厂数据。</p></div>
             <div><span>模型版本</span><strong>{demoEvent.modelVersion}</strong><p>双阶段偏移检测与故障候选 Demo。</p></div>
-            <div><span>安全边界</span><strong>Read-only</strong><p>无 DCS、PLC 写回能力。</p></div>
+            <div><span>安全边界</span><strong>当前 Demo 只读</strong><p>生产版可经人工授权、权限校验与联锁校验后接入 PLC/DCS。</p></div>
           </section>
           <section className="table-panel"><table aria-label="系统依赖检查"><thead><tr><th scope="col">依赖</th><th scope="col">状态</th><th scope="col">说明</th></tr></thead><tbody>{Object.entries(result.data.checks ?? { api: result.data.status }).map(([name, value]) => <tr key={name}><th scope="row">{name}</th><td>{value}</td><td>{name === "api" && result.mode === "static-demo" ? "API 失联，已启用静态 Demo" : "检查结果来自 readiness"}</td></tr>)}</tbody></table></section>
         </>

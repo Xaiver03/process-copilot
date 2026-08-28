@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/charts", () => ({
@@ -20,7 +21,7 @@ describe("AI 可感知事件研判", () => {
     const { container } = render(<EventDetailScreen eventId="demo-event" />);
 
     expect(await screen.findByText("AI 研判结论")).toBeInTheDocument();
-    expect(screen.getByText("AI 为什么这样判断")).toBeInTheDocument();
+    expect(screen.getByText("原因")).toBeInTheDocument();
     expect(screen.getByText("AI 建议下一步")).toBeInTheDocument();
     expect(screen.getByText("人工确认点")).toBeInTheDocument();
     await waitFor(() => expect(container.querySelectorAll("[data-ai-step]")).toHaveLength(5));
@@ -36,6 +37,22 @@ describe("AI 可感知事件研判", () => {
     expect(screen.getByText(/检测样本 160/)).toBeInTheDocument();
     expect(screen.getByText(/诊断样本 180/)).toBeInTheDocument();
   });
+
+  it("允许操作员自由追问，并在写回预演后明确显示未发送", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    render(<EventDetailScreen eventId="demo-event" />);
+
+    await screen.findByRole("heading", { name: "与序安协同研判" });
+    await user.type(screen.getByRole("textbox", { name: "向序安追问" }), "为什么不是传感器故障？");
+    await user.click(screen.getByRole("button", { name: "发送问题" }));
+    expect(await screen.findByText(/当前证据不足以完全排除传感器故障.*XMEAS\(21\).*XMV\(10\)/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "预演写回" }));
+    expect(await screen.findByText("草案已生成，未校验、未发送")).toBeInTheDocument();
+    expect(screen.getByText(/当前 Demo 不连接 PLC\/DCS/)).toBeInTheDocument();
+  });
 });
 
 describe("AI 装置总览", () => {
@@ -49,7 +66,7 @@ describe("AI 装置总览", () => {
     render(<OverviewScreen />);
 
     expect(await screen.findByText("AI 当前判断")).toBeInTheDocument();
-    expect(screen.getByText("为什么优先处理")).toBeInTheDocument();
+    expect(screen.getByText("优先原因")).toBeInTheDocument();
     expect(screen.getByText("AI 异常分数")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /查看 AI 研判依据/ })).toBeInTheDocument();
   });

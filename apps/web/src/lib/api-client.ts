@@ -23,6 +23,7 @@ export interface ApiResult<T> {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const STATIC_DEMO_NOTICE = "已打开明确标注的静态 Demo 数据，不会请求在线事件或写入服务器。";
 
 export class ApiProblemError extends Error {
   readonly name = "ApiProblemError";
@@ -94,6 +95,10 @@ async function withFallback<T>(request: () => Promise<T>, fallback: T): Promise<
   }
 }
 
+function staticDemoResult<T>(data: T): ApiResult<T> {
+  return { data, mode: "static-demo", notice: STATIC_DEMO_NOTICE };
+}
+
 export async function login(payload: LoginRequest): Promise<AuthSession> {
   const data = await requestJson<components["schemas"]["LoginResponse"]>("/api/v1/auth/login", {
     method: "POST",
@@ -115,6 +120,7 @@ export function getScenariosWithFallback(): Promise<ApiResult<Scenario[]>> {
 }
 
 export function getEventWithFallback(eventId: string): Promise<ApiResult<EventDetail>> {
+  if (eventId === "demo-event") return Promise.resolve(staticDemoResult(demoEvent));
   return withFallback(() => requestJson<EventDetail>(`/api/v1/events/${eventId}`), demoEvent);
 }
 
@@ -157,6 +163,7 @@ export function getReadinessWithFallback(): Promise<ApiResult<Health>> {
 }
 
 export function getRecordWithFallback(recordId: string): Promise<ApiResult<DecisionRecord>> {
+  if (recordId === "demo-record") return Promise.resolve(staticDemoResult(demoRecord));
   return withFallback(() => requestJson<DecisionRecord>(`/api/v1/records/${recordId}`), demoRecord);
 }
 

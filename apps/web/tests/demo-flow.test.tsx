@@ -42,7 +42,7 @@ describe("Demo 主链路", () => {
       }])));
     render(<DemoJourney />);
 
-    await screen.findByRole("option", { name: "动力学缓慢漂移" });
+    await screen.findByRole("option", { name: "反应动力学缓慢漂移（故障 13）" });
     await user.click(screen.getByRole("button", { name: "创建回放并读取事件" }));
     expect(await screen.findByRole("link", { name: "进入真实事件研判" })).toHaveAttribute(
       "href", "/events/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
