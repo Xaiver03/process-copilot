@@ -935,6 +935,7 @@ export interface operations {
                     "application/json": components["schemas"]["AIAnswer"];
                 };
             };
+            401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
