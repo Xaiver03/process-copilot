@@ -90,6 +90,7 @@ docs/submission/          作品、数据与 Demo 材料
 
 - [作品说明](docs/submission/作品说明_v01_DRAFT.md)
 - [三分钟 Demo 脚本](docs/submission/三分钟Demo脚本_v01_DRAFT.md)
+- [连续化工 AI 判别与“工业小郎中”论文启示](docs/research/2026-08-28_连续化工AI判别与工业小郎中论文启示_v01_DRAFT.md)
 - [多 Agent 协作编排规范](docs/plans/2026-08-28_多Agent协作编排规范_v01_DRAFT.md)
 - [Claude Code 独立验收 Prompt](docs/plans/2026-08-28_Claude_Code_独立验收Prompt_v01.md)
 - [Figma 设计系统](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)
