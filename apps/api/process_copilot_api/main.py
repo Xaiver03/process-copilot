@@ -1041,6 +1041,12 @@ def create_app(
                 if not row:
                     raise APIError(404, "run_not_found", "Replay run not found")
                 inference = session.get(RunInferenceStateRow, str(runId))
+                if row.state in {"completed", "failed"} and body.action != "restart":
+                    raise APIError(
+                        409,
+                        "run_terminal",
+                        "Completed or failed runs must be restarted before further control.",
+                    )
                 if body.action == "play":
                     row.state = "playing"
                 elif body.action == "pause":
@@ -1142,6 +1148,8 @@ def create_app(
                             message.event_type,
                             _stream_payload(message),
                         )
+                        if message.event_type in {"completed", "failed"}:
+                            return
                     continue
                 await asyncio.sleep(app.state.sse_heartbeat_interval_seconds)
                 heartbeat_number += 1

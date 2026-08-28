@@ -9,7 +9,12 @@ import yaml
 from fastapi.testclient import TestClient
 from process_copilot_api.auth import token_secret
 from process_copilot_api.catalog import DataCatalog
-from process_copilot_api.db import AnomalyEventRow, RunInferenceStateRow, RunStreamMessageRow
+from process_copilot_api.db import (
+    AnomalyEventRow,
+    ReplayRunRow,
+    RunInferenceStateRow,
+    RunStreamMessageRow,
+)
 from process_copilot_api.main import create_app
 from process_copilot_api.worker import inspect_processed_data
 
@@ -588,6 +593,54 @@ def test_online_restart_clears_only_current_run_products(client: TestClient):
         second_messages = session.query(RunStreamMessageRow).filter_by(run_id=second["id"]).all()
     assert [message.event_type for message in first_messages] == ["state"]
     assert len(second_messages) >= 2
+
+
+def test_terminal_run_rejects_control_until_explicit_restart(client: TestClient):
+    run = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    with client.app.state.database.session() as session:
+        session.get(ReplayRunRow, run["id"]).state = "completed"
+
+    for body in (
+        {"action": "play"},
+        {"action": "pause"},
+        {"action": "seek", "sampleIndex": 3},
+    ):
+        response = client.post(f"/api/v1/runs/{run['id']}/control", json=body)
+        assert response.status_code == 409
+        assert response.json()["code"] == "run_terminal"
+
+    restarted = client.post(
+        f"/api/v1/runs/{run['id']}/control",
+        json={"action": "restart"},
+    )
+    assert restarted.status_code == 200
+    assert restarted.json()["state"] == "ready"
+
+
+def test_sse_closes_immediately_after_terminal_message(client: TestClient):
+    run = client.post(
+        "/api/v1/runs",
+        json={"scenarioId": "tep-fault-05", "inferenceMode": "online"},
+    ).json()
+    with client.app.state.database.session() as session:
+        session.add(
+            RunStreamMessageRow(
+                run_id=run["id"],
+                event_type="completed",
+                sample_index=1,
+                payload={"runId": run["id"], "currentSample": 1},
+                created_at=datetime.now(UTC).replace(tzinfo=None),
+            )
+        )
+
+    response = client.get(f"/api/v1/runs/{run['id']}/stream")
+
+    assert response.status_code == 200
+    assert "event: completed" in response.text
+    assert "event: heartbeat" not in response.text
 
 
 def test_sse_replays_durable_messages_after_database_cursor(client: TestClient):
