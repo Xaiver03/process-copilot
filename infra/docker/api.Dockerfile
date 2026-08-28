@@ -13,6 +13,8 @@ RUN groupadd --system --gid 10001 process \
     && useradd --system --uid 10001 --gid process --home-dir /app --shell /usr/sbin/nologin process
 
 COPY apps/api/pyproject.toml apps/api/uv.lock /app/
+COPY apps/api/alembic.ini /app/alembic.ini
+COPY apps/api/alembic /app/alembic
 COPY apps/api/process_copilot_api /app/process_copilot_api
 RUN python -m pip install --retries 5 uv==0.10.7 \
     && uv sync --frozen --no-dev \
@@ -21,4 +23,4 @@ COPY --chown=process:process data/processed /app/data/processed
 
 USER process
 EXPOSE 8000
-CMD ["uvicorn", "process_copilot_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "python -m process_copilot_api.migrations && uvicorn process_copilot_api.main:app --host 0.0.0.0 --port 8000"]
