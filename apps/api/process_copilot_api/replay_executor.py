@@ -8,10 +8,12 @@ anomaly transitions in the API database.
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from math import isfinite
 from pathlib import Path
+from threading import Lock
 from typing import Any
 from uuid import uuid4
 
@@ -30,6 +32,7 @@ from .db import (
 _RAW_VARIABLE = re.compile(r"^(?:XMEAS|XMV)\([0-9]+\)$")
 _BATCH_LIMIT = 20
 _SAFETY_BOUNDARY = "Read-only advice. No automatic control write-back."
+_RUN_LOCKS: defaultdict[str, Lock] = defaultdict(Lock)
 
 
 def _contract_alarm_state(value: str) -> str:
@@ -69,41 +72,46 @@ class ReplayExecutor:
 
         context: _RunContext | None = None
         try:
-            with self.database.session() as session:
-                run = session.get(ReplayRunRow, str(run_id))
-                if run is None:
-                    return False
-                inference = session.get(RunInferenceStateRow, str(run_id))
-                if inference is None or inference.mode != "online" or run.state != "playing":
-                    return False
-
-                inference.worker_id = self.worker_id
-                inference.heartbeat_at = _now()
-                context = self._context(run, inference)
-                batch_size = min(int(run.speed), _BATCH_LIMIT)
-                processed = 0
-                while processed < batch_size and run.current_sample < len(context.rows):
-                    sample_index = run.current_sample
-                    result = context.engine.process(
-                        sample_index=sample_index,
-                        values=self._raw_values(context.rows[sample_index]),
+            with _RUN_LOCKS[str(run_id)]:
+                with self.database.session() as session:
+                    run = session.scalar(
+                        select(ReplayRunRow)
+                        .where(ReplayRunRow.id == str(run_id))
+                        .with_for_update()
                     )
-                    self._persist_inference(session, run, result)
-                    self._persist_transition(session, run, result)
-                    run.current_sample += 1
-                    context.processed_until = run.current_sample
-                    processed += 1
+                    if run is None:
+                        return False
+                    inference = session.get(RunInferenceStateRow, str(run_id))
+                    if inference is None or inference.mode != "online" or run.state != "playing":
+                        return False
 
-                if run.current_sample >= len(context.rows):
-                    run.state = "completed"
-                    self._append_message(
-                        session,
-                        run.id,
-                        "completed",
-                        None,
-                        {"runId": run.id, "currentSample": run.current_sample},
-                    )
-                return processed > 0 or run.state == "completed"
+                    inference.worker_id = self.worker_id
+                    inference.heartbeat_at = _now()
+                    context = self._context(run, inference)
+                    batch_size = min(int(run.speed), _BATCH_LIMIT)
+                    processed = 0
+                    while processed < batch_size and run.current_sample < len(context.rows):
+                        sample_index = run.current_sample
+                        result = context.engine.process(
+                            sample_index=sample_index,
+                            values=self._raw_values(context.rows[sample_index]),
+                        )
+                        self._persist_inference(session, run, result)
+                        self._persist_transition(session, run, result)
+                        run.current_sample += 1
+                        context.processed_until = run.current_sample
+                        processed += 1
+
+                    if run.current_sample >= len(context.rows):
+                        run.state = "completed"
+                        self._append_message(
+                            session,
+                            run.id,
+                            "completed",
+                            None,
+                            {"runId": run.id, "currentSample": run.current_sample},
+                        )
+                    return processed > 0 or run.state == "completed"
         except Exception as exc:
             self._contexts.pop(str(run_id), None)
             self._mark_failed(str(run_id), str(exc))

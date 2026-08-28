@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -156,6 +157,30 @@ def test_tick_advances_only_playing_runs_and_caps_batch_at_20(tmp_path: Path, fa
         inference_messages = [message for message in messages if message.event_type == "inference"]
         assert len(inference_messages) == 20
     assert fake_engine.calls == list(range(20))
+
+
+def test_two_executors_do_not_process_the_same_sample(tmp_path: Path, fake_engine) -> None:
+    _write_artifacts(tmp_path, row_count=4)
+    database, run_id = _database_with_run(tmp_path, speed=1)
+    executors = [
+        ReplayExecutor(database, tmp_path, worker_id="worker-a"),
+        ReplayExecutor(database, tmp_path, worker_id="worker-b"),
+    ]
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda executor: executor.tick(run_id), executors))
+
+    with database.session() as session:
+        run = session.get(ReplayRunRow, run_id)
+        samples = [
+            message.sample_index
+            for message in session.query(RunStreamMessageRow)
+            .filter_by(run_id=run_id, event_type="inference")
+            .order_by(RunStreamMessageRow.id)
+        ]
+    assert results == [True, True]
+    assert run.current_sample == 2
+    assert samples == [0, 1]
 
 
 def test_restart_clears_only_run_artifacts_and_rebuilds_from_zero(
