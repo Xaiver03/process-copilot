@@ -23,12 +23,13 @@ describe("应用框架与路由", () => {
     const routes = navigationItems.map((item) => item.href);
     expect(routes).toEqual(["/demo", "/overview", "/replay", "/events", "/system"]);
 
-    render(<AppShell currentPath="/events/demo-event"><p>内容</p></AppShell>);
+    const { container } = render(<AppShell currentPath="/events/demo-event"><p>内容</p></AppShell>);
     expect(
       screen.getByRole("link", { name: "序安 Process Sentinel（序安·过程哨兵）首页" }),
     ).toBeInTheDocument();
     expect(screen.getByText("序安")).toBeInTheDocument();
     expect(screen.getByText("PROCESS SENTINEL")).toBeInTheDocument();
+    expect(container.querySelector('img[src*="process-sentinel-mark-v01"]')).toBeInTheDocument();
     expect(screen.queryByText(/WUNO/i)).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "主导航" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /偏移事件/ })).toHaveAttribute("aria-current", "page");

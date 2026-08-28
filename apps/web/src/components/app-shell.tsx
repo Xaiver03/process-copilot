@@ -7,12 +7,12 @@ import {
   List,
   ListMagnifyingGlass,
   Play,
-  ShieldCheck,
   SignIn,
   SignOut,
   Waveform,
   X,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
@@ -49,7 +49,7 @@ export function AppShell({
           href="/demo"
           aria-label="序安 Process Sentinel（序安·过程哨兵）首页"
         >
-          <span className="brand-mark" aria-hidden="true"><ShieldCheck weight="duotone" /></span>
+          <span className="brand-mark" aria-hidden="true"><Image src="/brand/process-sentinel-mark-v01.png" alt="" width={38} height={38} priority /></span>
           <span><strong>序安</strong><small>PROCESS SENTINEL</small></span>
         </Link>
         <nav aria-label="主导航">
