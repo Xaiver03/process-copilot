@@ -5,6 +5,7 @@
 
 # JavaScript
 node_modules/
+**/node_modules
 .next/
 coverage/
 *.tsbuildinfo
