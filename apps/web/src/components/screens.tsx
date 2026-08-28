@@ -35,6 +35,7 @@ import { advanceReplaySample, createReplayTelemetry, describeReplayStage, normal
 import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
+import { EventCopilot } from "./event-copilot";
 import { ModeNotice } from "./mode-notice";
 import { StatePanel } from "./state-panel";
 
@@ -115,7 +116,7 @@ export function OverviewScreen() {
           <div className="overview-grid">
             <ProcessHeatmapChart />
               <aside className="event-rail">
-              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>为什么优先处理</h2></div></div>
+              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>优先原因</h2></div></div>
               <p className="event-ai-summary">三项关键变量在同一时间窗内共同偏离，AI 将<strong>{overviewCandidate.label}</strong>排为当前首要故障假设。</p>
               <dl className="priority-reasons">
                 <div><dt>发现</dt><dd>样本 {demoEvent.detectionSample} 锁定偏移</dd></div>
@@ -318,11 +319,13 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
               </section>
 
               <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title">
-                <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">AI 为什么这样判断</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
+                <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">原因</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
                 <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`).join("、")}共同指向当前故障假设。</p>
                 <EvidenceTrendChart evidence={event.evidence} />
                 <div className="ai-evidence-detail"><EvidencePanel evidence={event.evidence} /><ContributionChart evidence={event.evidence} /></div>
               </section>
+
+              <EventCopilot event={event} />
 
               <aside className="ai-side-stack">
                 <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title">
