@@ -50,7 +50,7 @@ make build
 BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
 ```
 
-当前 Web 验收基线：`39 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。ML、API、契约与 infra 使用各自验收命令独立复核。
+当前 Web 验收基线：`79 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。API 为 `86 passed`，基础设施校验通过；ML 与契约使用各自验收命令独立复核。
 
 ## 运行与部署
 

@@ -45,6 +45,8 @@
 
 当前评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v04_ZH_REVIEW.pdf`（14 页，16:9；新增完整管理后台、AI 配置与降级边界、调用记录、配置审计、操作员登录、人机问答、三分钟演示链路及故障演习）。
 
+同名 v04 的首轮构建已在修正 SSE 演习口径前归档到 `89_历史版本/序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v04_ZH_REVIEW_ARCHIVED_20260828.pdf`，当前文件为重新编译并复核后的 v04。
+
 上一评审版：`序安_Process_Sentinel_连续化工过程偏移副驾驶_产品手册_v03_ZH_REVIEW.pdf`。
 
 完整现场演习手册：`../docs/submission/序安完整演示演习手册_v01_REVIEW.md`。
