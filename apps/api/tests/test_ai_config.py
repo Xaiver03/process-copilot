@@ -7,6 +7,7 @@ from cryptography.fernet import Fernet
 from process_copilot_api.ai_config import (
     AIConfigPatch,
     AIConfigService,
+    AIConfigValidationError,
     StoredAIConfig,
     redact_sensitive_fields,
     resolve_config_from_env,
@@ -175,6 +176,37 @@ def test_environment_fallback_accepts_runtime_llm_variable_names():
     assert public.promptVersion == "event-copilot-v02"
     assert public.apiKeyConfigured is True
     assert "runtime-secret" not in repr(public)
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://provider.example/v1",
+        "https://user:password@provider.example/v1",
+        "https://127.0.0.1/v1",
+        "https://169.254.169.254/latest/meta-data",
+    ],
+)
+def test_enabled_provider_rejects_unsafe_base_urls(base_url: str):
+    service = AIConfigService(MemoryRepository())
+
+    with pytest.raises(AIConfigValidationError):
+        service.update(config_patch(baseUrl=base_url))
+
+
+def test_production_provider_requires_an_explicit_host_allowlist():
+    service = AIConfigService(MemoryRepository(), environ={"APP_ENV": "production"})
+    with pytest.raises(AIConfigValidationError):
+        service.update(config_patch(baseUrl="https://provider.example/v1"))
+
+    allowed = AIConfigService(
+        MemoryRepository(),
+        environ={
+            "APP_ENV": "production",
+            "LLM_ALLOWED_HOSTS": "provider.example",
+        },
+    )
+    assert allowed.update(config_patch(baseUrl="https://provider.example/v1")).enabled is True
 
 
 def test_sensitive_field_redaction_handles_nested_payloads():

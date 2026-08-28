@@ -60,6 +60,8 @@ for setting in \
   'LLM_MODEL:' \
   'LLM_TIMEOUT_SECONDS:' \
   'LLM_MAX_TOKENS:' \
+  'LLM_ALLOWED_HOSTS:' \
+  'ADMIN_AI_CONFIG_WRITE_ENABLED:' \
   'AI_CONFIG_ENCRYPTION_KEY:' \
   'OPERATOR_TOKEN_SECRET:'; do
   if ! grep -q "$setting" <<<"$compose_config"; then
@@ -171,7 +173,8 @@ if ! grep -q 'shared/runtime.env' "$ROOT_DIR/infra/scripts/deploy.sh" \
 fi
 
 for setting in INFERENCE_MODE LLM_PROVIDER LLM_BASE_URL LLM_MODEL LLM_API_KEY \
-  LLM_TIMEOUT_SECONDS LLM_MAX_TOKENS LLM_PROMPT_VERSION AI_CONFIG_ENCRYPTION_KEY \
+  LLM_TIMEOUT_SECONDS LLM_MAX_TOKENS LLM_PROMPT_VERSION LLM_ALLOWED_HOSTS \
+  ADMIN_AI_CONFIG_WRITE_ENABLED AI_CONFIG_ENCRYPTION_KEY \
   OPERATOR_TOKEN_SECRET; do
   if ! grep -q "$setting" "$ROOT_DIR/infra/scripts/deploy.sh"; then
     printf 'deploy runtime env must preserve %s\n' "$setting" >&2

@@ -27,6 +27,8 @@ COMPOSE_FILE="$SOURCE_DIR/infra/compose.yaml"
 [[ "${OPERATOR_TOKEN_SECRET:-}" =~ ^[A-Za-z0-9._-]{32,128}$ ]] || die "export a 32-128 character OPERATOR_TOKEN_SECRET"
 [[ "${INFERENCE_MODE:-online}" =~ ^(online|template)$ ]] || die "INFERENCE_MODE must be online or template"
 [[ "${LLM_PROVIDER:-disabled}" =~ ^[A-Za-z0-9._-]+$ ]] || die "LLM_PROVIDER contains unsafe env-file characters"
+[[ "${LLM_ALLOWED_HOSTS:-api.openai.com}" =~ ^[A-Za-z0-9.,_-]+$ ]] || die "LLM_ALLOWED_HOSTS contains unsafe env-file characters"
+[[ "${ADMIN_AI_CONFIG_WRITE_ENABLED:-false}" =~ ^(true|false|0|1)$ ]] || die "ADMIN_AI_CONFIG_WRITE_ENABLED must be true or false"
 if [[ "${LLM_PROVIDER:-disabled}" != "disabled" ]]; then
   [[ -n "${LLM_API_KEY:-}" ]] || die "LLM_API_KEY is required when LLM_PROVIDER is enabled"
   [[ -n "${LLM_BASE_URL:-}" && -n "${LLM_MODEL:-}" ]] || die "LLM_BASE_URL and LLM_MODEL are required when LLM_PROVIDER is enabled"
@@ -108,7 +110,7 @@ fi
 
 RUNTIME_ENV="$DEPLOY_DIR/shared/runtime.env"
 mkdir -p "$(dirname "$RUNTIME_ENV")"
-printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_PORT=%s\nCOMPOSE_PROJECT_NAME=%s\nINFERENCE_MODE=%s\nLLM_PROVIDER=%s\nLLM_BASE_URL=%s\nLLM_MODEL=%s\nLLM_API_KEY=%s\nLLM_TIMEOUT_SECONDS=%s\nLLM_MAX_TOKENS=%s\nLLM_PROMPT_VERSION=%s\nAI_CONFIG_ENCRYPTION_KEY=%s\nOPERATOR_TOKEN_SECRET=%s\n' \
+printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_PORT=%s\nCOMPOSE_PROJECT_NAME=%s\nINFERENCE_MODE=%s\nLLM_PROVIDER=%s\nLLM_BASE_URL=%s\nLLM_MODEL=%s\nLLM_API_KEY=%s\nLLM_TIMEOUT_SECONDS=%s\nLLM_MAX_TOKENS=%s\nLLM_PROMPT_VERSION=%s\nLLM_ALLOWED_HOSTS=%s\nADMIN_AI_CONFIG_WRITE_ENABLED=%s\nAI_CONFIG_ENCRYPTION_KEY=%s\nOPERATOR_TOKEN_SECRET=%s\n' \
   "${POSTGRES_USER:-process_copilot}" \
   "${POSTGRES_DB:-process_copilot}" \
   "$POSTGRES_PASSWORD" \
@@ -122,6 +124,8 @@ printf 'POSTGRES_USER=%s\nPOSTGRES_DB=%s\nPOSTGRES_PASSWORD=%s\nCOPILOT_HTTP_POR
   "${LLM_TIMEOUT_SECONDS:-8}" \
   "${LLM_MAX_TOKENS:-500}" \
   "${LLM_PROMPT_VERSION:-event-copilot-v01}" \
+  "${LLM_ALLOWED_HOSTS:-api.openai.com}" \
+  "${ADMIN_AI_CONFIG_WRITE_ENABLED:-false}" \
   "$AI_CONFIG_ENCRYPTION_KEY" \
   "$OPERATOR_TOKEN_SECRET" > "$RUNTIME_ENV"
 chmod 600 "$RUNTIME_ENV"

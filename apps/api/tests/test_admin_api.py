@@ -174,3 +174,27 @@ def test_admin_status_never_exposes_raw_worker_failure(admin_client) -> None:
     serialized = json.dumps(overview.json(), ensure_ascii=False)
     assert "/private/server/path" not in serialized
     assert "provider-secret" not in serialized
+
+
+def test_production_admin_ai_mutations_are_read_only_by_default(admin_client, monkeypatch) -> None:
+    client, _app = admin_client
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("OPERATOR_TOKEN_SECRET", "test-production-token-secret-000001")
+    monkeypatch.delenv("ADMIN_AI_CONFIG_WRITE_ENABLED", raising=False)
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+
+    update = client.put(
+        "/api/v1/admin/ai/config",
+        headers=headers,
+        json={"model": "must-not-change", "expectedVersion": 1},
+    )
+    connection_test = client.post(
+        "/api/v1/admin/ai/test",
+        headers=headers,
+        json={"question": "不得发出服务端请求"},
+    )
+
+    assert update.status_code == 403
+    assert update.json()["code"] == "admin_ai_read_only"
+    assert connection_test.status_code == 403
+    assert connection_test.json()["code"] == "admin_ai_read_only"

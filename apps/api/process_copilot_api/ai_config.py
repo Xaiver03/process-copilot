@@ -11,7 +11,9 @@ import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from ipaddress import ip_address
 from typing import Any, ClassVar, Protocol
+from urllib.parse import urlsplit
 
 from .crypto import encrypt_api_key
 
@@ -205,6 +207,11 @@ class AIConfigService:
         values["version"] = current.version + 1 if current else 1
         values["apiKeyConfigured"] = bool(ciphertext)
         candidate = AIConfig(**values)
+        validate_provider_base_url(
+            candidate.baseUrl,
+            enabled=candidate.enabled,
+            environ=self.environ,
+        )
         stored = self.repository.save(candidate, ciphertext)
         return _public_config(stored)
 
@@ -223,6 +230,47 @@ def _parse_bool(value: str | None, *, default: bool = False) -> bool:
     if normalized in {"0", "false", "no", "off"}:
         return False
     raise AIConfigValidationError("AI_ENABLED must be a boolean")
+
+
+def validate_provider_base_url(
+    value: str,
+    *,
+    enabled: bool,
+    environ: Mapping[str, str] | None = None,
+) -> str:
+    """Validate the credential-bearing provider origin before any server-side request."""
+    parsed = urlsplit(value.strip())
+    if parsed.scheme.lower() != "https":
+        raise AIConfigValidationError("baseUrl must use HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise AIConfigValidationError("baseUrl must not contain user credentials")
+    if not parsed.hostname:
+        raise AIConfigValidationError("baseUrl must include a hostname")
+    if parsed.query or parsed.fragment:
+        raise AIConfigValidationError("baseUrl must not contain a query or fragment")
+
+    hostname = parsed.hostname.rstrip(".").lower()
+    try:
+        address = ip_address(hostname)
+    except ValueError:
+        address = None
+    if address is not None and not address.is_global:
+        raise AIConfigValidationError("baseUrl must not target a private or local address")
+
+    source = environ if environ is not None else os.environ
+    allowed_hosts = {
+        item.strip().rstrip(".").lower()
+        for item in (
+            source.get("LLM_ALLOWED_HOSTS") or source.get("AI_ALLOWED_HOSTS") or ""
+        ).split(",")
+        if item.strip()
+    }
+    production = source.get("APP_ENV", "development").strip().lower() == "production"
+    if enabled and production and not allowed_hosts:
+        raise AIConfigValidationError("production AI requires LLM_ALLOWED_HOSTS")
+    if enabled and allowed_hosts and hostname not in allowed_hosts:
+        raise AIConfigValidationError("baseUrl hostname is not in LLM_ALLOWED_HOSTS")
+    return value.rstrip("/")
 
 
 def resolve_config_from_env(environ: Mapping[str, str] | None = None) -> AIConfig | None:
@@ -257,7 +305,7 @@ def resolve_config_from_env(environ: Mapping[str, str] | None = None) -> AIConfi
         version = int(source.get("AI_CONFIG_VERSION", "1"))
     except ValueError as exc:
         raise AIConfigValidationError("AI numeric environment setting is invalid") from exc
-    return AIConfig(
+    config = AIConfig(
         enabled=_parse_bool(source.get("AI_ENABLED"), default=provider != "disabled"),
         provider=provider,
         baseUrl=value("AI_BASE_URL", "LLM_BASE_URL", "https://localhost"),
@@ -270,6 +318,8 @@ def resolve_config_from_env(environ: Mapping[str, str] | None = None) -> AIConfi
         version=version,
         apiKeyConfigured=bool(source.get("AI_API_KEY") or source.get("LLM_API_KEY")),
     )
+    validate_provider_base_url(config.baseUrl, enabled=config.enabled, environ=source)
+    return config
 
 
 def redact_sensitive_fields(value: Any) -> Any:

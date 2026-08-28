@@ -115,6 +115,22 @@ def _default_data_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "data" / "processed"
 
 
+def _admin_ai_writes_enabled() -> bool:
+    configured = os.getenv("ADMIN_AI_CONFIG_WRITE_ENABLED")
+    if configured is not None:
+        return configured.strip().lower() in {"1", "true", "yes", "on"}
+    return os.getenv("APP_ENV", "development").strip().lower() != "production"
+
+
+def _require_admin_ai_writes() -> None:
+    if not _admin_ai_writes_enabled():
+        raise APIError(
+            403,
+            "admin_ai_read_only",
+            "公开演示环境的 AI 配置为只读；私有部署可由运维显式启用写入。",
+        )
+
+
 def _problem(
     request: Request, code: str, message: str, details: dict[str, Any] | None = None
 ) -> Problem:
@@ -637,6 +653,7 @@ def create_app(
             default=None, alias="Idempotency-Key", max_length=128
         ),
     ) -> Any:
+        _require_admin_ai_writes()
         payload = body.model_dump(mode="json", by_alias=True, exclude_unset=True)
         with app.state.database.session() as session:
             previous_response = _idempotent(
@@ -745,6 +762,7 @@ def create_app(
         body: AIConnectionTestRequest | None = None,
         operator: Annotated[Any, Depends(require_role("admin"))] = None,
     ) -> AIConnectionTestResponse:
+        _require_admin_ai_writes()
         now_timestamp = datetime.now(UTC).timestamp()
         attempts = [
             timestamp

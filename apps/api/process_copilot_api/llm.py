@@ -14,6 +14,8 @@ from uuid import uuid4
 
 import httpx
 
+from .ai_config import validate_provider_base_url
+
 logger = logging.getLogger(__name__)
 
 LLMMode = Literal["llm_enhanced", "template", "degraded"]
@@ -181,6 +183,7 @@ class ExplanationEnhancer:
         return self.enhance(event_summary, question, trace_id=trace_id)
 
     def _request(self, event_summary: dict[str, Any], question: str) -> Any:
+        base_url = validate_provider_base_url(self.settings.base_url, enabled=True)
         request_payload = {
             "model": self.settings.model,
             "messages": [
@@ -203,9 +206,11 @@ class ExplanationEnhancer:
         with httpx.Client(
             transport=self._transport,
             timeout=self.settings.timeout_seconds,
+            follow_redirects=False,
+            trust_env=False,
         ) as client:
             response = client.post(
-                f"{self.settings.base_url}/chat/completions",
+                f"{base_url}/chat/completions",
                 headers=headers,
                 json=request_payload,
             )
