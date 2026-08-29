@@ -70,5 +70,6 @@ def test_default_wastewater_scenario_is_first_and_template_event_has_prediction(
     )
     assert [item["variableId"] for item in detail["evidence"]] == ["PH-P", "PH-E", "Q-E"]
     assert all("不代表已证实因果" in item["summary"] for item in detail["evidence"])
+    assert [item["faultId"] for item in detail["candidates"]] == [1, 2, 3]
     assert [item["probability"] for item in detail["candidates"]] == [0.407, 0.407, 0.186]
     assert "不确定区间上界" in detail["recommendation"]["risk"]

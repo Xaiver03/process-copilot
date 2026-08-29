@@ -9,7 +9,7 @@
   "anomalyLatched": true,
   "initialCandidates": [
     {
-      "faultId": 0,
+      "faultId": 1,
       "label": "初沉池出口 pH 偏离（核查权重）",
       "probability": 0.407
     },
@@ -26,7 +26,7 @@
   ],
   "candidates": [
     {
-      "faultId": 0,
+      "faultId": 1,
       "label": "初沉池出口 pH 偏离（核查权重）",
       "probability": 0.407
     },
