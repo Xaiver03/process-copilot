@@ -179,8 +179,9 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await capture(page, testInfo, "UJ01-01_演示入口");
 
     await page.goto("/replay");
-    await expect(page.getByRole("heading", { name: "52 路过程数据回放" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "污水出水风险回放" })).toBeVisible();
     await page.getByLabel("回放场景").selectOption("tep-f01-feed-ratio-step");
+    await expect(page.getByRole("heading", { name: "52 路连续过程数据回放" })).toBeVisible();
     await page.getByRole("button", { name: "开始回放" }).click();
     await expect(page.getByText("回放进行中")).toBeVisible();
     await page.getByLabel("回放倍速").selectOption("20");
@@ -250,7 +251,7 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await page.getByLabel("研判说明").fill(`班长确认偏移 ${journeyStamp}`);
     await page.getByRole("button", { name: "确认并形成记录" }).click();
     await page.getByRole("link", { name: "打开审计记录" }).click();
-    await expect(page.getByText("确认偏移", { exact: true })).toBeVisible();
+    await expect(page.getByText("确认风险", { exact: true })).toBeVisible();
     await expect(page.getByText("当班班长 (shift-lead)", { exact: true })).toBeVisible();
     await capture(page, testInfo, "UJ04-01_班长确认记录");
   });
@@ -263,7 +264,7 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await page.getByLabel("研判说明").fill(`工程师驳回偏移 ${journeyStamp}`);
     await page.getByRole("button", { name: "确认并形成记录" }).click();
     await page.getByRole("link", { name: "打开审计记录" }).click();
-    await expect(page.getByText("驳回偏移", { exact: true })).toBeVisible();
+    await expect(page.getByText("驳回风险", { exact: true })).toBeVisible();
     await expect(page.getByText("工艺工程师 (process-engineer)", { exact: true })).toBeVisible();
     await capture(page, testInfo, "UJ05-01_工程师驳回记录");
   });
