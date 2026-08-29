@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">序安候选标志：异常边界截获</title>
+  <desc id="desc">连续过程曲线在越过安全边界之前被截获，虚线表示被阻止的未来趋势。</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- The enclosing boundary reads as protection without becoming a generic shield. -->
+    <path d="M398 104A188 188 0 1 0 412 382" stroke="#102A3A" stroke-width="34"/>
+    <path d="M412 382V310" stroke="#102A3A" stroke-width="34"/>
+    <!-- The process signal remains calm before a visible drift. -->
+    <path d="M92 301C138 301 157 300 187 300C218 300 227 255 254 255C281 255 291 318 319 318C343 318 353 272 374 238" stroke="#13C2C2" stroke-width="28"/>
+    <!-- The interception point is the only node, so it survives small sizes. -->
+    <circle cx="391" cy="214" r="25" fill="#FFFFFF" stroke="#13C2C2" stroke-width="20"/>
+    <!-- What would have happened is deliberately dashed and stops at the danger limit. -->
+    <path d="M411 190L454 135" stroke="#13C2C2" stroke-width="20" stroke-dasharray="5 29"/>
+    <path d="M396 114H468" stroke="#DE5B6D" stroke-width="20"/>
+  </g>
+</svg>

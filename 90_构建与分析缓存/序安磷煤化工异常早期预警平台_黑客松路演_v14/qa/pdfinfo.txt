@@ -1,0 +1,20 @@
+Title:           序安·磷煤化工异常早期预警平台
+Subject:         磷煤化工园区异常早期预警
+Author:          序安
+Creator:         Impress
+Producer:        LibreOfficeDev 26.8.0.0.alpha0 (AARCH64)
+CreationDate:    Sat Aug 29 23:07:01 2026 CST
+Custom Metadata: no
+Metadata Stream: yes
+Tagged:          yes
+UserProperties:  no
+Suspects:        no
+Form:            none
+JavaScript:      no
+Pages:           10
+Encrypted:       no
+Page size:       960.009 x 540 pts
+Page rot:        0
+File size:       1033511 bytes
+Optimized:       no
+PDF version:     1.7
