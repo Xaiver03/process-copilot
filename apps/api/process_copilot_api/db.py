@@ -98,6 +98,20 @@ class AIConfigurationRow(Base):
     updated_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
 
 
+class AIRuntimeProbeRow(Base):
+    __tablename__ = "ai_runtime_probes"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    mode: Mapped[str] = mapped_column(String(24), nullable=False)
+    model: Mapped[str] = mapped_column(String(160), nullable=False)
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason_code: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    trace_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    config_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    checked_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
+
+
 class AdminAuditRow(Base):
     __tablename__ = "admin_audit_events"
 

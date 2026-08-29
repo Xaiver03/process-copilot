@@ -59,6 +59,8 @@ class LLMSettings:
     api_key: str = ""
     timeout_seconds: float = 8.0
     max_tokens: int = 500
+    temperature: float = 0.2
+    fallback_policy: Literal["template", "degraded"] = "template"
     prompt_version: str = "event-copilot-v01"
 
     def __post_init__(self) -> None:
@@ -66,6 +68,10 @@ class LLMSettings:
             raise ValueError("timeout_seconds must be positive")
         if self.max_tokens < 1:
             raise ValueError("max_tokens must be positive")
+        if not 0 <= self.temperature <= 2:
+            raise ValueError("temperature must be between 0 and 2")
+        if self.fallback_policy not in {"template", "degraded"}:
+            raise ValueError("fallback_policy must be template or degraded")
 
     @classmethod
     def from_env(cls) -> LLMSettings:
@@ -77,6 +83,13 @@ class LLMSettings:
             max_tokens = int(os.getenv("LLM_MAX_TOKENS", "500"))
         except ValueError:
             max_tokens = 500
+        try:
+            temperature = float(os.getenv("LLM_TEMPERATURE", "0.2"))
+        except ValueError:
+            temperature = 0.2
+        fallback_policy = os.getenv("LLM_FALLBACK_POLICY", "template").strip().lower()
+        if fallback_policy not in {"template", "degraded"}:
+            fallback_policy = "template"
         return cls(
             provider=os.getenv("LLM_PROVIDER", "disabled").strip().lower(),
             base_url=os.getenv("LLM_BASE_URL", "").strip().rstrip("/"),
@@ -84,6 +97,8 @@ class LLMSettings:
             api_key=os.getenv("LLM_API_KEY", ""),
             timeout_seconds=timeout_seconds,
             max_tokens=max_tokens,
+            temperature=temperature,
+            fallback_policy=fallback_policy,
             prompt_version=os.getenv("LLM_PROMPT_VERSION", "event-copilot-v01").strip(),
         )
 
@@ -197,7 +212,7 @@ class ExplanationEnhancer:
                     ),
                 },
             ],
-            "temperature": 0,
+            "temperature": self.settings.temperature,
             "max_tokens": self.settings.max_tokens,
             "response_format": {"type": "json_object"},
         }
@@ -225,6 +240,19 @@ class ExplanationEnhancer:
         refs: list[str],
         reason: str,
     ) -> ExplanationResult:
+        if self.settings.fallback_policy == "degraded":
+            return ExplanationResult(
+                answer=(
+                    "语言模型暂不可用，当前不生成替代研判。请直接核对已登记证据与现场仪表，"
+                    "并由操作员独立决定下一步；系统保持只读。"
+                ),
+                mode="degraded",
+                model="provider-unavailable",
+                evidence_refs=refs,
+                latency_ms=_latency_ms(started),
+                trace_id=trace_id,
+                fallback_reason=reason,
+            )
         reference_text = "、".join(refs[:3]) or "已登记证据"
         return ExplanationResult(
             answer=(

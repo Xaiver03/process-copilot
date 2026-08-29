@@ -10,7 +10,9 @@ from process_copilot_api.db import (
     ReplayRunRow,
     RunInferenceStateRow,
 )
+from process_copilot_api.llm import ExplanationResult
 from process_copilot_api.main import create_app
+from sqlalchemy import text
 
 
 @pytest.fixture()
@@ -53,6 +55,34 @@ def auth_headers(client: TestClient, username: str, password: str) -> dict[str, 
     )
     assert response.status_code == 200
     return {"Authorization": f"Bearer {response.json()['token']}"}
+
+
+def enable_language_model(
+    client: TestClient,
+    headers: dict[str, str],
+    *,
+    expected_version: int = 1,
+    model: str = "demo-model",
+) -> dict[str, object]:
+    response = client.put(
+        "/api/v1/admin/ai/config",
+        headers={**headers, "Idempotency-Key": f"enable-{expected_version}-{model}"},
+        json={
+            "enabled": True,
+            "provider": "openai-compatible",
+            "baseUrl": "https://provider.example/v1",
+            "model": model,
+            "timeoutMs": 8000,
+            "maxTokens": 500,
+            "temperature": 0.35,
+            "promptVersion": "event-copilot-v01",
+            "fallbackPolicy": "degraded",
+            "apiKey": "provider-secret",
+            "expectedVersion": expected_version,
+        },
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
 
 
 def test_admin_endpoints_require_admin_role(admin_client) -> None:
@@ -144,6 +174,109 @@ def test_connection_test_is_audited_and_rate_limited(admin_client) -> None:
 
     audit = client.get("/api/v1/admin/audit", headers=headers).json()
     assert audit["total"] == 3
+
+
+def test_language_model_status_requires_real_probe_for_current_config(admin_client) -> None:
+    client, _app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+    updated = enable_language_model(client, headers)
+
+    response = client.get("/api/v1/admin/ai/status", headers=headers)
+
+    assert response.status_code == 200
+    language_model = response.json()["languageModel"]
+    assert language_model["status"] == "unknown"
+    assert language_model["version"] == updated["model"]
+    assert language_model["latencyMs"] is None
+    assert "尚未完成真实调用验证" in language_model["reason"]
+
+
+def test_successful_connection_probe_marks_current_config_ready(admin_client, monkeypatch) -> None:
+    client, app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+    updated = enable_language_model(client, headers)
+    captured_settings = []
+
+    class SuccessfulEnhancer:
+        def __init__(self, settings):
+            captured_settings.append(settings)
+
+        def enhance(self, event_summary, question, *, trace_id=None):
+            return ExplanationResult(
+                answer="连接正常。",
+                mode="llm_enhanced",
+                model="demo-model",
+                evidence_refs=["XMEAS(1)"],
+                latency_ms=7,
+                trace_id=trace_id or "trace-test",
+            )
+
+    monkeypatch.setattr("process_copilot_api.main.ExplanationEnhancer", SuccessfulEnhancer)
+
+    tested = client.post(
+        "/api/v1/admin/ai/test",
+        headers=headers,
+        json={"question": "连接是否正常？"},
+    )
+    status = client.get("/api/v1/admin/ai/status", headers=headers)
+
+    assert tested.status_code == 200
+    assert tested.json()["ok"] is True
+    assert captured_settings[0].temperature == 0.35
+    assert captured_settings[0].fallback_policy == "degraded"
+    language_model = status.json()["languageModel"]
+    assert language_model == {
+        "status": "ready",
+        "version": updated["model"],
+        "latencyMs": 7.0,
+        "reason": None,
+    }
+    with app.state.database.session() as session:
+        probe = (
+            session.execute(
+                text("SELECT config_version, mode FROM ai_runtime_probes WHERE id = :id"),
+                {"id": "language-model"},
+            )
+            .mappings()
+            .one()
+        )
+        assert probe["config_version"] == updated["version"]
+        assert probe["mode"] == "llm_enhanced"
+
+
+def test_probe_from_previous_config_version_is_not_reused(admin_client, monkeypatch) -> None:
+    client, _app = admin_client
+    headers = auth_headers(client, "system-admin", "demo-admin-2026")
+    enabled = enable_language_model(client, headers)
+
+    class SuccessfulEnhancer:
+        def __init__(self, settings):
+            self.settings = settings
+
+        def enhance(self, event_summary, question, *, trace_id=None):
+            return ExplanationResult(
+                answer="连接正常。",
+                mode="llm_enhanced",
+                model=self.settings.model,
+                evidence_refs=["XMEAS(1)"],
+                latency_ms=5,
+                trace_id=trace_id or "trace-test",
+            )
+
+    monkeypatch.setattr("process_copilot_api.main.ExplanationEnhancer", SuccessfulEnhancer)
+    assert client.post("/api/v1/admin/ai/test", headers=headers).json()["ok"] is True
+
+    changed = client.put(
+        "/api/v1/admin/ai/config",
+        headers=headers,
+        json={"model": "next-model", "expectedVersion": enabled["version"]},
+    )
+    assert changed.status_code == 200
+    status = client.get("/api/v1/admin/ai/status", headers=headers).json()["languageModel"]
+
+    assert status["status"] == "unknown"
+    assert status["version"] == "next-model"
+    assert "尚未完成真实调用验证" in status["reason"]
 
 
 def test_admin_status_never_exposes_raw_worker_failure(admin_client) -> None:

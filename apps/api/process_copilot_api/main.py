@@ -35,6 +35,7 @@ from .crypto import EncryptionKeyError, decrypt_api_key
 from .db import (
     AdminAuditRow,
     AIInteractionRow,
+    AIRuntimeProbeRow,
     AnomalyEventRow,
     AuditRow,
     Database,
@@ -461,28 +462,70 @@ def create_app(
         )
     app.state.ai_test_attempts = defaultdict(list)
 
-    def runtime_llm_settings() -> LLMSettings:
+    def runtime_llm_context() -> tuple[LLMSettings, int]:
         stored = app.state.ai_config_repository.load()
         if stored is None:
-            return LLMSettings.from_env()
+            return LLMSettings.from_env(), 0
         config = stored.config
         api_key = ""
         if stored.api_key_ciphertext:
             api_key = decrypt_api_key(stored.api_key_ciphertext)
-        return LLMSettings(
-            provider=config.provider if config.enabled else "disabled",
-            base_url=config.baseUrl.rstrip("/"),
-            model=config.model,
-            api_key=api_key,
-            timeout_seconds=config.timeout,
-            max_tokens=config.maxTokens,
-            prompt_version=config.promptVersion,
+        return (
+            LLMSettings(
+                provider=config.provider if config.enabled else "disabled",
+                base_url=config.baseUrl.rstrip("/"),
+                model=config.model,
+                api_key=api_key,
+                timeout_seconds=config.timeout,
+                max_tokens=config.maxTokens,
+                temperature=config.temperature,
+                fallback_policy=config.fallbackMode,
+                prompt_version=config.promptVersion,
+            ),
+            config.version,
         )
+
+    def record_language_model_probe(
+        result: Any,
+        *,
+        config_version: int,
+    ) -> None:
+        with app.state.database.session() as session:
+            row = session.get(AIRuntimeProbeRow, "language-model")
+            values = {
+                "status": "ready" if result.mode == "llm_enhanced" else "degraded",
+                "mode": result.mode,
+                "model": result.model,
+                "latency_ms": result.latency_ms,
+                "reason_code": result.fallback_reason,
+                "trace_id": result.trace_id,
+                "config_version": config_version,
+                "checked_at": _now(),
+            }
+            if row is None:
+                session.add(AIRuntimeProbeRow(id="language-model", **values))
+                return
+            for field, value in values.items():
+                setattr(row, field, value)
+
+    def language_probe_reason(reason_code: str | None) -> str:
+        known = {
+            "provider_disabled": "语言模型增强未启用",
+            "provider_not_configured": "语言模型配置不完整",
+            "invalid_provider_schema": "语言模型返回内容未通过安全结构校验",
+            "invalid_event_summary": "连接验证输入无效",
+            "invalid_question": "连接验证问题无效",
+            "ReadTimeout": "语言模型连接超时",
+            "ConnectTimeout": "语言模型连接超时",
+            "RuntimeError": "语言模型服务拒绝或未完成请求",
+        }
+        return known.get(reason_code, "最近一次真实调用未通过，系统已保持降级模式")
 
     def current_ai_status() -> AIStatus:
         config = app.state.ai_config_service.get()
         worker_version: str | None = None
         with app.state.database.session() as session:
+            language_probe = session.get(AIRuntimeProbeRow, "language-model")
             latest = session.scalars(
                 select(RunInferenceStateRow)
                 .where(RunInferenceStateRow.heartbeat_at.is_not(None))
@@ -520,8 +563,25 @@ def create_app(
                 version=config.model,
                 reason="Provider API Key 尚未配置",
             )
+        elif language_probe is None or language_probe.config_version != config.version:
+            language_status = ServiceStatus(
+                status="unknown",
+                version=config.model,
+                reason="当前配置尚未完成真实调用验证",
+            )
+        elif language_probe.status == "ready":
+            language_status = ServiceStatus(
+                status="ready",
+                version=config.model,
+                latency_ms=language_probe.latency_ms,
+            )
         else:
-            language_status = ServiceStatus(status="ready", version=config.model)
+            language_status = ServiceStatus(
+                status="degraded",
+                version=config.model,
+                latency_ms=language_probe.latency_ms,
+                reason=language_probe_reason(language_probe.reason_code),
+            )
         return AIStatus(
             inference_mode=os.getenv("INFERENCE_MODE", "online").strip().lower()
             if os.getenv("INFERENCE_MODE", "online").strip().lower() in {"online", "template"}
@@ -776,7 +836,7 @@ def create_app(
         question = body.question if body is not None else "请用一句话确认连接正常。"
         error: str | None = None
         try:
-            settings = runtime_llm_settings()
+            settings, config_version = runtime_llm_context()
             result = ExplanationEnhancer(settings).enhance(
                 {
                     "eventId": str(UUID(int=0)),
@@ -789,6 +849,7 @@ def create_app(
                 question,
                 trace_id=request.state.trace_id,
             )
+            record_language_model_probe(result, config_version=config_version)
             ok = result.mode == "llm_enhanced"
             mode = "llm_enhanced" if ok else "degraded"
             error = None if ok else result.fallback_reason or "template_fallback"
@@ -1221,14 +1282,17 @@ def create_app(
                 raise APIError(404, "event_not_found", "Anomaly event not found")
             detail = _event_detail(row)
         try:
-            settings = runtime_llm_settings()
+            settings, config_version = runtime_llm_context()
         except EncryptionKeyError:
             settings = LLMSettings(provider="disabled")
+            current_config = app.state.ai_config_service.get()
+            config_version = current_config.version if current_config is not None else 0
         result = ExplanationEnhancer(settings).enhance(
             detail.model_dump(mode="json", by_alias=True),
             body.question,
             trace_id=request.state.trace_id,
         )
+        record_language_model_probe(result, config_version=config_version)
         interaction_id = uuid4()
         created_at = _now()
         with app.state.database.session() as session:

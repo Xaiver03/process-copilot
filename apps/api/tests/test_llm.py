@@ -59,6 +59,8 @@ def settings(**overrides: object) -> LLMSettings:
         "api_key": "sk-test-secret",
         "timeout_seconds": 1.0,
         "max_tokens": 500,
+        "temperature": 0.2,
+        "fallback_policy": "template",
         "prompt_version": "event-copilot-v01",
     }
     values.update(overrides)
@@ -129,6 +131,45 @@ def test_success_accepts_only_explanation_fields_and_filters_unknown_refs(
     assert body["response_format"] == {"type": "json_object"}
 
 
+def test_provider_request_uses_configured_temperature(
+    event_summary: dict[str, object],
+):
+    captured: dict[str, object] = {}
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "answer": "优先核对进料流量。",
+                                    "evidenceRefs": ["XMEAS(1)"],
+                                },
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(
+        settings(temperature=0.35),
+        transport=httpx.MockTransport(respond),
+    )
+
+    result = enhancer.enhance(event_summary, "先看哪个变量？")
+
+    assert result.mode == "llm_enhanced"
+    body = captured["body"]
+    assert isinstance(body, dict)
+    assert body["temperature"] == 0.35
+
+
 @pytest.mark.parametrize(
     "response_factory",
     [
@@ -141,7 +182,8 @@ def test_success_accepts_only_explanation_fields_and_filters_unknown_refs(
     ids=["provider-5xx", "invalid-json"],
 )
 def test_provider_failures_return_template(
-    event_summary: dict[str, object], response_factory,
+    event_summary: dict[str, object],
+    response_factory,
 ):
     enhancer = ExplanationEnhancer(
         settings(),
@@ -165,6 +207,26 @@ def test_provider_timeout_returns_template(event_summary: dict[str, object]):
 
     assert result.mode == "template"
     assert result.trace_id == "trace-timeout"
+
+
+def test_degraded_fallback_policy_never_claims_template_answer(
+    event_summary: dict[str, object],
+):
+    def timeout(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("provider timed out", request=request)
+
+    enhancer = ExplanationEnhancer(
+        settings(fallback_policy="degraded"),
+        transport=httpx.MockTransport(timeout),
+    )
+
+    result = enhancer.enhance(event_summary, "下一步做什么？", trace_id="trace-degraded")
+
+    assert result.mode == "degraded"
+    assert result.model == "provider-unavailable"
+    assert result.trace_id == "trace-degraded"
+    assert "语言模型暂不可用" in result.answer
+    assert "确定性模板" not in result.answer
 
 
 def test_schema_overreach_and_control_output_are_rejected(
@@ -215,7 +277,8 @@ def test_schema_overreach_and_control_output_are_rejected(
 
 
 def test_api_key_never_enters_logs_on_provider_failure(
-    event_summary: dict[str, object], caplog: pytest.LogCaptureFixture,
+    event_summary: dict[str, object],
+    caplog: pytest.LogCaptureFixture,
 ):
     secret = "sk-super-secret-never-log"
 
@@ -239,6 +302,8 @@ def test_settings_read_expected_environment_variables(monkeypatch: pytest.Monkey
     monkeypatch.setenv("LLM_API_KEY", "env-secret")
     monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "8")
     monkeypatch.setenv("LLM_MAX_TOKENS", "500")
+    monkeypatch.setenv("LLM_TEMPERATURE", "0.35")
+    monkeypatch.setenv("LLM_FALLBACK_POLICY", "degraded")
     monkeypatch.setenv("LLM_PROMPT_VERSION", "event-copilot-v01")
 
     config = LLMSettings.from_env()
@@ -247,3 +312,5 @@ def test_settings_read_expected_environment_variables(monkeypatch: pytest.Monkey
     assert config.model == "model-from-env"
     assert config.timeout_seconds == 8.0
     assert config.max_tokens == 500
+    assert config.temperature == 0.35
+    assert config.fallback_policy == "degraded"

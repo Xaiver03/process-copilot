@@ -24,6 +24,7 @@ def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
         "admin_audit_events",
         "ai_configurations",
         "ai_interactions",
+        "ai_runtime_probes",
         "operators",
         "decision_records",
         "replay_runs",
