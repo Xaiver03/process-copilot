@@ -24,8 +24,46 @@ describe("AI 可感知事件研判", () => {
     expect(screen.getByText("原因")).toBeInTheDocument();
     expect(screen.getByText("AI 建议下一步")).toBeInTheDocument();
     expect(screen.getByText("人工确认点")).toBeInTheDocument();
-    await waitFor(() => expect(container.querySelectorAll("[data-ai-step]")).toHaveLength(5));
+    await waitFor(() => {
+      expect(container.querySelectorAll("[data-ai-step]").length).toBe(5);
+    });
     expect(Array.from(container.querySelectorAll("[data-ai-step]"), (node) => node.getAttribute("data-ai-step"))).toEqual(["1", "2", "3", "4", "5"]);
+  });
+
+  it("步骤导航可点击跳转到锚点，且当前步骤带 aria-current", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    Element.prototype.scrollIntoView = vi.fn();
+    const user = userEvent.setup();
+    const { container } = render(<EventDetailScreen eventId="demo-event" />);
+
+    await screen.findByRole("heading", { name: "偏移何时被看见" });
+    const ids = [
+      "step-01-detection",
+      "step-02-conclusion",
+      "step-03-explanation",
+      "step-04-recommendation",
+      "step-05-decision",
+    ];
+    for (const id of ids) {
+      expect(container.querySelector(`#${id}`)).toBeInTheDocument();
+    }
+
+    const detectLink = container.querySelector('a[href="#step-01-detection"]');
+    const explainLink = container.querySelector('a[href="#step-03-explanation"]');
+    const decisionLink = container.querySelector('a[href="#step-05-decision"]');
+    expect(detectLink).toBeInstanceOf(HTMLAnchorElement);
+    expect(explainLink).toBeInstanceOf(HTMLAnchorElement);
+    expect(decisionLink).toBeInstanceOf(HTMLAnchorElement);
+    expect(detectLink).toHaveAttribute("aria-current", "step");
+
+    await user.click(explainLink as HTMLElement);
+    expect(explainLink).toHaveAttribute("aria-current", "step");
+    expect(container.querySelector("#step-03-explanation")).toHaveFocus();
+
+    await user.click(decisionLink as HTMLElement);
+    expect(decisionLink).toHaveAttribute("aria-current", "step");
+    expect(container.querySelector("#step-05-decision")).toHaveFocus();
   });
 
   it("明确展示 AI 相对固定阈值规则多做的判断", async () => {

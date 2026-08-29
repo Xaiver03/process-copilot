@@ -46,6 +46,12 @@ type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type EventDetail = components["schemas"]["EventDetail"];
 type DecisionRecord = components["schemas"]["DecisionRecord"];
 type Health = components["schemas"]["Health"];
+const EVENT_DETAIL_AI_STEPS = ["step-01-detection", "step-02-conclusion", "step-03-explanation", "step-04-recommendation", "step-05-decision"] as const;
+type EventDetailAiStepId = (typeof EVENT_DETAIL_AI_STEPS)[number];
+
+function isEventDetailAiStepId(value: string): value is EventDetailAiStepId {
+  return (EVENT_DETAIL_AI_STEPS as readonly string[]).includes(value);
+}
 
 function useApiResource<T>(loader: () => Promise<ApiResult<T>>, key: string) {
   const loaderRef = useRef(loader);
@@ -350,6 +356,39 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
   const [recordHref, setRecordHref] = useState("");
   const [decisionMode, setDecisionMode] = useState<"live" | "static-demo" | null>(null);
   const session = useSession();
+  const [activeAiStep, setActiveAiStep] = useState<EventDetailAiStepId>(EVENT_DETAIL_AI_STEPS[0]);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (isEventDetailAiStepId(hash)) {
+      setActiveAiStep(hash);
+    } else {
+      setActiveAiStep(EVENT_DETAIL_AI_STEPS[0]);
+    }
+
+    const onHashChange = () => {
+      const next = window.location.hash.replace("#", "");
+      setActiveAiStep(isEventDetailAiStepId(next) ? next : EVENT_DETAIL_AI_STEPS[0]);
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [eventId]);
+
+  function goToStep(targetId: EventDetailAiStepId) {
+    const section = document.getElementById(targetId);
+    if (!section) return;
+    const prefersReduceMotion = typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false;
+    section.scrollIntoView({ behavior: prefersReduceMotion ? "auto" : "smooth", block: "start" });
+    section.focus({ preventScroll: true });
+    setActiveAiStep(targetId);
+    if (window.location.hash !== `#${targetId}`) {
+      history.replaceState(null, "", `#${targetId}`);
+    }
+  }
+
   return (
     <div className="page-stack event-detail-page">
       <ResourceBoundary {...resource}>{(result) => {
@@ -361,15 +400,35 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
             <PageHeader kicker="AI 事件研判" title={topCandidate?.label ?? `偏移事件 ${event.id}`} summary={`AI 已完成偏移发现、故障候选排序和变量证据对齐，当前等待${eventStateLabel[event.state] === "待研判" ? "人工确认" : "查看人工结论"}。`} />
             <ModeNotice mode={result.mode} notice={result.notice} />
             <ol className="ai-stepper" aria-label="AI 研判主链路">
-              <li><Pulse aria-hidden="true" /><span>01</span><strong>发现</strong><small>锁定异常窗口</small></li>
-              <li><Brain aria-hidden="true" /><span>02</span><strong>判断</strong><small>排序故障候选</small></li>
-              <li><ChartLineUp aria-hidden="true" /><span>03</span><strong>解释</strong><small>对齐变量证据</small></li>
-              <li><ListChecks aria-hidden="true" /><span>04</span><strong>建议</strong><small>生成检查顺序</small></li>
-              <li className="is-human"><UserFocus aria-hidden="true" /><span>05</span><strong>确认</strong><small>决定并留痕</small></li>
+              <li>
+                <a className="ai-step-link" href="#step-01-detection" aria-current={activeAiStep === "step-01-detection" ? "step" : undefined} onClick={(event) => { event.preventDefault(); goToStep("step-01-detection"); }}>
+                  <Pulse aria-hidden="true" /><span>01</span><strong>发现</strong><small>锁定异常窗口</small>
+                </a>
+              </li>
+              <li>
+                <a className="ai-step-link" href="#step-02-conclusion" aria-current={activeAiStep === "step-02-conclusion" ? "step" : undefined} onClick={(event) => { event.preventDefault(); goToStep("step-02-conclusion"); }}>
+                  <Brain aria-hidden="true" /><span>02</span><strong>判断</strong><small>排序故障候选</small>
+                </a>
+              </li>
+              <li>
+                <a className="ai-step-link" href="#step-03-explanation" aria-current={activeAiStep === "step-03-explanation" ? "step" : undefined} onClick={(event) => { event.preventDefault(); goToStep("step-03-explanation"); }}>
+                  <ChartLineUp aria-hidden="true" /><span>03</span><strong>解释</strong><small>对齐变量证据</small>
+                </a>
+              </li>
+              <li>
+                <a className="ai-step-link" href="#step-04-recommendation" aria-current={activeAiStep === "step-04-recommendation" ? "step" : undefined} onClick={(event) => { event.preventDefault(); goToStep("step-04-recommendation"); }}>
+                  <ListChecks aria-hidden="true" /><span>04</span><strong>建议</strong><small>生成检查顺序</small>
+                </a>
+              </li>
+              <li className="is-human">
+                <a className="ai-step-link" href="#step-05-decision" aria-current={activeAiStep === "step-05-decision" ? "step" : undefined} onClick={(event) => { event.preventDefault(); goToStep("step-05-decision"); }}>
+                  <UserFocus aria-hidden="true" /><span>05</span><strong>确认</strong><small>决定并留痕</small>
+                </a>
+              </li>
             </ol>
 
             <div className="ai-workbench">
-              <section className="ai-panel ai-detection" data-ai-step="1" aria-labelledby="ai-detection-title">
+              <section className="ai-panel ai-detection" data-ai-step="1" aria-labelledby="ai-detection-title" id="step-01-detection" tabIndex={-1}>
                 <div className="ai-section-header"><div><span className="kicker">步骤 01 · AI 发现</span><h2 id="ai-detection-title">偏移何时被看见</h2></div></div>
                 <p className="ai-sample-window">检测样本 {event.detectionSample} → 诊断样本 {event.diagnosisSample}</p>
                 <dl className="ai-stat-grid">
@@ -381,7 +440,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                 <p className="ai-method-note">持续性和滞回规则先过滤瞬时噪声，再由 PCA T² / SPE 判断过程是否偏离正常空间。</p>
               </section>
 
-              <section className="ai-panel ai-conclusion" data-ai-step="2" aria-labelledby="ai-conclusion-title">
+              <section className="ai-panel ai-conclusion" data-ai-step="2" aria-labelledby="ai-conclusion-title" id="step-02-conclusion" tabIndex={-1}>
                 <div className="ai-section-header">
                   <div><span className="kicker">步骤 02 · AI 判断</span><h2 id="ai-conclusion-title">AI 研判结论</h2></div>
                   <StatusTag state={severity.state} label={`${severity.label} · ${eventStateLabel[event.state]}`} />
@@ -396,7 +455,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                 </ol>
               </section>
 
-              <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title">
+              <section className="ai-panel ai-explanation" data-ai-step="3" aria-labelledby="ai-explanation-title" id="step-03-explanation" tabIndex={-1}>
                 <div className="ai-section-header"><div><span className="kicker">步骤 03 · AI 解释</span><h2 id="ai-explanation-title">原因</h2></div><span className="event-window-label">同一时间窗 · 三项证据</span></div>
                 <p className="ai-explanation-copy">AI 把变量变化放到同一个时间轴上比较：{event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`).join("、")}共同指向当前故障假设。</p>
                 <EvidenceTrendChart evidence={event.evidence} />
@@ -406,7 +465,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
               <EventCopilot event={event} />
 
               <aside className="ai-side-stack">
-                <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title">
+                <section className="ai-panel ai-recommendation" data-ai-step="4" aria-labelledby="ai-recommendation-title" id="step-04-recommendation" tabIndex={-1}>
                   <div className="ai-section-header"><div><span className="kicker">步骤 04 · AI 建议</span><h2 id="ai-recommendation-title">AI 建议下一步</h2></div></div>
                   <p className="ai-risk-copy"><strong>风险：</strong>{localizeIndustrialCopy(event.recommendation.risk)}</p>
                   <div className="ai-action-group"><h3>先核对</h3><ol>{event.recommendation.checks.map((item) => <li key={item}>{localizeIndustrialCopy(item)}</li>)}</ol></div>
@@ -414,7 +473,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
                   <p className="ai-safety-boundary"><strong>当前 Demo：</strong>不连接控制网、不向 PLC/DCS 写回。生产部署可在人工授权、权限校验和联锁校验通过后受控写回。</p>
                 </section>
 
-                <div className="ai-human-gate" data-ai-step="5">
+                <div className="ai-human-gate" data-ai-step="5" id="step-05-decision" tabIndex={-1}>
                   {recordHref ? <section className="decision-success" role="status"><CheckCircle weight="fill" aria-hidden="true" /><div><span className="kicker">人工确认点</span><strong>事件记录已形成</strong><span>{decisionMode === "static-demo" ? "静态 Demo 记录未写入服务器。" : "记录已写入审计服务。"}</span><Link href={recordHref}>打开审计记录</Link></div></section> : session ? (
                     <HumanDecision
                       operatorName={`${session.displayName}（${session.username}）`}
