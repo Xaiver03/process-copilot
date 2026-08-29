@@ -281,6 +281,7 @@ def test_schema_overreach_and_control_output_are_rejected(
     [
         "三项证据共同偏移。当前仅提供只读建议，不向 PLC/DCS 写回，请由操作员核对趋势。",
         "这里只解释已有证据，不会向 DCS 下发命令，最终由现场人员确认。",
+        "Read-only advice; no automatic control write-back to PLC/DCS.",
     ],
 )
 def test_read_only_control_system_disclaimers_are_accepted(
@@ -321,6 +322,11 @@ def test_read_only_control_system_disclaimers_are_accepted(
         "建议向 DCS 下发命令，将压力设定值调高 5%。",
         "请对 PLC 写回控制指令并立即执行。",
         "Open the coolant valve and increase the pressure setpoint.",
+        "不向 PLC 写回；请把阀门打开。",
+        "不向 PLC 写回；请将压力设定值调高 5%。",
+        "把流量调整至 20%。",
+        "请将设定值改为 10%。",
+        "请将压\u200b力设定值调\u200b高 5%。",
     ],
 )
 def test_affirmative_control_instructions_remain_rejected(

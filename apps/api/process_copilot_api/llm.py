@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import time
+import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -41,7 +42,11 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
         r"(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*"
         r"(?:\s*系统)?\s*(?:执行)?"
-        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令|控制)",
+        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令)",
+        r"(?:do(?:es)? not|will not|never|no)\s+(?:automatic\s+)?"
+        r"(?:control\s+)?(?:write[- ]?back|commands?)\s+(?:to|into)\s+"
+        r"(?:the\s+)?(?:plc|dcs|scada|modbus|opc[ -]?ua)"
+        r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*",
     )
 )
 _UNSAFE_RESPONSE_PATTERNS = tuple(
@@ -55,6 +60,11 @@ _UNSAFE_RESPONSE_PATTERNS = tuple(
         r"(?:the\s+)?(?:valve|pressure|flow|temperature|setpoint|output)",
         r"(?:设置|调整|打开|关闭|调高|调低|写入|下发).{0,20}"
         r"(?:阀|压力|流量|温度|设定值|setpoint|寄存器)",
+        r"(?:阀门?|压力|流量|温度|设定值|setpoint|寄存器).{0,24}"
+        r"(?:设置|调整(?:至|为)?|打开|关闭|调高|调低|写入|下发|执行|控制|"
+        r"改为|提高|降低|设为)",
+        r"(?:valve|pressure|flow|temperature|setpoint|output).{0,24}"
+        r"(?:set|write|change|adjust|open|close|increase|decrease)",
         r"(?:anomaly\s*score|异常分数|检测样本|严重等级|模型版本)"
         r".{0,30}(?:改为|修改|调整|覆盖|应为|should\s+be|set\s+to|change)",
     )
@@ -417,7 +427,8 @@ def _unsafe_answer(answer: str) -> bool:
     # Providers commonly restate the read-only boundary in otherwise valid answers.
     # Remove only explicit negative control-system phrases before applying the strict
     # deny-list; affirmative instructions and every other PLC/DCS mention remain blocked.
-    text_to_check = answer
+    text_to_check = unicodedata.normalize("NFKC", answer)
+    text_to_check = re.sub(r"[\u200b-\u200d\u2060\ufeff]", "", text_to_check)
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)
