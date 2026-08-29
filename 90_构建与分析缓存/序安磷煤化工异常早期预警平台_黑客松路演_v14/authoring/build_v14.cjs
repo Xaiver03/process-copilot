@@ -22,6 +22,8 @@ const logo = path.join(project, 'apps/web/public/brand/xuanan-anomaly-intercept-
 const hero = path.join(assets, '园区封面主视觉.png');
 const processHero = path.join(assets, '过滤异常主视觉.png');
 const replayShot = path.join(assets, 'screenshots', '公网在线回放_1440.png');
+const aiShot = path.join(assets, 'screenshots', '公网DeepSeek_AI研判与证据解释_首屏.png');
+const aiStatusShot = path.join(assets, 'screenshots', '公网AI运行状态_全页.png');
 const notes = [];
 
 function text(slide, value, x, y, w, h, size=20, color=C.navy, bold=false, extra={}) {
@@ -43,22 +45,19 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
  s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:7.5,fill:{color:'00101C',transparency:48},line:{color:'00101C',transparency:100}});
  s.addImage({path:logo,x:0.8,y:0.56,w:0.82,h:0.82});text(s,'序安',1.68,0.76,1.12,0.38,21,C.white,true);badge(s,'黑客松路演 · REVIEW',0.8,1.55,2.4,'12374A',C.cyan);
  text(s,'磷煤化工异常\n早期预警平台',0.8,2.05,7.35,1.62,42,C.white,true);
- text(s,'让异常在事故之前、在化验结果之前被看见',0.82,4.02,7.7,0.55,22,C.cyan,true);
+ text(s,'让异常在化验结果前被看见',0.82,4.02,7.7,0.55,22,C.cyan,true);
  text(s,'读懂 DCS 时序信号 · 给出原因证据 · 由人确认闭环',0.82,4.77,7.2,0.42,17,C.white);
  text(s,'当前 Demo：只读 / 影子建议',0.82,6.47,3.5,0.34,14,C.white,true);
- note(s,'封面','大家好，我们带来的是“序安·磷煤化工异常早期预警平台”。它不替代 DCS，也不替代操作员。它只做一件很具体的事：持续读取已经存在的过程数据，在化验结果出来之前、在异常演变成事故之前，指出风险正在形成，并把判断依据和处置建议交给人确认。');
+ note(s,'封面','作品名是“序安·磷煤化工异常早期预警平台”。一句话介绍：让异常在化验结果前被看见。它不替代 DCS，也不替代操作员；它持续读取已经存在的过程数据，在化验结果出来前指出风险，并把判断依据和处置建议交给人确认。');
 }
 
-// 02 时间差
+// 02 具体人物与当前损耗
 {
- const s=base();header(s,'01 / 园区问题','真正的时间差，不在传感器，在判断');brand(s);
- text(s,'DCS 一直有数据',0.78,2.05,3.2,0.5,27,C.navy,true);text(s,'压力、流量、温度、液位、密度……\n现场变量持续在线。',0.8,2.72,3.35,0.9,19,C.gray);
- arrow(s,4.15,3.08,1.0);text(s,'但关键结论会迟到',5.38,2.05,3.55,0.5,27,C.red,true);text(s,'离线化验、跨装置核对、班组经验判断，\n往往发生在趋势已经形成之后。',5.4,2.72,3.58,0.9,19,C.gray);
- arrow(s,9.0,3.08,0.9,C.amber);box(s,10.12,1.95,2.4,2.1,'FFF5E4',C.amber);text(s,'序安补上\n“提前判断”',10.38,2.27,1.9,0.9,24,C.navy,true,{align:'center'});text(s,'不新增控制权',10.48,3.42,1.7,0.28,14,C.gray,true,{align:'center'});
- s.addShape(pptx.ShapeType.line,{x:0.85,y:5.05,w:11.65,h:0,line:{color:C.border,width:2}});
- ['磷酸生产','煤化工公辅','固废与水系统','下游产品'].forEach((v,i)=>{dot(s,1.45+i*3.02,5.05,i===2?C.amber:C.cyan,0.15);text(s,v,0.65+i*3.02,5.34,1.62,0.34,17,C.navy,true,{align:'center'});});
- text(s,'园区不是四个孤岛：一个环节的偏移，会沿物料、能源和环境链向后传递。',1.1,6.18,11.1,0.43,20,C.navy,true,{align:'center'});
- note(s,'园区问题','磷煤化工现场并不缺传感器，DCS 也一直在采集压力、流量、温度、液位和密度。真正的问题是，很多关键判断依赖离线化验、跨装置核对和老师傅经验。等结论出来时，趋势可能已经形成。序安补的是这段“提前判断”的时间差，而且不增加新的控制权。');
+ const s=base();header(s,'01 / 谁在用','中控操作员周师傅的一个白班','不讲“广大用户”，只看一个人如何判断');brand(s);
+ const day=[['08:00','接班','看 DCS 趋势与交接记录'],['10:20','曲线变怪','来回翻趋势、问上一班'],['11:00','等化验','打电话追结果、跨工段核对'],['11:30','决定处置','靠经验排查，再写交接记录']];
+ day.forEach((a,i)=>{const x=0.68+i*3.12;box(s,x,2.05,2.78,2.38,i===2?'FFF5E4':C.white,i===2?C.amber:C.border);text(s,a[0],x+0.22,2.28,0.8,0.3,14,i===2?C.amber:C.cyan,true);text(s,a[1],x+0.22,2.82,2.32,0.4,23,C.navy,true);text(s,a[2],x+0.22,3.45,2.32,0.7,16,C.gray);if(i<3)arrow(s,x+2.82,3.16,0.28);});
+ box(s,0.78,5.02,11.75,1.28,C.deep,C.deep);text(s,'没有序安时的具体损耗',1.05,5.22,3.0,0.34,18,C.cyan,true);text(s,'4 处信息反复核对  ·  等待吃掉处置窗口\n高经验人员被重复排查占用  ·  事后证据难还原',4.02,5.14,7.82,0.72,16,C.white,true,{align:'center'});
+ note(s,'周师傅的一班','这不是给“广大用户”的抽象平台。我们先服务一个具体人：中控操作员周师傅。他接班后看 DCS 和交接记录；曲线变怪时来回翻趋势、问上一班；关键结果没出来，还要打电话追化验、跨工段核对。损耗很具体：四处信息反复核对，等待吃掉处置窗口，高经验人员被重复排查占用，事后证据又难还原。');
 }
 
 // 03 异常故事
@@ -82,23 +81,23 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
 
 // 05 模型分工
 {
- const s=base();header(s,'03 / AI 架构','诊断模型做判断，语言模型负责讲明白','语言模型不直接替代过程诊断');brand(s);
- const ns=[['实时变量 / 软测量','DCS、传感器、化验历史'],['异常窗口','预测未来风险区间'],['诊断模型','候选故障排序\n变量贡献'],['语言模型','基于结构化证据\n解释 / 问答'],['操作员','确认、驳回、升级'],['审计','留痕；未来受控写回']];
- ns.forEach((a,i)=>{const x=0.48+i*2.1;box(s,x,2.12,1.75,2.22,i===2?C.deep:(i===4?'FFF5E4':C.white),i===2?C.deep:(i===4?C.amber:C.border));text(s,a[0],x+0.13,2.5,1.49,0.58,18,i===2?C.white:C.navy,true,{align:'center'});text(s,a[1],x+0.14,3.33,1.47,0.65,13,i===2?'CBE9EF':C.gray,false,{align:'center'});if(i<5)arrow(s,x+1.77,3.24,0.28);});
- box(s,1.15,5.22,11.0,0.83,C.pale,C.cyan);text(s,'关键边界：语言模型只能解释已经结构化的证据，不能凭一句话直接控制设备。',1.45,5.44,10.4,0.38,19,C.navy,true,{align:'center'});
- text(s,'真实 llm_enhanced 公网截图待供应商恢复后补入；当前不采用 template-v0.1 旧截图。',2.2,6.42,8.9,0.28,12,C.gray,false,{align:'center'});
- note(s,'模型分工','这里要讲清楚两类模型的分工。过程诊断模型读取实时变量和软测量结果，先发现异常窗口，再给故障候选排序，并计算变量贡献。语言模型拿到这些结构化证据以后，负责把技术判断翻译成人能理解的话，并回答追问。它不能绕过诊断模型，更不能因为一句对话就直接控制设备。');
+ const s=base();header(s,'03 / 真实 AI 链路','诊断模型做判断，DeepSeek 把证据讲明白','公网实测：llm_enhanced / deepseek-v4-flash');brand(s);
+ const ns=[['实时变量','DCS / 传感器'],['诊断模型','异常窗口与候选'],['结构化证据','PH-P / PH-E / Q-E'],['DeepSeek','解释、问答、Trace'],['操作员','确认 / 驳回']];
+ ns.forEach((a,i)=>{const y=1.92+i*0.92;box(s,0.72,y,4.22,0.68,i===3?C.deep:(i===4?'FFF5E4':C.white),i===3?C.deep:(i===4?C.amber:C.border));text(s,a[0],0.94,y+0.13,1.55,0.3,16,i===3?C.white:C.navy,true);text(s,a[1],2.42,y+0.13,2.2,0.3,14,i===3?C.cyan:C.gray,false,{align:'right'});if(i<4)arrow(s,2.67,y+0.72,0.01);});
+ box(s,5.22,1.9,7.33,4.82,C.white,C.border);s.addImage({path:aiShot,x:5.36,y:2.04,w:7.05,h:4.54});badge(s,'PLAYWRIGHT 公网实拍',9.78,6.12,2.35,'12374A',C.cyan);
+ text(s,'语言模型只解释当前事件的结构化证据，不直接控制设备。',0.78,6.62,4.2,0.34,13,C.red,true,{align:'center'});
+ note(s,'真实 AI 链路','这一页是本轮公网真实截图。过程诊断模型先产生异常窗口、故障候选和变量证据；DeepSeek 只在这些结构化证据上做解释和问答。公网实测返回 llm_enhanced，模型是 deepseek-v4-flash，证据引用为 PH-P、PH-E 和 Q-E，每次调用都有 Trace。这证明解释增强链路已打通，但不代表语言模型可以控制设备。');
 }
 
 // 06 Demo
 {
- const s=base();header(s,'04 / 现场演示','我们现场演示的，不是一张静态截图','从回放到确认，走完一条真实产品路径');brand(s);
- const steps=[['01','选择场景','污水 / TEP 公开验证'],['02','过程回放','变量实时向前推进'],['03','捕获并确认','异常 → 证据 → 人工留痕']];
+ const s=base();header(s,'04 / Demo 复现','评委现在就能自己跑一遍','公网链接 + 演示账号 + 三步操作');brand(s);
+ const steps=[['01','登录','https://huagong.finlaw.cloud/demo'],['02','回放','账号 operator-01\n口令 demo-op-2026'],['03','追问并确认','选场景 → 开始回放\n进事件 → 向序安追问']];
  steps.forEach((a,i)=>{const y=2.05+i*1.25;badge(s,a[0],0.72,y,0.62,i===2?'FFF5E4':C.pale,i===2?C.amber:C.teal);text(s,a[1],1.58,y-0.01,2.15,0.38,20,C.navy,true);text(s,a[2],1.58,y+0.43,2.52,0.45,14,C.gray);});
  box(s,0.72,5.95,3.4,0.72,C.deep,C.deep);text(s,'当前 Demo：只读 / 影子建议',0.94,6.12,2.95,0.34,17,C.white,true,{align:'center'});
  box(s,4.48,1.98,8.08,4.73,C.white,C.border);s.addImage({path:replayShot,x:4.62,y:2.12,w:7.8,h:4.39});
  badge(s,'PLAYWRIGHT 公网实拍',9.75,6.12,2.42,'12374A',C.cyan);
- note(s,'现场演示','现场演示会走一条完整路径：进入系统，选择公开验证场景，让过程变量开始回放；系统捕获异常窗口，给出候选故障和变量证据；操作员继续追问，并选择确认、驳回或升级。污水场景用来说明如何预测滞后的化验指标，TEP 场景用来说明连续化工过程偏移。它们都是公开技术验证数据，不是贵州企业数据。');
+ note(s,'Demo 复现','评委可以现场复现。第一步，打开 https://huagong.finlaw.cloud/demo，用 operator-01 和口令 demo-op-2026 登录。第二步，选择污水出水风险或 TEP 场景，开始过程回放。第三步，进入捕获到的风险事件，向序安追问并做人工确认。当前 Demo 只读，不会向 PLC 或 DCS 发送指令。');
 }
 
 // 07 产业参照
@@ -118,9 +117,26 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
  note(s,'安全边界','当前 Demo 的边界非常明确：只读数据、输出影子建议、由人确认，不自动写回 PLC 或 DCS。未来如果进入生产控制，也不是模型直接下指令，而是必须依次通过人工审批、身份与权限、工艺上下限、联锁校验、控制网关和执行回读。任何一道不通过，就停在建议层。');
 }
 
-// 09 PoC
+// 09 48 小时增量
 {
- const s=base();header(s,'07 / 落地方式','先用一个装置，证明一个预警闭环','4–8 周只读 PoC；周期以现场数据条件为准');brand(s);
+ const s=base();header(s,'07 / 开发边界','48 小时做了什么，哪些不是这次才有','如实区分本次增量与赛前 / 开源基线');brand(s);
+ box(s,0.74,1.92,5.72,4.72,C.white,C.border);badge(s,'赛前 / 开源基线',1.02,2.22,2.35);text(s,'不算本次独立从零开发',1.02,2.82,4.92,0.42,22,C.navy,true);['Next.js / FastAPI / PostgreSQL 工程骨架','TEP 与 UCI 公开数据','基础过程回放与只读理念','开源依赖和通用工具链'].forEach((v,i)=>{dot(s,1.15,3.66+i*0.58,C.teal,0.08);text(s,v,1.38,3.45+i*0.58,4.42,0.36,17,C.gray,i===0);});
+ box(s,6.82,1.92,5.75,4.72,C.deep,C.deep);badge(s,'本次 48 小时新增 / 重构',7.12,2.22,2.72,'12374A',C.cyan);text(s,'可验证的增量',7.12,2.82,4.72,0.42,23,C.white,true);['磷煤化工异常早期预警定位','污水软测量 + TEP 双场景旅程','DeepSeek 真实在线解释与 Trace','人工确认、影子闸门与公网 Demo','Playwright 复现证据与路演材料'].forEach((v,i)=>{dot(s,7.24,3.56+i*0.54,i===2?C.amber:C.cyan,0.08);text(s,v,7.48,3.35+i*0.54,4.38,0.34,16,C.white,i===2);});
+ note(s,'48 小时增量','我们不把开源框架和赛前工作包装成四十八小时内从零完成。赛前和开源基线包括 Next.js、FastAPI、PostgreSQL 工程骨架，TEP 和 UCI 公开数据，基础回放和只读理念。本次四十八小时新增或重构的是：磷煤化工定位、污水与 TEP 双场景旅程、DeepSeek 真实在线解释与 Trace、人工确认和影子闸门，以及公网 Demo 和 Playwright 复现证据。');
+}
+
+// 10 技术、数据与授权
+{
+ const s=base();header(s,'08 / 技术与来源','模型、工具、数据和素材从哪里来','可复现，也可追溯');brand(s);
+ const groups=[['模型','污水软测量：随机森林\nTEP：PCA / 梯度提升诊断\n解释：deepseek-v4-flash'],['工具','Next.js · FastAPI · PostgreSQL\nPython · Playwright\nPptxGenJS'],['数据','UCI 城市污水：官网 527 条\n本地镜像 520 条\nTEP 公开仿真数据'],['素材授权','Logo：序安自有资产\n截图：自有公网 Demo 实拍\n主视觉：AI 生成，无企业标识\nSource Han Sans SC：SIL OFL']];
+ groups.forEach((a,i)=>{const x=0.7+(i%2)*6.2,y=1.92+Math.floor(i/2)*2.35;box(s,x,y,5.72,1.98,i===3?'FFF5E4':C.white,i===3?C.amber:C.border);text(s,a[0],x+0.28,y+0.23,1.55,0.36,20,i===3?C.amber:C.teal,true);text(s,a[1],x+1.78,y+0.22,3.58,1.45,16,C.navy,i===0);});
+ text(s,'公开数据 ≠ 贵州真实生产数据  ·  官方案例引用 ≠ 合作关系',1.35,6.72,10.65,0.3,16,C.red,true,{align:'center'});
+ note(s,'技术与来源','模型方面，污水软测量使用随机森林，TEP 使用 PCA 与梯度提升诊断，语言解释使用 deepseek-v4-flash。工具包括 Next.js、FastAPI、PostgreSQL、Python、Playwright 和 PptxGenJS。数据使用 UCI 公开城市污水数据和 TEP 公开仿真数据。Logo 是序安自有资产，截图由我们的公网 Demo 实拍，主视觉由 AI 生成且没有企业标识，中文字体 Source Han Sans SC 采用 SIL OFL 许可。');
+}
+
+// 11 PoC
+{
+ const s=base();header(s,'09 / 落地方式','先用一个装置，证明一个预警闭环','4–8 周只读 PoC；周期以现场数据条件为准');brand(s);
  const cols=[['第 1–2 周','定义问题','选一个装置、一个风险目标\n确认变量与化验标签'],['第 3–4 周','离线验证','清洗历史数据\n回放异常窗口和证据'],['第 5–6 周','影子运行','只读接入 / 文件同步\n与班组判断并行对照'],['第 7–8 周','共同验收','看提前量、误报、可解释性\n决定是否扩大范围']];
  cols.forEach((a,i)=>{const x=0.63+i*3.12;text(s,a[0],x,1.98,2.5,0.28,12,C.cyan,true);s.addShape(pptx.ShapeType.line,{x,y:2.4,w:2.52,h:0,line:{color:i===3?C.amber:C.cyan,width:5}});text(s,a[1],x,2.72,2.52,0.44,23,C.navy,true);text(s,a[2],x,3.44,2.52,1.0,16,C.gray);});box(s,0.75,5.15,11.8,0.95,C.pale,C.cyan);text(s,'最低数据清单：时间戳一致的过程变量、有限化验/事件标签、设备与工艺上下文、明确访问授权。',1.08,5.4,11.14,0.4,18,C.navy,true,{align:'center'});text(s,'PoC 不承诺虚构效果；用共同认可的回放与影子运行结果决定下一步。',2.02,6.4,9.25,0.32,15,C.gray,true,{align:'center'});
  note(s,'PoC','落地不需要一开始覆盖整个园区。我们建议先选一个装置、一个风险目标，确认变量和化验标签；然后做离线历史回放，检查异常窗口和证据；再进行只读影子运行，与班组判断并行对照；最后共同验收提前量、误报和可解释性。四到八周只是建议节奏，实际周期取决于现场数据条件。');
@@ -128,8 +144,8 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
 
 // 10 收尾
 {
- const s=pptx.addSlide();s.background={color:C.deep};brand(s,true);text(s,'下一步，不是“接管控制”',0.82,0.82,7.2,0.54,20,C.cyan,true);text(s,'而是授权我们先看清\n一个真实问题',0.82,1.62,8.4,1.44,38,C.white,true);box(s,0.82,3.65,6.72,1.45,'12374A',C.cyan);text(s,'一个装置  ×  一个风险目标  ×  一条只读数据链',1.18,4.03,5.98,0.6,23,C.white,true,{align:'center'});text(s,'现场需要共同确认',8.42,1.75,3.55,0.42,19,C.cyan,true);['谁能授权数据','最痛的异常是什么','怎么定义“有用的提前量”'].forEach((v,i)=>{dot(s,8.56,2.72+i*0.78,i===2?C.amber:C.cyan);text(s,v,8.86,2.5+i*0.78,3.42,0.44,18,C.white,true);});text(s,'序安·磷煤化工异常早期预警平台',0.82,6.56,6.8,0.36,17,C.white,true);text(s,'公开验证数据 ≠ 贵州企业真实数据 ｜ 公开案例参照 ≠ 合作关系',7.0,6.56,5.43,0.28,12,'B5CAD3',false,{align:'right'});
- note(s,'收尾','我们今天提出的下一步，不是接管控制，而是请园区授权我们先看清一个真实问题：选一个装置、一个风险目标、建立一条只读数据链。双方先确认谁能授权数据、最痛的异常是什么，以及怎样定义“有用的提前量”。公开验证数据不等于贵州企业真实数据，公开案例参照也不等于合作关系。');
+ const s=pptx.addSlide();s.background={color:C.deep};brand(s,true);text(s,'再给 100 天，我们先做什么？',0.82,0.82,7.2,0.54,20,C.cyan,true);text(s,'进入一个获授权装置，\n完成首个目标的只读数据对齐。',0.82,1.62,8.4,1.44,36,C.white,true);box(s,0.82,3.65,6.72,1.45,'12374A',C.cyan);text(s,'一个装置  ×  一个风险目标  ×  一条只读数据链',1.18,4.03,5.98,0.6,23,C.white,true,{align:'center'});text(s,'现场需要共同确认',8.42,1.75,3.55,0.42,19,C.cyan,true);['谁能授权数据','最痛的异常是什么','怎么定义“有用的提前量”'].forEach((v,i)=>{dot(s,8.56,2.72+i*0.78,i===2?C.amber:C.cyan);text(s,v,8.86,2.5+i*0.78,3.42,0.44,18,C.white,true);});text(s,'序安·磷煤化工异常早期预警平台',0.82,6.56,6.8,0.36,17,C.white,true);text(s,'公开验证数据 ≠ 贵州企业真实数据 ｜ 公开案例参照 ≠ 合作关系',7.0,6.56,5.43,0.28,12,'B5CAD3',false,{align:'right'});
+ note(s,'100 天的第一件事','如果再给我们一百天，第一件事只有一句话：进入一个获授权装置，完成首个目标的只读数据对齐。我们不会一开始就接管控制，而是先选一个装置、一个风险目标和一条只读数据链。公开验证数据不等于贵州企业真实数据，公开案例参照也不等于合作关系。');
 }
 
 fs.mkdirSync(path.dirname(out), {recursive:true});
