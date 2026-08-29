@@ -54,12 +54,14 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
 _CONTROL_ACTIONS_ZH = (
     r"设(?:置|定|为|成)|置(?:于)?|修改|改(?:为)?|调(?:整|节|高|低|至|为)|"
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
-    r"降(?:低|至)|上调|下调|增(?:加|大)|减(?:少|小)|切换|写(?:入|回)|下发|执行|控制"
+    r"降(?:低|至|温)|升温|重启|复位|上调|下调|增(?:加|大)|减(?:少|小)|"
+    r"切换|写(?:入|回)|下发|执行|控制"
 )
 _CONTROL_TARGETS_ZH = (
-    r"阀门?|泵|压力|流量|温度|液位|转速|功率|频率|电流|电压|扭矩|开度|"
+    r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
     r"设定值|给定值|输出|加热|冷却|进料|出料|回流|搅拌|风机|压缩机|电机|寄存器"
 )
+_CONTROL_DIRECTIVE_MARKERS_ZH = r"请|建议|应当|必须|需要|务必|立即|马上|把|将|可将|可以将"
 _UNSAFE_RESPONSE_PATTERNS = tuple(
     re.compile(pattern, re.IGNORECASE)
     for pattern in (
@@ -452,4 +454,11 @@ def _unsafe_answer(answer: str) -> bool:
     text_to_check = re.sub(r"\s+", " ", text_to_check)
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
+    compact_text = re.sub(r"[\W_]+", "", text_to_check, flags=re.UNICODE)
+    if (
+        re.search(_CONTROL_DIRECTIVE_MARKERS_ZH, compact_text)
+        and re.search(_CONTROL_ACTIONS_ZH, compact_text)
+        and re.search(_CONTROL_TARGETS_ZH, compact_text)
+    ):
+        return True
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)
