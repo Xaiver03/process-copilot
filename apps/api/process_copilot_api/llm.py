@@ -55,6 +55,14 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
         r"(?:写回|下发(?:控制)?命令|发送(?:控制)?指令)",
     )
 )
+_SAFE_OBSERVATION_DESCRIPTION_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"(?:多个|多项|三项|这些)(?:独立)?(?:过程)?(?:变量|测量|测点|指标)"
+        r"(?:的)?(?:同时|同步|共同)(?:变化|偏移|波动)",
+        r"(?:这种|该)同步模式",
+    )
+)
 _CONTROL_ACTIONS_ZH = (
     r"设(?:置|定|为|成)|置(?:于)?|修改|改(?:为)?|调(?:整|节|高|低|至|为)|"
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
@@ -559,6 +567,8 @@ def _unsafe_answer(answer: str) -> bool:
     )
     text_to_check = re.sub(r"\s+", " ", text_to_check)
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
+        text_to_check = safe_pattern.sub("", text_to_check)
+    for safe_pattern in _SAFE_OBSERVATION_DESCRIPTION_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     compact_text = re.sub(r"[\W_]+", "", text_to_check, flags=re.UNICODE)
     if re.search(
