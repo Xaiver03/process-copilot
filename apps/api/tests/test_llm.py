@@ -361,6 +361,7 @@ def test_read_only_control_system_disclaimers_are_accepted(
         "不涉及任何控制写回；请向 P.L.C. 下发指令。",
         "不涉及任何控制写回；请向 P.L.C. 写值 1。",
         "不涉及任何控制写回；Please write to P.L.C.",
+        "不涉及任何控制写回；Please send a command to P.L.C.",
         "不涉及任何控制写回；请将压力维持在 5%。",
         "不涉及任何控制写回；请保持温度为 80℃。",
         "把流量调整至 20%。",

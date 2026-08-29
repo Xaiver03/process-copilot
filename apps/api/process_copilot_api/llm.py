@@ -65,7 +65,8 @@ _CONTROL_TARGETS_ZH = (
 )
 _CONTROL_ACTIONS_EN = (
     r"set|write|change|adjust|open|close|increase|decrease|raise|lower|restart|"
-    r"reboot|reset|switch|start|stop|enable|disable|execute|maintain|keep|hold|"
+    r"reboot|reset|switch|start|stop|enable|disable|execute|send|issue|dispatch|"
+    r"command|maintain|keep|hold|"
     r"turn\s+(?:on|off)|power\s+(?:on|off)"
 )
 _CONTROL_TARGETS_EN = (
