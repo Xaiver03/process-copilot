@@ -26,10 +26,10 @@ describe("应用框架与路由", () => {
 
     const { container } = render(<AppShell currentPath="/events/demo-event"><p>内容</p></AppShell>);
     expect(
-      screen.getByRole("link", { name: "序安·DCS 智能预判平台首页" }),
+      screen.getByRole("link", { name: "序安 磷煤化工异常早期预警平台首页" }),
     ).toBeInTheDocument();
     expect(screen.getByText("序安")).toBeInTheDocument();
-    expect(screen.getByText("DCS 智能预判平台")).toBeInTheDocument();
+    expect(screen.getByText("磷煤化工异常早期预警")).toBeInTheDocument();
     expect(container.querySelector('img[src*="process-sentinel-mark-v01"]')).toBeInTheDocument();
     expect(screen.queryByText(/WUNO/i)).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "主导航" })).toBeInTheDocument();

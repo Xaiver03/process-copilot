@@ -5,8 +5,8 @@ import "./globals.css";
 import { ShellProvider } from "@/components/shell-provider";
 
 export const metadata: Metadata = {
-  title: "序安·DCS 智能预判平台",
-  description: "基于 DCS 时序数据，提前预测工业过程风险，给出原因证据和处置建议，并由人确认闭环。",
+  title: "序安 磷煤化工异常早期预警平台",
+  description: "基于 DCS 时序数据提前发现磷煤化工过程异常，给出原因证据和处置建议，并由人员确认闭环。",
   icons: { icon: "/favicon.ico", apple: "/icon.png" },
 };
 

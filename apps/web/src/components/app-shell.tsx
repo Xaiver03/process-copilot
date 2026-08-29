@@ -48,10 +48,10 @@ export function AppShell({
         <Link
           className="brand-lockup"
           href="/demo"
-          aria-label="序安·DCS 智能预判平台首页"
+          aria-label="序安 磷煤化工异常早期预警平台首页"
         >
           <span className="brand-mark" aria-hidden="true"><Image src="/brand/process-sentinel-mark-v01.png" alt="" width={38} height={38} priority /></span>
-          <span><strong>序安</strong><small>DCS 智能预判平台</small></span>
+          <span><strong>序安</strong><small>磷煤化工异常早期预警</small></span>
         </Link>
         <nav aria-label="主导航">
           {[...navigationItems, ...(session?.role === "admin"
@@ -75,7 +75,7 @@ export function AppShell({
       <div className="app-workspace">
         <header className="context-bar">
           <button className="sidebar-trigger" type="button" aria-label="打开主导航" aria-controls="app-navigation" aria-expanded={navigationOpen} onClick={() => setNavigationOpen(true)}><List aria-hidden="true" /></button>
-          <div><span>序安·DCS 智能预判平台</span><strong>工业过程风险预判工作区</strong></div>
+          <div><span>序安 磷煤化工异常早期预警平台</span><strong>DCS 异常预判工作区</strong></div>
           <span className="source-chip">公开数据演示</span>
           {session ? (
             <div className="operator-badge">

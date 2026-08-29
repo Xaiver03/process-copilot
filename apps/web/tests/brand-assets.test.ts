@@ -20,6 +20,7 @@ describe("浏览器品牌资产", () => {
 
   it("站点元数据显式引用标准浏览器图标", () => {
     const layoutSource = readFileSync(resolve(process.cwd(), "src", "app", "layout.tsx"), "utf8");
+    expect(layoutSource).toContain('title: "序安 磷煤化工异常早期预警平台"');
     expect(layoutSource).toContain('icon: "/favicon.ico"');
     expect(layoutSource).toContain('apple: "/icon.png"');
   });
