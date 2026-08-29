@@ -177,6 +177,50 @@ def test_responses_api_request_and_native_output_are_supported(
     assert body["text"] == {"format": {"type": "json_object"}}
 
 
+def test_chat_gateway_5xx_falls_back_to_native_responses(
+    event_summary: dict[str, object],
+):
+    requested_paths: list[str] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        requested_paths.append(request.url.path)
+        if request.url.path.endswith("/chat/completions"):
+            return httpx.Response(
+                502,
+                json={"error": {"type": "upstream_error"}},
+            )
+        return httpx.Response(
+            200,
+            json={
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": json.dumps(
+                                    {
+                                        "answer": "先核对进料流量趋势，再确认阀位反馈。",
+                                        "evidenceRefs": ["XMEAS(1)", "XMV(1)"],
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                            }
+                        ],
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(settings(), transport=httpx.MockTransport(respond))
+
+    result = enhancer.enhance(event_summary, "先看哪三个变量？")
+
+    assert result.mode == "llm_enhanced"
+    assert result.model == "demo-model"
+    assert requested_paths == ["/v1/chat/completions", "/v1/responses"]
+
+
 def test_wastewater_prediction_fields_are_forwarded_without_untrusted_extras():
     captured: dict[str, object] = {}
 

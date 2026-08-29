@@ -280,7 +280,7 @@ class ExplanationEnhancer:
                 headers=headers,
                 json=request_payload,
             )
-            if response.status_code in {400, 403, 404, 405, 422}:
+            if response.status_code in {400, 403, 404, 405, 422} or response.status_code >= 500:
                 response = client.post(
                     f"{base_url}/responses",
                     headers=headers,
