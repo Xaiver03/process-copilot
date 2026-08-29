@@ -42,9 +42,10 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
         r"(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*"
         r"(?:\s*系统)?\s*(?:执行)?"
-        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令)",
+        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令|同步|分发|推送|广播)",
         r"(?:do(?:es)? not|will not|never|no)\s+(?:automatic\s+)?"
-        r"(?:control\s+)?(?:write[- ]?back|commands?)\s+(?:to|into)\s+"
+        r"(?:control\s+)?(?:write[- ]?back|commands?|sync(?:hronize|hronization)?|"
+        r"distribut(?:e|ion)|push|broadcast)\s+(?:to|into|with)\s+"
         r"(?:the\s+)?(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*",
         r"(?:不涉及|不包含|不提供)\s*(?:任何)?\s*(?:自动)?\s*(?:控制)?\s*"
@@ -56,7 +57,7 @@ _CONTROL_ACTIONS_ZH = (
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
     r"降(?:低|至|温)|升温|重启|复位|上调|下调|增(?:加|大)|减(?:少|小)|"
     r"切换|暂停|恢复|保持|维持|合上|断开|投入|投用|退出|跳闸|"
-    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|传(?:送|输)|转发|发布|同步|广播|执行|控制|调控|激活"
+    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|传(?:送|输)|转发|发布|同步|广播|推送|分发|执行|控制|调控|激活"
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
@@ -499,15 +500,25 @@ def _unsafe_answer(answer: str) -> bool:
         if re.search(r"命令|指令|控制量", compact_text):
             return True
         if re.search(_CONTROL_ACTIONS_ZH, compact_text) or re.search(
-            rf"\b(?:{_CONTROL_ACTIONS_EN})\b", lowercase_text
+            rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text
         ):
             return True
     if re.search(_CONTROL_ACTIONS_ZH, compact_text) and re.search(
         _CONTROL_TARGETS_ZH, compact_text
     ):
         return True
-    if re.search(rf"\b(?:{_CONTROL_ACTIONS_EN})\b", lowercase_text) and re.search(
-        rf"\b(?:{_CONTROL_TARGETS_EN})\b", lowercase_text
+    if (
+        re.search(rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text)
+        and re.search(_CONTROL_TARGETS_ZH, compact_text)
+    ) or (
+        re.search(_CONTROL_ACTIONS_ZH, compact_text)
+        and re.search(rf"(?<![a-z])(?:{_CONTROL_TARGETS_EN})(?![a-z])", lowercase_text)
+    ):
+        return True
+    if re.search(
+        rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text
+    ) and re.search(
+        rf"(?<![a-z])(?:{_CONTROL_TARGETS_EN})(?![a-z])", lowercase_text
     ):
         return True
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)

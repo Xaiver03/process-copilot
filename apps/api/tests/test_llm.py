@@ -283,6 +283,8 @@ def test_schema_overreach_and_control_output_are_rejected(
         "这里只解释已有证据，不会向 DCS 下发命令，最终由现场人员确认。",
         "优先查看三项分析数据的趋势一致性和可信度，不涉及任何控制写回。",
         "Read-only advice; no automatic control write-back to PLC/DCS.",
+        "不向 PLC 同步数据；这里只提供只读解释。",
+        "No automatic sync to PLC; this is read-only advice.",
     ],
 )
 def test_read_only_control_system_disclaimers_are_accepted(
@@ -388,6 +390,12 @@ def test_read_only_control_system_disclaimers_are_accepted(
         "向 DCS 广播数据。",
         "Push data to PLC.",
         "Distribute data to DCS.",
+        "推送阀门设定值。",
+        "将数据分发至 DCS。",
+        "push阀门。",
+        "sync压力。",
+        "broadcast流量。",
+        "阀门 push。",
         "把阀门打开。",
         "将压力设定值调高。",
         "把流量调整至 20%。",
