@@ -104,6 +104,38 @@ if ! grep -q 'data/processed' "$ROOT_DIR/infra/docker/api.Dockerfile"; then
   exit 1
 fi
 
+if ! grep -qE 'chmod -R a\+rX /app/data/processed' "$ROOT_DIR/infra/docker/api.Dockerfile"; then
+  printf 'api image must make processed artifacts recursively readable by non-root users\n' >&2
+  exit 1
+fi
+
+for deployment_script in deploy.sh update.sh; do
+  script_path="$ROOT_DIR/infra/scripts/$deployment_script"
+  if ! grep -q 'find .*data/processed.*-type d.*chmod 755' "$script_path" \
+    || ! grep -q 'find .*data/processed.*-type f.*chmod 644' "$script_path"; then
+    printf '%s must normalize only public processed-data permissions for bind-mounted non-root readers\n' "$deployment_script" >&2
+    exit 1
+  fi
+done
+
+update_reset_line="$(grep -nF 'git reset --hard "origin/$BRANCH"' "$ROOT_DIR/infra/scripts/update.sh" | head -n1 | cut -d: -f1 || true)"
+update_permission_line="$(grep -n 'find .*data/processed.*-type d.*chmod 755' "$ROOT_DIR/infra/scripts/update.sh" | head -n1 | cut -d: -f1 || true)"
+update_compose_line="$(grep -n 'docker compose .* config --quiet' "$ROOT_DIR/infra/scripts/update.sh" | head -n1 | cut -d: -f1 || true)"
+if [[ -z "$update_reset_line" || -z "$update_permission_line" || -z "$update_compose_line" \
+  || "$update_permission_line" -le "$update_reset_line" || "$update_permission_line" -ge "$update_compose_line" ]]; then
+  printf 'update must normalize processed-data permissions after checkout and before compose\n' >&2
+  exit 1
+fi
+
+deploy_copy_line="$(grep -nF 'copy_tree "$SOURCE_DIR/$path" "$RELEASE_DIR/$path"' "$ROOT_DIR/infra/scripts/deploy.sh" | head -n1 | cut -d: -f1 || true)"
+deploy_permission_line="$(grep -n 'find .*data/processed.*-type d.*chmod 755' "$ROOT_DIR/infra/scripts/deploy.sh" | head -n1 | cut -d: -f1 || true)"
+deploy_compose_line="$(grep -n 'docker compose .* config --quiet' "$ROOT_DIR/infra/scripts/deploy.sh" | tail -n1 | cut -d: -f1 || true)"
+if [[ -z "$deploy_copy_line" || -z "$deploy_permission_line" || -z "$deploy_compose_line" \
+  || "$deploy_permission_line" -le "$deploy_copy_line" || "$deploy_permission_line" -ge "$deploy_compose_line" ]]; then
+  printf 'deploy must normalize processed-data permissions after release copy and before compose\n' >&2
+  exit 1
+fi
+
 if ! grep -q 'process-copilot-ml' "$ROOT_DIR/apps/api/pyproject.toml" \
   || ! grep -q 'services/ml' "$ROOT_DIR/infra/docker/api.Dockerfile"; then
   printf 'api and worker images must install the local industrial model package\n' >&2

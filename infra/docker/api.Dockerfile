@@ -23,6 +23,7 @@ RUN python -m pip install --retries 5 uv==0.10.7 \
     && uv sync --frozen --no-dev \
     && chown -R process:process /app
 COPY --chown=process:process data/processed /app/data/processed
+RUN chmod -R a+rX /app/data/processed
 
 USER process
 EXPOSE 8000

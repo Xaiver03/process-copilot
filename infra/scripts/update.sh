@@ -34,6 +34,12 @@ printf 'updating %s: %s -> %s\n' "$REPO_DIR" "${LOCAL_SHA:0:12}" "${REMOTE_SHA:0
 
 git reset --hard "origin/$BRANCH"
 
+# `umask 077` protects runtime secrets, but Git may create newly added public
+# demo artifacts with modes that uid 10001 cannot traverse through the bind
+# mount. Normalize only the public processed-data tree before Compose starts.
+find "$REPO_DIR/data/processed" -type d -exec chmod 755 {} +
+find "$REPO_DIR/data/processed" -type f -exec chmod 644 {} +
+
 COMPOSE_FILE="$REPO_DIR/infra/compose.yaml"
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" config --quiet
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d postgres --wait
