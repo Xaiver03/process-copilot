@@ -26,7 +26,7 @@ describe("应用框架与路由", () => {
 
     const { container } = render(<AppShell currentPath="/events/demo-event"><p>内容</p></AppShell>);
     expect(
-      screen.getByRole("link", { name: "序安 磷煤化工异常早期预警平台首页" }),
+      screen.getByRole("link", { name: "序安·磷煤化工异常早期预警平台首页" }),
     ).toBeInTheDocument();
     expect(screen.getByText("序安")).toBeInTheDocument();
     expect(screen.getByText("磷煤化工异常早期预警")).toBeInTheDocument();
