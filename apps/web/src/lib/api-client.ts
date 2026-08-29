@@ -13,6 +13,10 @@ type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type Health = components["schemas"]["Health"];
 type Problem = components["schemas"]["Problem"];
 type LoginRequest = components["schemas"]["LoginRequest"];
+type EnvironmentalScenario = components["schemas"]["EnvironmentalScenario"];
+type EnvironmentalScenarioDetail = components["schemas"]["EnvironmentalScenarioDetail"];
+type CapacityPlanRequest = components["schemas"]["CapacityPlanRequest"];
+type CapacityPlanResponse = components["schemas"]["CapacityPlanResponse"];
 
 export type DataMode = "live" | "static-demo";
 
@@ -228,6 +232,33 @@ export async function startScenarioWithFallback(
     mode: eventsResult.mode,
     notice: eventsResult.notice,
   };
+}
+
+// 息烽磷煤化工园区场景对齐新增：交椅山渣库示意场景 + “以渣定产”仿真（无静态兜底数据，
+// 离线时如实展示错误，不用编造数据冒充这两项新功能已连通真实/仿真结果）。
+
+export function getEnvironmentalScenariosWithFallback(): Promise<ApiResult<EnvironmentalScenario[]>> {
+  return withFallback(
+    () => requestJson<EnvironmentalScenario[]>("/api/v1/environmental-scenarios"),
+    [],
+  );
+}
+
+export function getEnvironmentalScenarioDetail(
+  scenarioId: string,
+): Promise<EnvironmentalScenarioDetail> {
+  return requestJson<EnvironmentalScenarioDetail>(
+    `/api/v1/environmental-scenarios/${scenarioId}`,
+  );
+}
+
+export function simulateCapacityPlan(
+  payload: CapacityPlanRequest,
+): Promise<CapacityPlanResponse> {
+  return requestJson<CapacityPlanResponse>("/api/v1/capacity-plan/simulate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function startOnlineScenarioWithFallback(

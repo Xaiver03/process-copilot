@@ -1,0 +1,72 @@
+{
+  "id": "xifeng-jiaoyishan-leachate",
+  "name": "交椅山磷石膏渣库渗滤液早期预警（示意）",
+  "description": "对应报告《贵阳息烽磷煤化工园区工艺体系分析及AI赋能应用思路》4.4节场景(5)：以合成示意数据演示——若能在防渗膜异常、电导率、边坡位移等先导指标出现持续偏离时即发出预警，理论上可在总磷于泉点出露超标之前完成拦截，而不是像2017年环保督查记录的那样，等污染物运移至泉点出露、总磷超标之后才发现。",
+  "monitoringPoints": [
+    "交椅山渣库西侧边坡",
+    "库底导渗盲沟集水池",
+    "桂花泉"
+  ],
+  "regulatoryLimitLabel": "息烽河流域总磷特别排放限值",
+  "regulatoryLimitValue": 0.3,
+  "regulatoryLimitUnit": "mg/L",
+  "variables": [
+    {
+      "variableId": "membrane_anomaly_score",
+      "variableName": "防渗膜异常置信度（机器视觉，对应 HJ 1480-2026 视频异常检测报警类型）",
+      "unit": "score(0-1)",
+      "monitoringPoint": "交椅山渣库西侧边坡",
+      "leadingIndicator": true
+    },
+    {
+      "variableId": "conductivity_us_cm",
+      "variableName": "渗滤液电导率",
+      "unit": "uS/cm",
+      "monitoringPoint": "库底导渗盲沟集水池",
+      "leadingIndicator": true
+    },
+    {
+      "variableId": "slope_displacement_mm",
+      "variableName": "边坡累计位移",
+      "unit": "mm",
+      "monitoringPoint": "交椅山渣库西侧边坡",
+      "leadingIndicator": true
+    },
+    {
+      "variableId": "leachate_level_m",
+      "variableName": "渗滤液集水池水位",
+      "unit": "m",
+      "monitoringPoint": "库底导渗盲沟集水池",
+      "leadingIndicator": false
+    },
+    {
+      "variableId": "ph",
+      "variableName": "渗滤液 pH",
+      "unit": "pH",
+      "monitoringPoint": "库底导渗盲沟集水池",
+      "leadingIndicator": false
+    },
+    {
+      "variableId": "total_phosphorus_mg_l",
+      "variableName": "总磷浓度（泉点出露，桂花泉）",
+      "unit": "mg/L",
+      "monitoringPoint": "桂花泉",
+      "leadingIndicator": false
+    }
+  ],
+  "sourceLabel": "Synthetic illustrative scenario derived from public Xifeng park EIA and regulatory disclosures; not real sensor data.",
+  "citations": [
+    {
+      "label": "交椅山磷石膏库西侧边坡及三区东段覆土复绿项目环境影响报告书公众参与说明（贵阳开磷化肥有限公司，2025）",
+      "detail": "防渗膜老化、排水沟渠淤堵渗漏、雨污未分流的现状描述，是本场景防渗膜异常与渗滤液早期漂移设定的依据。"
+    },
+    {
+      "label": "息烽县磷煤化工生态工业基地总体规划环境影响评价报告书简本（息烽县人民政府，2022）第2.5节",
+      "detail": "2017年环保督查发现渗漏经泉点出露、企业分五期治理、2020-2021年仍出现渗漏点的事实时间线。"
+    },
+    {
+      "label": "HJ 1480-2026《排污单位自行监测视频监控系统建设与联网技术要求》（生态环境部，2026-07-22发布，2026-10-01实施）",
+      "detail": "视频异常检测报警类型编码，是本场景“防渗膜异常置信度”变量对应的标准化数据来源设计依据。"
+    }
+  ]
+}

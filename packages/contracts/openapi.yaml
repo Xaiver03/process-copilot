@@ -56,6 +56,66 @@ paths:
                   $ref: "#/components/schemas/Scenario"
         "400":
           $ref: "#/components/responses/Problem"
+  /api/v1/environmental-scenarios:
+    get:
+      summary: >-
+        List illustrative Xifeng phosphorus-coal park environmental scenarios
+        (Xifeng park AI-enablement report, section 4.4-5). Synthetic data,
+        kept separate from the TEP scenario catalog and its provenance guard.
+      operationId: listEnvironmentalScenarios
+      responses:
+        "200":
+          description: Available illustrative environmental scenarios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentalScenario"
+        "400":
+          $ref: "#/components/responses/Problem"
+  /api/v1/environmental-scenarios/{scenarioId}:
+    get:
+      summary: Get an environmental scenario's telemetry and rule-based early warning
+      operationId: getEnvironmentalScenario
+      parameters:
+        - name: scenarioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scenario metadata, telemetry series and early-warning result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentalScenarioDetail"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/v1/capacity-plan/simulate:
+    post:
+      summary: >-
+        Simulate feasible multi-unit production loads under a phosphogypsum
+        consumption cap (the "gypsum-capped production" policy constraint,
+        Xifeng park AI-enablement report section 3.2 / 4.4-6). Stateless
+        rule-based calculator; no model is trained or called.
+      operationId: simulateCapacityPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CapacityPlanRequest"
+      responses:
+        "200":
+          description: Feasible load combinations under the supplied gypsum cap.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityPlanResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
   /api/v1/runs:
     post:
       summary: Create a replay run
@@ -958,4 +1018,152 @@ components:
         code: {type: string}
         message: {type: string}
         details: {type: object, additionalProperties: true}
+        traceId: {type: string}
+    EnvironmentalVariable:
+      type: object
+      required: [variableId, variableName, unit, monitoringPoint, leadingIndicator]
+      properties:
+        variableId: {type: string}
+        variableName: {type: string}
+        unit: {type: string}
+        monitoringPoint: {type: string}
+        leadingIndicator: {type: boolean}
+    EnvironmentalCitation:
+      type: object
+      required: [label, detail]
+      properties:
+        label: {type: string}
+        detail: {type: string}
+    EnvironmentalScenario:
+      type: object
+      required:
+        [
+          id,
+          name,
+          description,
+          monitoringPoints,
+          regulatoryLimitLabel,
+          regulatoryLimitValue,
+          regulatoryLimitUnit,
+          variables,
+          sourceLabel,
+          citations,
+        ]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        description: {type: string}
+        monitoringPoints: {type: array, items: {type: string}}
+        regulatoryLimitLabel: {type: string}
+        regulatoryLimitValue: {type: number}
+        regulatoryLimitUnit: {type: string}
+        variables:
+          type: array
+          items: {$ref: "#/components/schemas/EnvironmentalVariable"}
+        sourceLabel: {type: string}
+        citations:
+          type: array
+          items: {$ref: "#/components/schemas/EnvironmentalCitation"}
+    EnvironmentalTelemetrySeries:
+      type: object
+      required: [variableId, values]
+      properties:
+        variableId: {type: string}
+        values: {type: array, items: {type: number}}
+    EnvironmentalEarlyWarning:
+      type: object
+      required: [triggered, breachVariableId, summary]
+      properties:
+        triggered: {type: boolean}
+        warningDay: {type: [integer, "null"]}
+        warningVariableId: {type: [string, "null"]}
+        breachDay: {type: [integer, "null"]}
+        breachVariableId: {type: string}
+        leadTimeDays: {type: [integer, "null"]}
+        summary: {type: string}
+    EnvironmentalScenarioDetail:
+      type: object
+      required: [scenario, dayIndex, series, earlyWarning]
+      properties:
+        scenario: {$ref: "#/components/schemas/EnvironmentalScenario"}
+        dayIndex: {type: array, items: {type: integer}}
+        series:
+          type: array
+          items: {$ref: "#/components/schemas/EnvironmentalTelemetrySeries"}
+        earlyWarning: {$ref: "#/components/schemas/EnvironmentalEarlyWarning"}
+    CapacityLineRequest:
+      type: object
+      required: [id, name, requestedP2o5Tpd]
+      properties:
+        id: {type: string, minLength: 1, maxLength: 64}
+        name: {type: string, minLength: 1, maxLength: 200}
+        requestedP2o5Tpd: {type: number, exclusiveMinimum: 0}
+        priority: {type: integer, minimum: 0, maximum: 10, default: 0}
+    CapacityPlanRequest:
+      type: object
+      required: [gypsumCapTpd, lines]
+      properties:
+        gypsumCapTpd: {type: number, exclusiveMinimum: 0}
+        gypsumRatioLow: {type: number, exclusiveMinimum: 0, default: 4.0}
+        gypsumRatioHigh: {type: number, exclusiveMinimum: 0, default: 5.0}
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: {$ref: "#/components/schemas/CapacityLineRequest"}
+    CapacityLineResult:
+      type: object
+      required: [id, name, requestedP2o5Tpd, allocatedP2o5Tpd, loadPctOfRequest]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        requestedP2o5Tpd: {type: number}
+        allocatedP2o5Tpd: {type: number}
+        loadPctOfRequest: {type: number}
+    CapacityPlanOption:
+      type: object
+      required:
+        [
+          strategy,
+          label,
+          totalAllocatedP2o5Tpd,
+          gypsumOutputLowTpd,
+          gypsumOutputHighTpd,
+          withinCap,
+          utilizationPct,
+          lines,
+        ]
+      properties:
+        strategy: {enum: [proportional, priority_first, equal_share]}
+        label: {type: string}
+        totalAllocatedP2o5Tpd: {type: number}
+        gypsumOutputLowTpd: {type: number}
+        gypsumOutputHighTpd: {type: number}
+        withinCap: {type: boolean}
+        utilizationPct: {type: number}
+        lines:
+          type: array
+          items: {$ref: "#/components/schemas/CapacityLineResult"}
+    CapacityPlanResponse:
+      type: object
+      required:
+        [
+          gypsumCapTpd,
+          totalRequestedP2o5Tpd,
+          requestedGypsumOutputLowTpd,
+          requestedGypsumOutputHighTpd,
+          requestWithinCap,
+          options,
+          disclosure,
+        ]
+      properties:
+        gypsumCapTpd: {type: number}
+        totalRequestedP2o5Tpd: {type: number}
+        requestedGypsumOutputLowTpd: {type: number}
+        requestedGypsumOutputHighTpd: {type: number}
+        requestWithinCap: {type: boolean}
+        options:
+          type: array
+          items: {$ref: "#/components/schemas/CapacityPlanOption"}
+        disclosure: {type: string}
         traceId: {type: string}

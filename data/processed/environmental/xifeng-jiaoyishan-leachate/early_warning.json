@@ -1,0 +1,9 @@
+{
+  "triggered": true,
+  "warningDay": 129,
+  "warningVariableId": "membrane_anomaly_score",
+  "breachDay": 173,
+  "breachVariableId": "total_phosphorus_mg_l",
+  "leadTimeDays": 44,
+  "summary": "第 129 天，membrane_anomaly_score 率先偏离基线并持续 5 天以上；总磷在第 173 天于泉点突破 0.3 mg/L 特别排放限值——提前 44 天可发出预警，而不是等泉点超标后才发现（对应报告 3.2 节“漏洞二”）。"
+}

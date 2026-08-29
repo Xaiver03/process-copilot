@@ -10,6 +10,7 @@ import {
   Play,
   SignIn,
   SignOut,
+  Warning,
   Waveform,
   X,
 } from "@phosphor-icons/react";
@@ -24,6 +25,7 @@ export const navigationItems = [
   { href: "/overview", label: "运营总览", icon: Gauge },
   { href: "/replay", label: "过程回放", icon: Waveform },
   { href: "/events", label: "偏移事件", icon: ListMagnifyingGlass },
+  { href: "/xifeng", label: "息烽园区场景", icon: Warning },
   { href: "/system", label: "系统状态", icon: HardDrives },
 ] as const;
 

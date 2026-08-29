@@ -55,6 +55,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/environmental-scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List illustrative Xifeng phosphorus-coal park environmental scenarios (Xifeng park AI-enablement report, section 4.4-5). Synthetic data, kept separate from the TEP scenario catalog and its provenance guard. */
+        get: operations["listEnvironmentalScenarios"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/environmental-scenarios/{scenarioId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an environmental scenario's telemetry and rule-based early warning */
+        get: operations["getEnvironmentalScenario"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/capacity-plan/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Simulate feasible multi-unit production loads under a phosphogypsum consumption cap (the "gypsum-capped production" policy constraint, Xifeng park AI-enablement report section 3.2 / 4.4-6). Stateless rule-based calculator; no model is trained or called. */
+        post: operations["simulateCapacityPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs": {
         parameters: {
             query?: never;
@@ -714,6 +765,91 @@ export interface components {
             };
             traceId: string;
         };
+        EnvironmentalVariable: {
+            variableId: string;
+            variableName: string;
+            unit: string;
+            monitoringPoint: string;
+            leadingIndicator: boolean;
+        };
+        EnvironmentalCitation: {
+            label: string;
+            detail: string;
+        };
+        EnvironmentalScenario: {
+            id: string;
+            name: string;
+            description: string;
+            monitoringPoints: string[];
+            regulatoryLimitLabel: string;
+            regulatoryLimitValue: number;
+            regulatoryLimitUnit: string;
+            variables: components["schemas"]["EnvironmentalVariable"][];
+            sourceLabel: string;
+            citations: components["schemas"]["EnvironmentalCitation"][];
+        };
+        EnvironmentalTelemetrySeries: {
+            variableId: string;
+            values: number[];
+        };
+        EnvironmentalEarlyWarning: {
+            triggered: boolean;
+            warningDay?: number | null;
+            warningVariableId?: string | null;
+            breachDay?: number | null;
+            breachVariableId: string;
+            leadTimeDays?: number | null;
+            summary: string;
+        };
+        EnvironmentalScenarioDetail: {
+            scenario: components["schemas"]["EnvironmentalScenario"];
+            dayIndex: number[];
+            series: components["schemas"]["EnvironmentalTelemetrySeries"][];
+            earlyWarning: components["schemas"]["EnvironmentalEarlyWarning"];
+        };
+        CapacityLineRequest: {
+            id: string;
+            name: string;
+            requestedP2o5Tpd: number;
+            /** @default 0 */
+            priority: number;
+        };
+        CapacityPlanRequest: {
+            gypsumCapTpd: number;
+            /** @default 4 */
+            gypsumRatioLow: number;
+            /** @default 5 */
+            gypsumRatioHigh: number;
+            lines: components["schemas"]["CapacityLineRequest"][];
+        };
+        CapacityLineResult: {
+            id: string;
+            name: string;
+            requestedP2o5Tpd: number;
+            allocatedP2o5Tpd: number;
+            loadPctOfRequest: number;
+        };
+        CapacityPlanOption: {
+            /** @enum {unknown} */
+            strategy: "proportional" | "priority_first" | "equal_share";
+            label: string;
+            totalAllocatedP2o5Tpd: number;
+            gypsumOutputLowTpd: number;
+            gypsumOutputHighTpd: number;
+            withinCap: boolean;
+            utilizationPct: number;
+            lines: components["schemas"]["CapacityLineResult"][];
+        };
+        CapacityPlanResponse: {
+            gypsumCapTpd: number;
+            totalRequestedP2o5Tpd: number;
+            requestedGypsumOutputLowTpd: number;
+            requestedGypsumOutputHighTpd: number;
+            requestWithinCap: boolean;
+            options: components["schemas"]["CapacityPlanOption"][];
+            disclosure: string;
+            traceId?: string;
+        };
     };
     responses: {
         /** @description Request could not be completed. */
@@ -801,6 +937,75 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+        };
+    };
+    listEnvironmentalScenarios: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available illustrative environmental scenarios. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvironmentalScenario"][];
+                };
+            };
+            400: components["responses"]["Problem"];
+        };
+    };
+    getEnvironmentalScenario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenarioId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Scenario metadata, telemetry series and early-warning result. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvironmentalScenarioDetail"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    simulateCapacityPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapacityPlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Feasible load combinations under the supplied gypsum cap. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapacityPlanResponse"];
+                };
+            };
+            422: components["responses"]["Problem"];
         };
     };
     createRun: {

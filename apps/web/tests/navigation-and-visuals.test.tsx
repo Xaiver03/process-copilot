@@ -22,7 +22,7 @@ describe("应用框架与路由", () => {
 
   it("提供全部产品路由并高亮当前位置", () => {
     const routes = navigationItems.map((item) => item.href);
-    expect(routes).toEqual(["/demo", "/overview", "/replay", "/events", "/system"]);
+    expect(routes).toEqual(["/demo", "/overview", "/replay", "/events", "/xifeng", "/system"]);
 
     const { container } = render(<AppShell currentPath="/events/demo-event"><p>内容</p></AppShell>);
     expect(

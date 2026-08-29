@@ -34,6 +34,15 @@
 
 详细口径见 [数据说明](docs/submission/数据说明_v01_DRAFT.md)。
 
+## 息烽磷煤化工园区场景对齐（`codex/xifeng-park-alignment` 分支）
+
+对齐报告《贵阳息烽磷煤化工园区工艺体系分析及AI赋能应用思路》4.4 节的两项新增能力，见 [场景对齐说明](docs/plans/2026-08-29_息烽磷煤化工园区场景对齐说明.md)：
+
+- `GET /api/v1/environmental-scenarios`、`GET /api/v1/environmental-scenarios/{scenarioId}`：交椅山磷石膏渣库渗滤液早期预警（报告 4.4 节场景(5)，本文认定的优先落地场景）。合成示意数据，来源标注见 `services/ml/process_copilot_ml/environmental_scenarios.py`，与 TEP 场景数据来源、防伪装治理规则（`DataCatalog` provenance guard）严格分离，不互相冒充。
+- `POST /api/v1/capacity-plan/simulate`：“以渣定产”园区物料平衡仿真（报告 3.2 节“漏洞三”、4.4 节场景(6)）。纯规则计算，不训练/不调用任何模型；产能、消纳上限均为调用方传入，不是核实过的息烽园区真实产能数字。
+- 前端页面：`/xifeng`（导航“息烽园区场景”）。
+- 这两项是本次新增的示意能力，不是已连通息烽园区真实生产/环保数据的结论；正式立项前仍需现场核实（见报告“现状边界与下一步”一节）。
+
 ## 快速验证
 
 需要 Node 22、pnpm 9.15.4、Python 3.12、uv 和 Docker Compose。

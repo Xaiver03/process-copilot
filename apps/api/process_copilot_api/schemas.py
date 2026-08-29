@@ -272,3 +272,104 @@ class Problem(ContractModel):
     message: str
     details: dict[str, Any] | None = None
     trace_id: str
+
+
+# --- 息烽磷煤化工园区场景对齐（报告《贵阳息烽磷煤化工园区工艺体系分析及AI赋能应用思路》4.4节） ---
+# 与 TEP 场景（Scenario/DataCatalog）刻意分开建模：数据来源、置信边界和防伪装治理规则不同，
+# 不得复用 DataCatalog 的 provenance guard，也不得让两类场景互相冒充数据来源。
+
+
+class EnvironmentalVariable(ContractModel):
+    variable_id: str
+    variable_name: str
+    unit: str
+    monitoring_point: str
+    leading_indicator: bool
+
+
+class EnvironmentalCitation(ContractModel):
+    label: str
+    detail: str
+
+
+class EnvironmentalScenario(ContractModel):
+    id: str
+    name: str
+    description: str
+    monitoring_points: list[str]
+    regulatory_limit_label: str
+    regulatory_limit_value: float
+    regulatory_limit_unit: str
+    variables: list[EnvironmentalVariable]
+    source_label: str
+    citations: list[EnvironmentalCitation]
+
+
+class EnvironmentalTelemetrySeries(ContractModel):
+    variable_id: str
+    values: list[float]
+
+
+class EnvironmentalEarlyWarning(ContractModel):
+    triggered: bool
+    warning_day: int | None = None
+    warning_variable_id: str | None = None
+    breach_day: int | None = None
+    breach_variable_id: str
+    lead_time_days: int | None = None
+    summary: str
+
+
+class EnvironmentalScenarioDetail(ContractModel):
+    scenario: EnvironmentalScenario
+    day_index: list[int]
+    series: list[EnvironmentalTelemetrySeries]
+    early_warning: EnvironmentalEarlyWarning
+
+
+# --- “以渣定产”园区物料平衡仿真（报告 3.2 节“漏洞三”、4.4节场景(6)） ---
+# 纯规则计算，不训练/不调用任何模型；容量与配比均为调用方传入或报告引用区间，
+# 不是核实过的息烽园区真实产能数字。
+
+
+class CapacityLineRequest(ContractModel):
+    id: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=200)
+    requested_p2o5_tpd: float = Field(gt=0)
+    priority: int = Field(default=0, ge=0, le=10)
+
+
+class CapacityPlanRequest(ContractModel):
+    gypsum_cap_tpd: float = Field(gt=0)
+    gypsum_ratio_low: float = Field(default=4.0, gt=0)
+    gypsum_ratio_high: float = Field(default=5.0, gt=0)
+    lines: list[CapacityLineRequest] = Field(min_length=1, max_length=8)
+
+
+class CapacityLineResult(ContractModel):
+    id: str
+    name: str
+    requested_p2o5_tpd: float
+    allocated_p2o5_tpd: float
+    load_pct_of_request: float
+
+
+class CapacityPlanOption(ContractModel):
+    strategy: Literal["proportional", "priority_first", "equal_share"]
+    label: str
+    total_allocated_p2o5_tpd: float
+    gypsum_output_low_tpd: float
+    gypsum_output_high_tpd: float
+    within_cap: bool
+    utilization_pct: float
+    lines: list[CapacityLineResult]
+
+
+class CapacityPlanResponse(ContractModel):
+    gypsum_cap_tpd: float
+    total_requested_p2o5_tpd: float
+    requested_gypsum_output_low_tpd: float
+    requested_gypsum_output_high_tpd: float
+    request_within_cap: bool
+    options: list[CapacityPlanOption]
+    disclosure: str

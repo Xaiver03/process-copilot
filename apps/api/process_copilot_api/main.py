@@ -56,6 +56,8 @@ from .db import (
     RunStreamMessageRow,
 )
 from .llm import ExplanationEnhancer, LLMSettings
+from .capacity_planner import simulate_capacity_plan
+from .environmental import EnvironmentalCatalog
 from .schemas import (
     AdminAuditChangeSummary,
     AdminAuditEntry,
@@ -70,12 +72,16 @@ from .schemas import (
     AIStatus,
     AnomalyEvent,
     AskEventRequest,
+    CapacityPlanRequest,
+    CapacityPlanResponse,
     ControlCheck,
     ControlProposal,
     CreateControlProposalRequest,
     CreateRunRequest,
     DecisionRecord,
     DecisionRequest,
+    EnvironmentalScenario,
+    EnvironmentalScenarioDetail,
     EventDetail,
     EvidenceItem,
     FaultCandidate,
@@ -497,6 +503,7 @@ def create_app(
     app.state.database = Database(database_url or _default_database_url())
     app.state.database.create_schema()
     app.state.catalog = DataCatalog(data_dir or _default_data_dir())
+    app.state.environmental_catalog = EnvironmentalCatalog(data_dir or _default_data_dir())
     app.state.sse_heartbeat_interval_seconds = sse_heartbeat_interval_seconds
     app.state.sse_heartbeat_count = sse_heartbeat_count
     seed_operators(app.state.database)
@@ -1026,6 +1033,38 @@ def create_app(
     @app.get("/api/v1/scenarios", response_model=list[Scenario], operation_id="listScenarios")
     def list_scenarios() -> list[Scenario]:
         return app.state.catalog.scenarios
+
+    @app.get(
+        "/api/v1/environmental-scenarios",
+        response_model=list[EnvironmentalScenario],
+        operation_id="listEnvironmentalScenarios",
+    )
+    def list_environmental_scenarios() -> list[EnvironmentalScenario]:
+        return app.state.environmental_catalog.scenarios
+
+    @app.get(
+        "/api/v1/environmental-scenarios/{scenarioId}",
+        response_model=EnvironmentalScenarioDetail,
+        operation_id="getEnvironmentalScenario",
+    )
+    def get_environmental_scenario(scenarioId: str) -> EnvironmentalScenarioDetail:
+        detail = app.state.environmental_catalog.detail(scenarioId)
+        if detail is None:
+            raise APIError(
+                404,
+                "environmental_scenario_not_found",
+                "Environmental scenario not found",
+                {"scenarioId": scenarioId},
+            )
+        return detail
+
+    @app.post(
+        "/api/v1/capacity-plan/simulate",
+        response_model=CapacityPlanResponse,
+        operation_id="simulateCapacityPlan",
+    )
+    def simulate_capacity_plan_endpoint(body: CapacityPlanRequest) -> CapacityPlanResponse:
+        return simulate_capacity_plan(body)
 
     @app.post("/api/v1/runs", response_model=ReplayRun, status_code=201, operation_id="createRun")
     def create_run(
@@ -1629,6 +1668,9 @@ def create_app(
             "/healthz": {"200", "400"},
             "/readyz": {"200", "400", "503"},
             "/api/v1/scenarios": {"200", "400"},
+            "/api/v1/environmental-scenarios": {"200", "400"},
+            "/api/v1/environmental-scenarios/{scenarioId}": {"200", "404"},
+            "/api/v1/capacity-plan/simulate": {"200", "422"},
             "/api/v1/auth/login": {"200", "401", "422"},
             "/api/v1/auth/me": {"200", "401"},
             "/api/v1/runs": {"201", "404", "409", "422"},

@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from process_copilot_ml.build import build_demo
+from process_copilot_ml.environmental_scenarios import build_environmental_scenarios
 
 
 def _project_root() -> Path:
@@ -34,6 +35,16 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="replace non-empty formal output directories after staged validation",
     )
+    build_environmental = subparsers.add_parser(
+        "build-environmental",
+        help="Build synthetic illustrative Xifeng park environmental scenarios (report §4.4-5)",
+    )
+    build_environmental.add_argument(
+        "--output-dir",
+        type=Path,
+        default=_project_root() / "data" / "processed" / "environmental",
+    )
+    build_environmental.add_argument("--seed", type=int, default=42)
     return parser
 
 
@@ -43,6 +54,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = build_demo(args.source_zip, args.output_dir, args.manifest_dir, force=args.force)
         print(f"buildHash={result.build_hash}")
         print(f"manifest={result.manifest_path}")
+        return 0
+    if args.command == "build-environmental":
+        artifacts = build_environmental_scenarios(args.output_dir, seed=args.seed)
+        for entry in artifacts:
+            print(f"scenario={entry['scenario']}")
         return 0
     return 2
 

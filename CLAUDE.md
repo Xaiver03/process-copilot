@@ -49,7 +49,16 @@ make infra-check     # bash infra/tests/validate_infra.sh
 2. **apps/api**（FastAPI + SQLAlchemy）：读 `data/processed/`（DataCatalog），API 版本前缀 `/api/v1`，经 Caddy 反代。写 Postgres（runs/events/decisions/audit/idempotency 表）；支持 `Idempotency-Key` 头；错误响应用统一 Problem 格式；无 DATABASE_URL 时回退到本地 sqlite。`worker.py` 是刻意的只读单进程检查器（无外部队列），入口保持稳定以便未来加 replay executor。
 3. **apps/web**（Next.js + vitest）：路由 `/`、`/demo`、`/replay`、`/overview`、`/events`、`/events/[id]`、`/records/[id]`、`/system`、`/healthz`。API 类型手写在 `src/lib/api-schema.ts`，客户端在 `src/lib/api-client.ts`。视觉继承 Wuno 设计 token（`packages/ui/src/tokens.css`）。
 
-**packages/contracts/openapi.yaml 是 API 契约的权威来源**（redocly lint 把关）；`packages/contracts/schemas/domain.schema.json` 为领域 schema。改动 API 时先改契约。
+**packages/contracts/openapi.yaml 是 API 契约的权威来源**（redocly lint 把关）；`packages/contracts/schemas/domain.schema.json` 为领域 schema。改动 API 时先改契约。`apps/web/src/lib/api-schema.ts` 用 `pnpm --filter web generate:api` 从契约生成，不要手改。
+
+### 息烽磷煤化工园区场景对齐（`codex/xifeng-park-alignment` 分支）
+
+在 TEP 场景之外新增两个与《贵阳息烽磷煤化工园区工艺体系分析及AI赋能应用思路》报告对应、明确标注为合成
+示意数据/规则计算的能力，详见 [场景对齐说明](docs/plans/2026-08-29_息烽磷煤化工园区场景对齐说明.md)：
+`apps/api/process_copilot_api/environmental.py`（交椅山渣库渗滤液早期预警，独立于 `DataCatalog` 及其
+provenance guard）与 `capacity_planner.py`（“以渣定产”物料平衡仿真，纯规则、不训练模型）。新增场景数据由
+`services/ml/process_copilot_ml/environmental_scenarios.py` 生成，不要把它接入 TEP 的 `build-demo`/`DataCatalog`
+或复用其 `sourceLabel`。
 
 ## 部署约束（重要）
 

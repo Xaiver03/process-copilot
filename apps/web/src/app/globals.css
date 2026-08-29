@@ -262,6 +262,12 @@ textarea { resize: vertical; }
 .decision-form { display: grid; gap: var(--space-2); }.decision-form label { display: grid; gap: 6px; color: var(--wuno-text-secondary); font-size: var(--font-support); font-weight: 700; }.decision-form .primary-button { width: 100%; }.safety-note { margin: 0; color: var(--wuno-text-secondary); font-size: var(--font-support); line-height: 1.6; }.form-error { margin: 0; color: #a52f42; font-size: var(--font-support); }
 .login-form { display: grid; gap: var(--space-2); }.login-form label { display: grid; gap: 6px; color: var(--wuno-text-secondary); font-size: var(--font-support); font-weight: 700; }.login-form input { border: 1px solid var(--wuno-border-subtle); border-radius: var(--control-radius); padding: 10px 12px; font: inherit; }.login-form .primary-button { width: 100%; justify-content: center; }
 .operator-identity { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; color: var(--wuno-text-secondary); font-size: var(--font-support); }
+.capacity-form { display: grid; gap: var(--space-2); max-width: 480px; margin: 16px 0; }
+.capacity-form label { display: grid; gap: 6px; color: var(--wuno-text-secondary); font-size: var(--font-support); font-weight: 700; }
+.capacity-form input { border: 1px solid var(--wuno-border-subtle); border-radius: var(--control-radius); padding: 10px 12px; font: inherit; }
+.capacity-results { display: grid; gap: var(--space-2); margin-top: 16px; }
+.capacity-results table { margin: 0; }
+.capacity-results caption { text-align: left; padding-bottom: 8px; color: var(--wuno-text-secondary); font-size: var(--font-support); font-weight: 700; }
 .role-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 10px; border-radius: 999px; font-size: var(--font-support); font-weight: 800; }.role-chip.role-shift_lead { background: color-mix(in srgb, var(--process-normal) 14%, white); color: #147253; }.role-chip.role-operator { background: color-mix(in srgb, #2f6fa5 12%, white); color: #2f6fa5; }
 .operator-badge { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }.operator-badge .text-link { background: none; border: none; cursor: pointer; font: inherit; padding: 4px 8px; }
 .login-page { width: min(100%, 760px); }

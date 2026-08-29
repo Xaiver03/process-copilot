@@ -14,16 +14,19 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import type { components } from "@/lib/api-schema";
 import {
   controlRunWithFallback,
+  getEnvironmentalScenarioDetail,
+  getEnvironmentalScenariosWithFallback,
   getEventWithFallback,
   getReadinessWithFallback,
   getRecordWithFallback,
   getScenariosWithFallback,
   listRunEventsWithFallback,
+  simulateCapacityPlan,
   startOnlineScenarioWithFallback,
   submitDecisionWithFallback,
   type ApiResult,
@@ -33,7 +36,7 @@ import { useSession } from "@/lib/auth-store";
 import { eventSeverityPresentation, eventStateLabel, formatFaultCandidate, formatScenarioPresentation, localizeIndustrialCopy } from "@/lib/presentation";
 import { advanceReplaySample, createReplayTelemetry, describeReplayStage, getReplaySignalDefinitions, normalizeReplaySpeed, REPLAY_TICK_MS, REPLAY_TOTAL_SAMPLES } from "@/lib/replay-demo";
 import { subscribeToRun, type RunStreamMessage } from "@/lib/run-stream";
-import { ContributionChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
+import { ContributionChart, EnvironmentalTrendChart, EvidenceTrendChart, ProcessHeatmapChart } from "./charts";
 import { DemoJourney } from "./demo-journey";
 import { EvidencePanel, HumanDecision, StatusTag } from "./industrial";
 import { EventCopilot } from "./event-copilot";
@@ -46,6 +49,9 @@ type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type EventDetail = components["schemas"]["EventDetail"];
 type DecisionRecord = components["schemas"]["DecisionRecord"];
 type Health = components["schemas"]["Health"];
+type EnvironmentalScenarioDetail = components["schemas"]["EnvironmentalScenarioDetail"];
+type CapacityPlanResponse = components["schemas"]["CapacityPlanResponse"];
+type CapacityLineRequest = components["schemas"]["CapacityLineRequest"];
 const EVENT_DETAIL_AI_STEPS = ["step-01-detection", "step-02-conclusion", "step-03-explanation", "step-04-recommendation", "step-05-decision"] as const;
 type EventDetailAiStepId = (typeof EVENT_DETAIL_AI_STEPS)[number];
 
@@ -531,6 +537,162 @@ export function SystemScreen() {
           <section className="table-panel"><table aria-label="系统依赖检查"><thead><tr><th scope="col">依赖</th><th scope="col">状态</th><th scope="col">说明</th></tr></thead><tbody>{Object.entries(result.data.checks ?? { api: result.data.status }).map(([name, value]) => <tr key={name}><th scope="row">{name}</th><td>{value}</td><td>{name === "api" && result.mode === "static-demo" ? "API 失联，已启用静态 Demo" : "检查结果来自 readiness"}</td></tr>)}</tbody></table></section>
         </>
       )}</ResourceBoundary>
+    </div>
+  );
+}
+
+const DEFAULT_CAPACITY_LINES: CapacityLineRequest[] = [
+  { id: "fertilizer", name: "磷肥支路", requestedP2o5Tpd: 300, priority: 1 },
+  { id: "purified-acid", name: "净化磷酸/磷酸铁支路", requestedP2o5Tpd: 200, priority: 2 },
+];
+
+async function loadEnvironmentalScenario(): Promise<ApiResult<EnvironmentalScenarioDetail | null>> {
+  const list = await getEnvironmentalScenariosWithFallback();
+  if (list.mode === "static-demo") {
+    return { data: null, mode: list.mode, notice: list.notice };
+  }
+  const first = list.data[0];
+  if (!first) {
+    return { data: null, mode: "live", notice: "环境场景数据暂未生成。" };
+  }
+  const detail = await getEnvironmentalScenarioDetail(first.id);
+  return { data: detail, mode: "live", notice: list.notice };
+}
+
+function CapacityPlanner() {
+  const [gypsumCapTpd, setGypsumCapTpd] = useState(1800);
+  const [lines, setLines] = useState(DEFAULT_CAPACITY_LINES);
+  const [response, setResponse] = useState<CapacityPlanResponse | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      setResponse(await simulateCapacityPlan({
+        gypsumCapTpd,
+        gypsumRatioLow: 4.0,
+        gypsumRatioHigh: 5.0,
+        lines,
+      }));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "仿真请求失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="chart-panel" aria-labelledby="capacity-planner-title">
+      <div className="section-heading"><div><span className="kicker">以渣定产 · 规则仿真（示意）</span><h2 id="capacity-planner-title">磷石膏消纳能力约束下的产能仿真</h2></div></div>
+      <p className="sr-summary">按报告 2.1 节磷石膏产出系数 4-5 吨/吨 P2O5 折算全园区磷酸总处理量上限；容量与消纳上限均为下方手动输入，不是核实过的息烽园区真实产能数字。</p>
+      <form onSubmit={handleSubmit} className="capacity-form">
+        <label>
+          磷石膏消纳能力上限（吨/天）
+          <input
+            type="number"
+            min={1}
+            step="1"
+            value={gypsumCapTpd}
+            onChange={(event) => setGypsumCapTpd(Number(event.target.value))}
+            required
+          />
+        </label>
+        {lines.map((line, index) => (
+          <label key={line.id}>
+            {line.name} 期望处理量（吨 P2O5/天）
+            <input
+              type="number"
+              min={0.1}
+              step="0.1"
+              value={line.requestedP2o5Tpd}
+              onChange={(event) => {
+                const next = [...lines];
+                next[index] = { ...line, requestedP2o5Tpd: Number(event.target.value) };
+                setLines(next);
+              }}
+              required
+            />
+          </label>
+        ))}
+        <button type="submit" className="primary-button" disabled={busy}>{busy ? "仿真中…" : "运行仿真"}</button>
+      </form>
+      {error ? <StatePanel state="error" detail={error} onRetry={() => setError("")} /> : null}
+      {response ? (
+        <div className="capacity-results">
+          <p role="status">
+            请求总量 {response.totalRequestedP2o5Tpd.toFixed(1)} 吨/天 P2O5，对应磷石膏产出约
+            {" "}{response.requestedGypsumOutputLowTpd.toFixed(0)}–{response.requestedGypsumOutputHighTpd.toFixed(0)} 吨/天，
+            {response.requestWithinCap ? "未超出消纳上限。" : "超出消纳上限，以下为可行压减方案："}
+          </p>
+          {response.options.map((option) => (
+            <table key={`${option.strategy}-${option.label}`} className="table-panel" aria-label={option.label}>
+              <caption>{option.label}（{option.withinCap ? "在消纳上限内" : "仍超限"}，磷石膏产出利用率约 {option.utilizationPct.toFixed(0)}%）</caption>
+              <thead><tr><th scope="col">装置</th><th scope="col">请求负荷</th><th scope="col">仿真分配负荷</th><th scope="col">占请求比例</th></tr></thead>
+              <tbody>
+                {option.lines.map((line) => (
+                  <tr key={line.id}>
+                    <th scope="row">{line.name}</th>
+                    <td>{line.requestedP2o5Tpd.toFixed(1)} 吨/天</td>
+                    <td>{line.allocatedP2o5Tpd.toFixed(1)} 吨/天</td>
+                    <td>{line.loadPctOfRequest.toFixed(0)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))}
+          <p className="sr-summary">{response.disclosure}</p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function XifengScreen() {
+  const resource = useApiResource<EnvironmentalScenarioDetail | null>(
+    loadEnvironmentalScenario,
+    "xifeng-environmental",
+  );
+  return (
+    <div className="page-stack">
+      <PageHeader
+        kicker="息烽磷煤化工园区场景对齐"
+        title="交椅山渣库预警与以渣定产仿真"
+        summary="对应《贵阳息烽磷煤化工园区工艺体系分析及AI赋能应用思路》4.4 节场景 (5)(6)：均为示意数据或规则仿真，不是已连通的息烽园区真实数据。"
+      />
+      <ResourceBoundary {...resource}>{(result) => (
+        <>
+          <ModeNotice mode={result.mode} notice={result.notice} />
+          {result.data ? (
+            <>
+              <section className="chart-panel">
+                <h2>{result.data.scenario.name}</h2>
+                <p>{result.data.scenario.description}</p>
+                <p className="sr-summary">{result.data.scenario.sourceLabel}</p>
+                <ul>
+                  {result.data.scenario.citations.map((citation) => (
+                    <li key={citation.label}><strong>{citation.label}</strong>：{citation.detail}</li>
+                  ))}
+                </ul>
+              </section>
+              <EnvironmentalTrendChart
+                dayIndex={result.data.dayIndex}
+                totalPhosphorus={result.data.series.find((series) => series.variableId === "total_phosphorus_mg_l")?.values ?? []}
+                membraneAnomalyScore={result.data.series.find((series) => series.variableId === "membrane_anomaly_score")?.values ?? []}
+                regulatoryLimit={result.data.scenario.regulatoryLimitValue}
+                warningDay={result.data.earlyWarning.warningDay ?? null}
+                breachDay={result.data.earlyWarning.breachDay ?? null}
+              />
+              <p role="status">{result.data.earlyWarning.summary}</p>
+            </>
+          ) : (
+            <StatePanel state="empty" detail="环境场景数据暂未生成，可运行 services/ml 的 build-environmental 命令。" />
+          )}
+        </>
+      )}</ResourceBoundary>
+      <CapacityPlanner />
     </div>
   );
 }

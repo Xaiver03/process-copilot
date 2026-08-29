@@ -69,6 +69,78 @@ export function EvidenceTrendChart({ evidence }: { evidence: EvidenceItem[] }) {
   );
 }
 
+export function EnvironmentalTrendChart({
+  dayIndex,
+  totalPhosphorus,
+  membraneAnomalyScore,
+  regulatoryLimit,
+  warningDay,
+  breachDay,
+}: {
+  dayIndex: number[];
+  totalPhosphorus: number[];
+  membraneAnomalyScore: number[];
+  regulatoryLimit: number;
+  warningDay: number | null;
+  breachDay: number | null;
+}) {
+  const categories = dayIndex.map((day) => `第${day}天`);
+  return (
+    <section className="chart-panel" aria-labelledby="environmental-trend-title">
+      <div className="section-heading">
+        <div><span className="kicker">先导指标 vs 泉点总磷（示意数据）</span><h2 id="environmental-trend-title">交椅山渣库渗滤液早期预警</h2></div>
+      </div>
+      <p role="status" className="sr-summary">
+        防渗膜异常置信度{warningDay !== null ? `在第 ${warningDay} 天` : ""}率先偏离基线，
+        总磷浓度{breachDay !== null ? `在第 ${breachDay} 天` : "在较晚时点"}于泉点突破 {regulatoryLimit} mg/L 特别排放限值。
+      </p>
+      <ReactECharts
+        className="evidence-chart"
+        opts={{ renderer: "canvas" }}
+        aria-hidden="true"
+        option={{
+          animation: false,
+          grid: { left: 56, right: 56, top: 32, bottom: 40 },
+          tooltip: { trigger: "axis" },
+          legend: { top: 0, textStyle: { fontSize: 11 } },
+          xAxis: { type: "category", data: categories, axisLabel: { interval: 29 } },
+          yAxis: [
+            { type: "value", name: "总磷 mg/L", position: "left" },
+            { type: "value", name: "膜异常置信度", position: "right", min: 0, max: 1 },
+          ],
+          series: [
+            {
+              name: "总磷浓度（桂花泉）",
+              type: "line",
+              data: totalPhosphorus,
+              showSymbol: false,
+              lineStyle: { color: "#c2410c" },
+              markLine: {
+                symbol: "none",
+                data: [
+                  { yAxis: regulatoryLimit, label: { formatter: `特别排放限值 ${regulatoryLimit}mg/L` } },
+                  ...(breachDay !== null ? [{ xAxis: breachDay, label: { formatter: "泉点超标" } }] : []),
+                ],
+              },
+            },
+            {
+              name: "防渗膜异常置信度",
+              type: "line",
+              yAxisIndex: 1,
+              data: membraneAnomalyScore,
+              showSymbol: false,
+              lineStyle: { color: "#13c2c2" },
+              markLine: warningDay !== null
+                ? { symbol: "none", data: [{ xAxis: warningDay, label: { formatter: "先导预警" } }] }
+                : undefined,
+            },
+          ],
+        }}
+      />
+    </section>
+  );
+}
+
 export function ContributionChart({ evidence }: { evidence: EvidenceItem[] }) {
   const sorted = [...evidence].sort((a, b) => a.contribution - b.contribution);
   const maxContribution = Math.max(1, ...sorted.map((item) => item.contribution));
