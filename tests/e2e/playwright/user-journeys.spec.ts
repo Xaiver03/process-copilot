@@ -283,8 +283,8 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await capture(page, testInfo, "UJ06-02_管理运行概览");
 
     await page.getByRole("link", { name: "AI 配置" }).click();
-    await expect(page.getByRole("heading", { name: "在线 AI 配置" })).toBeVisible();
-    await expect(page.getByRole("status").filter({ hasText: "在线 AI 当前已禁用" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "AI 运行配置" })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "在线增强当前已禁用" })).toBeVisible();
     await page.getByRole("button", { name: "保存配置" }).click();
     await expect(page.getByRole("alert").filter({ hasText: /公开演示环境的 AI 配置为只读|read-only/i }))
       .toBeVisible();
@@ -454,7 +454,7 @@ test.describe.serial("序安完整前后端用户旅程", () => {
 
     await login(page, accounts.admin);
     await page.goto("/admin");
-    await expect(page.getByLabel("服务状态摘要")).toContainText("在线 AI");
+    await expect(page.getByLabel("服务状态摘要")).toContainText("在线增强路径");
     await expect(page.getByLabel("服务状态摘要")).toContainText("工业模型");
     await expect(page.getByLabel("服务状态摘要")).toContainText("语言模型");
     await capture(page, testInfo, "UJ10-01_AI运行与降级状态透明");
