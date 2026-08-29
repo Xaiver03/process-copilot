@@ -16,7 +16,7 @@
 - FastAPI + PostgreSQL：场景、回放、SSE、事件、幂等人工决策、审计记录和真实 readiness。
 - Next.js 驾驶舱：真实 scenario/run/event/decision/record 链路、网络降级、响应式和可访问性。
 - 完整管理后台：AI 运行概览、Provider 配置、密钥只写、调用记录、配置审计与管理员 RBAC。
-- 人机协同研判：事件证据内主动追问；公网复用 SSOS 的配置管理模式，已通过受控配置接入自有 OpenAI-compatible API 的 `gpt-5.5` 真实在线增强，单次调用失败时如实标记“模板降级”。
+- 人机协同研判：事件证据内主动追问；公网复用 SSOS 的配置管理模式，通过 OpenAI-compatible API 接入 DeepSeek，已实测返回 `llm_enhanced / deepseek-v4-flash`。单次失败仍按后端策略进入模板或降级，页面始终显示实际 mode/model/Trace；供应商密钥不写入仓库。
 - 受控执行预演：AI Trace 绑定人工编辑后的动作草案，后端持久化 5 道影子门禁；Demo 永远 `sent=false`，不向 PLC/DCS 发送。
 - 序安产品界面与组件规范：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
 - Docker Compose：Web、API、worker、PostgreSQL、Caddy 五个健康服务，含发布、备份和回滚脚本。
@@ -33,6 +33,28 @@
 - 公网管理后台可查看真实运行状态，但 AI 配置写入和连接测试默认关闭；有效密钥经受控管理员路由写入并由目标环境重新加密，不复制 SSOS 密文、不写入仓库。私有部署才可按白名单和出站策略开启变更。
 
 详细口径见 [数据说明](docs/submission/数据说明_v01_DRAFT.md)。
+
+## 技术栈与技术选型
+
+以下是当前代码和部署配置中的技术事实；版本范围以各层 `package.json`、`pyproject.toml` 和 [Compose 配置](infra/compose.yaml) 为准。
+
+| 层 | 当前选型 | 选择理由与边界 |
+| --- | --- | --- |
+| 前端 | Next.js 15、React 19、TypeScript；ECharts 用于过程图表 | 适合把驾驶舱、路由和服务端交付放在同一 Web 应用中，同时保留响应式、可访问性和可测试组件；前端只展示 API 返回的证据与状态。见 [`apps/web/package.json`](apps/web/package.json)。 |
+| 后端 | FastAPI、Pydantic 2、SQLAlchemy 2、Uvicorn；REST API + SSE 回放事件流 | 类型化契约、健康检查和实时回放边界清晰，便于把场景、run、事件、人工决策和审计记录拆开；接口契约集中在 [`packages/contracts/openapi.yaml`](packages/contracts/openapi.yaml)。 |
+| 数据库 | 部署使用 PostgreSQL 16、psycopg 3、Alembic；测试可注入 SQLite | PostgreSQL 负责持久化运行、事件、AI 交互、配置、决策和审计数据；SQLite 仅用于轻量测试与本地隔离，不代表生产数据库。 |
+| ML 与数据 | Python 3.12；NumPy、scikit-learn、PyArrow、Joblib、Parquet | TEP 使用 PCA T²/SPE 和候选分类，污水场景使用基于 7 个在线变量的 RandomForest 软测量；冻结数据和模型产物可校验、可重放，不把 Demo 结果表述为生产性能。见 [`services/ml/pyproject.toml`](services/ml/pyproject.toml)。 |
+| LLM 接入 | OpenAI-compatible HTTP 接口；配置项包括 provider、base URL、model、超时、token 上限和 fallback 策略 | 通过统一协议保留供应商可替换性，并将结构校验、只读提示词和模板/降级路径放在后端；当前公网使用 DeepSeek 配置，但供应商密钥、完整 endpoint 和运行时敏感配置不写入 README 或仓库。 |
+| 认证与权限 | 预置操作员账号、PBKDF2 口令哈希、HS256 JWT Bearer；operator / shift lead / admin 角色 | 满足 Demo 的登录、角色门禁和审计链路；不提供自助注册，不把 Demo 账号模式当作完整生产 IAM。实现见 [`apps/api/process_copilot_api/auth.py`](apps/api/process_copilot_api/auth.py)。 |
+| 部署与反向代理 | Docker Compose 编排 Web、API、worker、PostgreSQL、Caddy；Web 使用 Node 22 standalone，API/worker 使用 Python 3.12；Caddy 转发 Web 与 `/api`、健康检查路由 | 服务隔离、健康依赖、内部后端网络和公网 HTTPS 入口更容易复现；Caddy 对外提供入口，高位应用端口保持在宿主机回环/运维路径，不直接暴露给公网。见 [`infra/caddy/Caddyfile`](infra/caddy/Caddyfile)。 |
+| 测试与质量门禁 | API/ML 使用 pytest，Web 使用 Vitest + Testing Library；Playwright 做跨 BASE_URL 用户旅程；Redocly 做 OpenAPI 契约检查；另有 Ruff、ESLint、TypeScript、Next build 与基础设施校验 | 分层验证数据/模型、接口/持久化、组件交互、真实浏览器旅程和发布配置，避免只用单元测试推断端到端行为。统一入口见 [`Makefile`](Makefile) 与 [`tests/e2e`](tests/e2e)。 |
+
+### 当前 Demo 只读边界
+
+- 数据来自公开仿真或公开污水传感器记录，不是贵州企业真实生产数据；当前文档不宣称生产误报率、漏报率、提前量、收益或任何未验证性能。
+- AI 输出是证据整理、风险解释和检查建议，不是法规超限结论；预测边界、候选变量和模板回答均需人工确认。
+- Demo 不连接 PLC/DCS、联锁或控制回路；受控执行仅为影子门禁预演，保持 `sent=false`，不会向生产控制系统写回。
+- 公网或本地环境的 LLM 调用可能返回在线增强、模板或降级模式；页面必须展示实际 mode/model/Trace，不能把配置目标写成已验证结果。
 
 ## 快速验证
 
