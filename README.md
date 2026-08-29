@@ -4,7 +4,7 @@
 
 当前交付分支：`codex/process-sentinel-online-ai`
 
-主链路：`过程数据回放 -> 在线偏移发现 -> Top-3 候选与变量证据 -> 人机主动追问 -> 人工确认 -> 调用与决策审计`
+主链路：`过程数据回放 -> 在线偏移发现 -> Top-3 候选与变量证据 -> 人机主动追问 -> 人工确认 -> 影子门禁 -> 调用与决策审计`
 
 这不是泛化的“智慧工厂大屏”。它只聚焦连续生产装置的一个动作：当班工程师看到过程偏移后，快速判断“是不是真偏了、先看哪三个变量、下一步先查什么、谁确认过”。
 
@@ -16,7 +16,8 @@
 - FastAPI + PostgreSQL：场景、回放、SSE、事件、幂等人工决策、审计记录和真实 readiness。
 - Next.js 驾驶舱：真实 scenario/run/event/decision/record 链路、网络降级、响应式和可访问性。
 - 完整管理后台：AI 运行概览、Provider 配置、密钥只写、调用记录、配置审计与管理员 RBAC。
-- 人机协同研判：事件证据内主动追问；语言模型未开启时如实标记“模板降级”，不伪装在线调用。
+- 人机协同研判：事件证据内主动追问；公网已通过 SSOS 既有 AI 配置路径接入 `deepseek-chat` 真实在线增强，单次调用失败时如实标记“模板降级”。
+- 受控执行预演：AI Trace 绑定人工编辑后的动作草案，后端持久化 5 道影子门禁；Demo 永远 `sent=false`，不向 PLC/DCS 发送。
 - 序安产品界面与组件规范：[Figma](https://www.figma.com/design/lpsBWvjCx54fF28rWLMpBx)。
 - Docker Compose：Web、API、worker、PostgreSQL、Caddy 五个健康服务，含发布、备份和回滚脚本。
 
@@ -29,7 +30,7 @@
 - 场景：`F01 Feed composition step deviation`、`F06 A-feed loss`、`F13 Reaction kinetics slow drift`
 - 这是公开仿真数据，不是贵州企业真实生产数据；不能据此声称生产误报率、漏报率、提前量或收益。
 - 系统只提供读侧证据与建议，没有 DCS、PLC、联锁或控制回路写回能力。
-- 公网管理后台可查看真实运行状态，但 AI 配置写入和连接测试默认关闭；私有部署才可按白名单和出站策略启用。
+- 公网管理后台可查看真实运行状态，但 AI 配置写入和连接测试默认关闭；有效密钥经受控管理员路由写入并由目标环境重新加密，不复制 SSOS 密文、不写入仓库。私有部署才可按白名单和出站策略开启变更。
 
 详细口径见 [数据说明](docs/submission/数据说明_v01_DRAFT.md)。
 
@@ -50,7 +51,7 @@ make build
 BASE_URL=http://127.0.0.1:18090 CHECK_WEB=1 bash tests/e2e/smoke.sh
 ```
 
-当前 Web 验收基线：`79 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。API 为 `86 passed`，基础设施校验通过；ML 与契约使用各自验收命令独立复核。
+当前 Web 验收基线：`82 passed`；本轮同时通过 ESLint、TypeScript 和 Next.js production build。API 为 `94 passed`，ML 为 `63 passed`；契约与基础设施校验均通过。
 
 正式前后端用户旅程验收：
 
@@ -60,7 +61,7 @@ PLAYWRIGHT_EVIDENCE_TARGET=public \
 pnpm test:e2e:journeys
 ```
 
-同一套 Playwright 脚本在本地与公网均通过 `10/10`，覆盖 22 个关键状态并同时保存首屏与完整页面，共 88 张截图。UJ-09、UJ-10 专门验证工业模型证据、AI 追问、调用审计、运行与降级状态、密钥不回显和公网只读边界。详见 [完整用户旅程验收](docs/submission/序安完整用户旅程验收_v01_REVIEW.md)与 [AI 用户流程验收](docs/submission/序安AI用户流程验收_v01_REVIEW.md)。
+同一套 Playwright 脚本在本地与公网均通过 `11/11`，覆盖 23 个关键状态并同时保存首屏与完整页面，共 92 张截图。UJ-09 至 UJ-11 专门验证工业模型证据、AI 追问、调用审计、运行与降级状态、密钥不回显、人工编辑动作和后端持久化影子门禁。详见 [完整用户旅程验收](docs/submission/序安完整用户旅程验收_v01_REVIEW.md)与 [AI 用户流程验收](docs/submission/序安AI用户流程验收_v01_REVIEW.md)。
 
 ## 运行与部署
 
@@ -68,7 +69,7 @@ pnpm test:e2e:journeys
 - 专用目录：`/opt/process-copilot`
 - Compose project：`process-copilot`
 - 宿主高位端口：`18090`
-- 当前 release：`20260828T0530Z`
+- 当前部署源：`main@012fa86`（应用代码）；验收证据提交：`638d1e4`
 
 公网 HTTPS 入口已经通过宿主机 Caddy 反向代理接通：
 
