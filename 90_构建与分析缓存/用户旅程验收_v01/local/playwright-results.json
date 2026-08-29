@@ -83,7 +83,7 @@
         {
           "title": "序安完整前后端用户旅程",
           "file": "user-journeys.spec.ts",
-          "line": 151,
+          "line": 161,
           "column": 15,
           "specs": [
             {
@@ -102,12 +102,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 31489,
+                      "duration": 31947,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:00:20.918Z",
+                      "startTime": "2026-08-29T01:37:03.983Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -148,7 +148,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-f01231497c2ad1c21ad7",
               "file": "user-journeys.spec.ts",
-              "line": 165,
+              "line": 175,
               "column": 7
             },
             {
@@ -167,12 +167,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1056,
+                      "duration": 1269,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:06.206Z",
+                      "startTime": "2026-08-29T01:37:49.976Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -203,7 +203,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-92c5153c049816181903",
               "file": "user-journeys.spec.ts",
-              "line": 194,
+              "line": 204,
               "column": 7
             },
             {
@@ -222,12 +222,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1943,
+                      "duration": 2315,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:07.266Z",
+                      "startTime": "2026-08-29T01:37:51.250Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -258,7 +258,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-812a5346507f9da47473",
               "file": "user-journeys.spec.ts",
-              "line": 207,
+              "line": 217,
               "column": 7
             },
             {
@@ -277,12 +277,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1480,
+                      "duration": 1638,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:09.212Z",
+                      "startTime": "2026-08-29T01:37:53.572Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -303,7 +303,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-760784987e6a0e2d6b24",
               "file": "user-journeys.spec.ts",
-              "line": 230,
+              "line": 240,
               "column": 7
             },
             {
@@ -322,12 +322,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1514,
+                      "duration": 1612,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:10.695Z",
+                      "startTime": "2026-08-29T01:37:55.215Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -348,7 +348,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-2a69a08c7aa7d3faf586",
               "file": "user-journeys.spec.ts",
-              "line": 244,
+              "line": 254,
               "column": 7
             },
             {
@@ -367,12 +367,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2486,
+                      "duration": 2751,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:12.213Z",
+                      "startTime": "2026-08-29T01:37:56.831Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -433,7 +433,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-bbebcb6c56add5eec463",
               "file": "user-journeys.spec.ts",
-              "line": 257,
+              "line": 267,
               "column": 7
             },
             {
@@ -452,12 +452,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 499,
+                      "duration": 542,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:14.703Z",
+                      "startTime": "2026-08-29T01:37:59.587Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -478,7 +478,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-adf5d4b3944e640f9003",
               "file": "user-journeys.spec.ts",
-              "line": 294,
+              "line": 304,
               "column": 7
             },
             {
@@ -497,12 +497,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1989,
+                      "duration": 2351,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:15.206Z",
+                      "startTime": "2026-08-29T01:38:00.134Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -543,7 +543,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-dd6aefcd1211fa5bc0ae",
               "file": "user-journeys.spec.ts",
-              "line": 309,
+              "line": 319,
               "column": 7
             },
             {
@@ -562,12 +562,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1373,
+                      "duration": 1595,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:17.199Z",
+                      "startTime": "2026-08-29T01:38:02.490Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -598,7 +598,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-6130423b62ca0e9fec75",
               "file": "user-journeys.spec.ts",
-              "line": 334,
+              "line": 344,
               "column": 7
             },
             {
@@ -617,12 +617,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1133,
+                      "duration": 1220,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-28T17:01:18.576Z",
+                      "startTime": "2026-08-29T01:38:04.090Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -653,7 +653,52 @@
               ],
               "id": "e47fcf35bc402c5fa352-b6b1ae59e7de59175e57",
               "file": "user-journeys.spec.ts",
-              "line": 397,
+              "line": 407,
+              "column": 7
+            },
+            {
+              "title": "UJ-11 操作员以 AI Trace 编辑拟议动作并完成只读影子门禁核验",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 980,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-29T01:38:05.315Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "UJ11-01_AI人工编辑影子门禁-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--bfa3e--AI-Trace-编辑拟议动作并完成只读影子门禁核验/attachments/UJ11-01-AI人工编辑影子门禁-viewport-510cbb59b873def432b652e6961c440d173b3bcb.png"
+                        },
+                        {
+                          "name": "UJ11-01_AI人工编辑影子门禁-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程--bfa3e--AI-Trace-编辑拟议动作并完成只读影子门禁核验/attachments/UJ11-01-AI人工编辑影子门禁-full-page-adfbc6b3afc7e1394b98805bc5e7d52e7f0e9ffc.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e47fcf35bc402c5fa352-0eed8b41d50c9f3d83cb",
+              "file": "user-journeys.spec.ts",
+              "line": 470,
               "column": 7
             }
           ]
@@ -663,9 +708,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-28T17:00:20.726Z",
-    "duration": 59035.89,
-    "expected": 10,
+    "startTime": "2026-08-29T01:37:03.644Z",
+    "duration": 62723.468,
+    "expected": 11,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
