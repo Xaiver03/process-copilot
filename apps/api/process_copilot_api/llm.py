@@ -55,7 +55,7 @@ _CONTROL_ACTIONS_ZH = (
     r"设(?:置|定|为|成)|置(?:于)?|修改|改(?:为)?|调(?:整|节|高|低|至|为)|"
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
     r"降(?:低|至|温)|升温|重启|复位|上调|下调|增(?:加|大)|减(?:少|小)|"
-    r"切换|写(?:入|回)|下发|执行|控制"
+    r"切换|暂停|恢复|合上|断开|投入|投用|退出|跳闸|写(?:入|回)|下发|执行|控制"
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
@@ -63,8 +63,9 @@ _CONTROL_TARGETS_ZH = (
     r"寄存器|模式|报警|继电器|开关|接触器|断路器|控制器|执行器"
 )
 _CONTROL_ACTIONS_EN = (
-    r"set|write|change|adjust|open|close|increase|decrease|restart|reset|switch|"
-    r"start|stop|enable|disable|execute"
+    r"set|write|change|adjust|open|close|increase|decrease|raise|lower|restart|"
+    r"reboot|reset|switch|start|stop|enable|disable|execute|turn\s+(?:on|off)|"
+    r"power\s+(?:on|off)"
 )
 _CONTROL_TARGETS_EN = (
     r"valve|pressure|flow|temperature|setpoint|output|motor|pump|relay|mode|alarm|"
@@ -463,6 +464,8 @@ def _unsafe_answer(answer: str) -> bool:
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     compact_text = re.sub(r"[\W_]+", "", text_to_check, flags=re.UNICODE)
+    if re.search(r"写入|下发(?:控制)?命令|发送(?:控制)?指令", compact_text):
+        return True
     if re.search(_CONTROL_ACTIONS_ZH, compact_text) and re.search(
         _CONTROL_TARGETS_ZH, compact_text
     ):
