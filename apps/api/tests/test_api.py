@@ -361,7 +361,7 @@ def test_catalog_accepts_allowlisted_wastewater_prediction_scenario(tmp_path: Pa
                 "faultOnsetSample": 86,
                 "sourceLabel": "UCI Water Treatment Plant public sensor data",
                 "domain": "wastewater",
-                "modelFamily": "uci-wtp-pca-softsensor",
+                "modelFamily": "uci-wtp-rf-softsensor",
                 "sampleIntervalSeconds": 86400,
                 "recommendedInferenceMode": "template",
             }
@@ -374,7 +374,7 @@ def test_catalog_accepts_allowlisted_wastewater_prediction_scenario(tmp_path: Pa
     scenario = catalog.get("uci-wtp-effluent")
     assert scenario is not None
     assert scenario.domain == "wastewater"
-    assert scenario.model_family == "uci-wtp-pca-softsensor"
+    assert scenario.model_family == "uci-wtp-rf-softsensor"
     assert scenario.sample_interval_seconds == 86400
     assert scenario.recommended_inference_mode == "template"
     assert catalog.readiness() == ("ok", "manifest loaded")
@@ -392,7 +392,7 @@ def test_wastewater_event_preserves_prediction_evidence(tmp_path: Path):
         "faultOnsetSample": 86,
         "sourceLabel": "UCI Water Treatment Plant public sensor data",
         "domain": "wastewater",
-        "modelFamily": "uci-wtp-pca-softsensor",
+        "modelFamily": "uci-wtp-rf-softsensor",
         "sampleIntervalSeconds": 86400,
         "recommendedInferenceMode": "template",
     }
@@ -445,7 +445,7 @@ def test_wastewater_event_preserves_prediction_evidence(tmp_path: Path):
             "riskLevel": "elevated",
             "boundaryBasis": "训练期出水 COD 第 95 百分位，不是法规排放限值。",
         },
-        "modelVersion": "uci-wtp-pca-softsensor-v1",
+        "modelVersion": "uci-wtp-rf-softsensor-v1",
         "dataSourceDisclosure": "Public UCI wastewater sensor data, not real Guizhou plant data.",
     }
     (scenario_dir / "event-template.json").write_text(json.dumps(template), encoding="utf-8")

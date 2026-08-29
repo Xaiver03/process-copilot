@@ -574,7 +574,7 @@ components:
         domain:
           enum: [continuous_chemical, wastewater]
         modelFamily:
-          enum: [tep-pca-hgb, uci-wtp-pca-softsensor]
+          enum: [tep-pca-hgb, uci-wtp-rf-softsensor]
         sampleIntervalSeconds:
           type: integer
           minimum: 1

@@ -17,7 +17,7 @@ SOURCE_DEFAULTS: dict[str, dict[str, Any]] = {
     },
     WASTEWATER_SOURCE_LABEL: {
         "domain": "wastewater",
-        "model_family": "uci-wtp-pca-softsensor",
+        "model_family": "uci-wtp-rf-softsensor",
         "sample_interval_seconds": 86400,
         "recommended_inference_mode": "template",
     },

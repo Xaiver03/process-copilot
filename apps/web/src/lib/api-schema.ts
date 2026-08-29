@@ -386,7 +386,7 @@ export interface components {
             /** @enum {unknown} */
             domain: "continuous_chemical" | "wastewater";
             /** @enum {unknown} */
-            modelFamily: "tep-pca-hgb" | "uci-wtp-pca-softsensor";
+            modelFamily: "tep-pca-hgb" | "uci-wtp-rf-softsensor";
             sampleIntervalSeconds: number;
             /** @enum {unknown} */
             recommendedInferenceMode: "online" | "template";

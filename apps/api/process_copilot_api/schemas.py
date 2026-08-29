@@ -37,7 +37,7 @@ class Scenario(ContractModel):
         "UCI Water Treatment Plant public sensor data",
     ]
     domain: Literal["continuous_chemical", "wastewater"]
-    model_family: Literal["tep-pca-hgb", "uci-wtp-pca-softsensor"]
+    model_family: Literal["tep-pca-hgb", "uci-wtp-rf-softsensor"]
     sample_interval_seconds: int = Field(ge=1)
     recommended_inference_mode: Literal["online", "template"]
 
