@@ -381,8 +381,15 @@ export interface components {
             faultId: number;
             sampleCount: number;
             faultOnsetSample: number;
-            /** @constant */
-            sourceLabel: "Tennessee Eastman Process public simulation";
+            /** @enum {unknown} */
+            sourceLabel: "Tennessee Eastman Process public simulation" | "UCI Water Treatment Plant public sensor data";
+            /** @enum {unknown} */
+            domain: "continuous_chemical" | "wastewater";
+            /** @enum {unknown} */
+            modelFamily: "tep-pca-hgb" | "uci-wtp-pca-softsensor";
+            sampleIntervalSeconds: number;
+            /** @enum {unknown} */
+            recommendedInferenceMode: "online" | "template";
         };
         CreateRunRequest: {
             scenarioId: string;
@@ -454,16 +461,29 @@ export interface components {
             /** @constant */
             safetyBoundary: "Read-only advice. No automatic control write-back.";
         };
+        PredictionEvidence: {
+            targetId: string;
+            targetName: string;
+            unit: string;
+            horizonSamples: number;
+            horizonLabel: string;
+            predictedValue: number;
+            observedValue?: number | null;
+            historicalHighBoundary: number;
+            uncertaintyMae: number;
+            lowerBound: number;
+            upperBound: number;
+            /** @enum {unknown} */
+            riskLevel: "normal" | "elevated" | "high" | "unknown";
+            boundaryBasis: string;
+        };
         EventDetail: components["schemas"]["AnomalyEvent"] & {
             /** @description First sample where the anomaly event was latched. */
             detectionSample: number;
             /** @description Sample used for the latest delayed candidate and evidence refresh. */
             diagnosisSample: number;
-            /**
-             * @description Pre-registered, label-independent delay after anomaly detection.
-             * @constant
-             */
-            diagnosisDelaySamples: 20;
+            /** @description Scenario-specific, label-independent delay after anomaly detection. */
+            diagnosisDelaySamples: number;
             /** @enum {unknown} */
             diagnosisState: "pending" | "provisional" | "updated";
             diagnosisAnomalyScore: number;
@@ -473,9 +493,10 @@ export interface components {
             candidates: components["schemas"]["FaultCandidate"][];
             evidence: components["schemas"]["EvidenceItem"][];
             recommendation: components["schemas"]["Recommendation"];
+            prediction?: components["schemas"]["PredictionEvidence"] | null;
             modelVersion: string;
-            /** @constant */
-            dataSourceDisclosure: "Public simulation data, not real Guizhou plant data.";
+            /** @enum {unknown} */
+            dataSourceDisclosure: "Public simulation data, not real Guizhou plant data." | "Public UCI wastewater sensor data, not real Guizhou plant data.";
         };
         InferenceSnapshot: {
             /** Format: uuid */

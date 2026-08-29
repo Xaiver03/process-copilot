@@ -19,6 +19,10 @@ export const demoScenario: Scenario = {
   sampleCount: 500,
   faultOnsetSample: 160,
   sourceLabel: "Tennessee Eastman Process public simulation",
+  domain: "continuous_chemical",
+  modelFamily: "tep-pca-hgb",
+  sampleIntervalSeconds: 180,
+  recommendedInferenceMode: "online",
 };
 
 export const demoEvent: EventDetail = {

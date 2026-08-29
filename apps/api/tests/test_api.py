@@ -347,6 +347,126 @@ def test_catalog_reads_agent_generated_scenario_and_event_template(tmp_path: Pat
     assert catalog.event_template("tep-f01-feed-ratio-step")["sampleIndex"] == 161
 
 
+def test_catalog_accepts_allowlisted_wastewater_prediction_scenario(tmp_path: Path):
+    scenario_dir = tmp_path / "scenarios" / "uci-wtp-effluent"
+    scenario_dir.mkdir(parents=True)
+    (scenario_dir / "scenario.json").write_text(
+        json.dumps(
+            {
+                "id": "uci-wtp-effluent",
+                "name": "出水风险预判",
+                "description": "基于当前过程变量预测下一化验周期的出水 COD 风险。",
+                "faultId": 0,
+                "sampleCount": 156,
+                "faultOnsetSample": 86,
+                "sourceLabel": "UCI Water Treatment Plant public sensor data",
+                "domain": "wastewater",
+                "modelFamily": "uci-wtp-pca-softsensor",
+                "sampleIntervalSeconds": 86400,
+                "recommendedInferenceMode": "template",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    catalog = DataCatalog(tmp_path)
+
+    scenario = catalog.get("uci-wtp-effluent")
+    assert scenario is not None
+    assert scenario.domain == "wastewater"
+    assert scenario.model_family == "uci-wtp-pca-softsensor"
+    assert scenario.sample_interval_seconds == 86400
+    assert scenario.recommended_inference_mode == "template"
+    assert catalog.readiness() == ("ok", "manifest loaded")
+
+
+def test_wastewater_event_preserves_prediction_evidence(tmp_path: Path):
+    data_dir = tmp_path / "processed"
+    scenario_dir = data_dir / "scenarios" / "uci-wtp-effluent"
+    scenario_dir.mkdir(parents=True)
+    scenario = {
+        "id": "uci-wtp-effluent",
+        "name": "出水风险预判",
+        "faultId": 0,
+        "sampleCount": 156,
+        "faultOnsetSample": 86,
+        "sourceLabel": "UCI Water Treatment Plant public sensor data",
+        "domain": "wastewater",
+        "modelFamily": "uci-wtp-pca-softsensor",
+        "sampleIntervalSeconds": 86400,
+        "recommendedInferenceMode": "template",
+    }
+    (scenario_dir / "scenario.json").write_text(json.dumps(scenario), encoding="utf-8")
+    candidate = {"faultId": 0, "label": "出水质量风险", "probability": 0.82}
+    evidence = {
+        "variableId": "DQO-D",
+        "variableName": "二沉池入口化学需氧量",
+        "unit": "mg/L",
+        "contribution": 0.8,
+        "direction": "up",
+        "summary": "连续高于训练期中位水平",
+        "values": [198.0, 206.0, 217.0],
+    }
+    template = {
+        "sampleIndex": 86,
+        "detectionSample": 86,
+        "diagnosisSample": 87,
+        "diagnosisDelaySamples": 1,
+        "diagnosisState": "updated",
+        "diagnosisAnomalyScore": 0.82,
+        "anomalyLatched": True,
+        "anomalyScore": 0.82,
+        "initialCandidates": [candidate],
+        "candidates": [candidate],
+        "evidence": [
+            evidence,
+            {**evidence, "variableId": "SS-D", "variableName": "二沉池入口悬浮物"},
+            {**evidence, "variableId": "PH-D", "variableName": "二沉池入口 pH"},
+        ],
+        "recommendation": {
+            "mode": "template",
+            "risk": "下一化验周期出水 COD 进入历史高位区间",
+            "checks": ["核对二沉池入口负荷与取样时间"],
+            "actions": ["由操作员确认是否升级复核"],
+            "safetyBoundary": "Read-only advice. No automatic control write-back.",
+        },
+        "prediction": {
+            "targetId": "DQO-S",
+            "targetName": "出水化学需氧量",
+            "unit": "mg/L",
+            "horizonSamples": 1,
+            "horizonLabel": "下一化验周期",
+            "predictedValue": 92.4,
+            "observedValue": None,
+            "historicalHighBoundary": 88.0,
+            "uncertaintyMae": 6.2,
+            "lowerBound": 86.2,
+            "upperBound": 98.6,
+            "riskLevel": "elevated",
+            "boundaryBasis": "训练期出水 COD 第 95 百分位，不是法规排放限值。",
+        },
+        "modelVersion": "uci-wtp-pca-softsensor-v1",
+        "dataSourceDisclosure": "Public UCI wastewater sensor data, not real Guizhou plant data.",
+    }
+    (scenario_dir / "event-template.json").write_text(json.dumps(template), encoding="utf-8")
+    app = create_app(database_url=f"sqlite:///{tmp_path / 'api.db'}", data_dir=data_dir)
+
+    with TestClient(app) as test_client:
+        run = test_client.post("/api/v1/runs", json={"scenarioId": scenario["id"]}).json()
+        event = test_client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
+        response = test_client.get(f"/api/v1/events/{event['id']}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["diagnosisDelaySamples"] == 1
+    assert payload["prediction"]["targetId"] == "DQO-S"
+    assert payload["prediction"]["riskLevel"] == "elevated"
+    assert "不是法规排放限值" in payload["prediction"]["boundaryBasis"]
+    assert payload["dataSourceDisclosure"] == (
+        "Public UCI wastewater sensor data, not real Guizhou plant data."
+    )
+
+
 def test_event_detail_preserves_two_stage_generated_template(tmp_path: Path):
     data_dir = tmp_path / "processed"
     scenario_dir = data_dir / "scenarios" / "tep-f01-feed-ratio-step"
@@ -965,6 +1085,35 @@ def test_catalog_rejects_invalid_provenance_without_relabeling(tmp_path: Path):
     assert catalog.readiness()[1] != "manifest loaded"
 
 
+def test_catalog_rejects_allowlisted_source_with_mismatched_domain(tmp_path: Path):
+    (tmp_path / "manifest.json").write_text(
+        json.dumps(
+            {
+                "scenarios": [
+                    {
+                        "id": "mislabeled-source",
+                        "name": "Mismatched source",
+                        "faultId": 0,
+                        "sampleCount": 100,
+                        "faultOnsetSample": 10,
+                        "sourceLabel": "UCI Water Treatment Plant public sensor data",
+                        "domain": "continuous_chemical",
+                        "modelFamily": "tep-pca-hgb",
+                        "sampleIntervalSeconds": 180,
+                        "recommendedInferenceMode": "online",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    catalog = DataCatalog(tmp_path)
+
+    assert catalog.get("mislabeled-source") is None
+    assert catalog.readiness()[0] == "degraded"
+
+
 def test_openapi_surface_matches_frozen_contract():
     app = create_app(database_url="sqlite:///:memory:", data_dir=Path("/does/not/exist"))
     actual = app.openapi()
@@ -986,6 +1135,7 @@ def test_openapi_surface_matches_frozen_contract():
         "ReplayRun",
         "AnomalyEvent",
         "EventDetail",
+        "PredictionEvidence",
         "DecisionRecord",
         "Problem",
     ):
@@ -1000,3 +1150,10 @@ def test_openapi_surface_matches_frozen_contract():
         "anomalyLatched",
         "initialCandidates",
     } <= event_required
+    scenario_required = set(actual["components"]["schemas"]["Scenario"].get("required", []))
+    assert {
+        "domain",
+        "modelFamily",
+        "sampleIntervalSeconds",
+        "recommendedInferenceMode",
+    } <= scenario_required

@@ -548,7 +548,17 @@ components:
             type: string
     Scenario:
       type: object
-      required: [id, name, faultId, sampleCount, faultOnsetSample, sourceLabel]
+      required:
+        - id
+        - name
+        - faultId
+        - sampleCount
+        - faultOnsetSample
+        - sourceLabel
+        - domain
+        - modelFamily
+        - sampleIntervalSeconds
+        - recommendedInferenceMode
       properties:
         id: {type: string}
         name: {type: string}
@@ -558,7 +568,18 @@ components:
         sampleCount: {type: integer, minimum: 1}
         faultOnsetSample: {type: integer, minimum: 0}
         sourceLabel:
-          const: Tennessee Eastman Process public simulation
+          enum:
+            - Tennessee Eastman Process public simulation
+            - UCI Water Treatment Plant public sensor data
+        domain:
+          enum: [continuous_chemical, wastewater]
+        modelFamily:
+          enum: [tep-pca-hgb, uci-wtp-pca-softsensor]
+        sampleIntervalSeconds:
+          type: integer
+          minimum: 1
+        recommendedInferenceMode:
+          enum: [online, template]
     CreateRunRequest:
       type: object
       required: [scenarioId]
@@ -608,7 +629,7 @@ components:
       properties:
         variableId:
           type: string
-          pattern: '^(XMEAS|XMV)\([0-9]+\)$'
+          pattern: '^[A-Z][A-Z0-9-]*(?:\([0-9]+\))?$'
         variableName: {type: string}
         unit: {type: string}
         contribution: {type: number, minimum: 0}
@@ -631,6 +652,37 @@ components:
           items: {type: string}
         safetyBoundary:
           const: Read-only advice. No automatic control write-back.
+    PredictionEvidence:
+      type: object
+      required:
+        - targetId
+        - targetName
+        - unit
+        - horizonSamples
+        - horizonLabel
+        - predictedValue
+        - historicalHighBoundary
+        - uncertaintyMae
+        - lowerBound
+        - upperBound
+        - riskLevel
+        - boundaryBasis
+      properties:
+        targetId: {type: string}
+        targetName: {type: string}
+        unit: {type: string}
+        horizonSamples: {type: integer, minimum: 1}
+        horizonLabel: {type: string}
+        predictedValue: {type: number}
+        observedValue:
+          type: [number, "null"]
+        historicalHighBoundary: {type: number}
+        uncertaintyMae: {type: number, minimum: 0}
+        lowerBound: {type: number}
+        upperBound: {type: number}
+        riskLevel:
+          enum: [normal, elevated, high, unknown]
+        boundaryBasis: {type: string}
     EventDetail:
       allOf:
         - $ref: "#/components/schemas/AnomalyEvent"
@@ -659,8 +711,8 @@ components:
               description: Sample used for the latest delayed candidate and evidence refresh.
             diagnosisDelaySamples:
               type: integer
-              const: 20
-              description: Pre-registered, label-independent delay after anomaly detection.
+              minimum: 0
+              description: Scenario-specific, label-independent delay after anomaly detection.
             diagnosisState:
               enum: [pending, provisional, updated]
             diagnosisAnomalyScore:
@@ -686,9 +738,15 @@ components:
                 $ref: "#/components/schemas/EvidenceItem"
             recommendation:
               $ref: "#/components/schemas/Recommendation"
+            prediction:
+              oneOf:
+                - $ref: "#/components/schemas/PredictionEvidence"
+                - type: "null"
             modelVersion: {type: string}
             dataSourceDisclosure:
-              const: Public simulation data, not real Guizhou plant data.
+              enum:
+                - Public simulation data, not real Guizhou plant data.
+                - Public UCI wastewater sensor data, not real Guizhou plant data.
     InferenceSnapshot:
       type: object
       required: [runId, sampleIndex, t2, spe, anomalyScore, alarmState, modelVersion, latencyMs]
