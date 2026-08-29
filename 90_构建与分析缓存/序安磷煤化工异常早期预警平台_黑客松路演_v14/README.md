@@ -17,7 +17,7 @@ authoring/build_v14.cjs
 
 ## 资产
 
-- `assets/序安标志_v04.svg`：v04“异常边界截获”矢量标志。
+- Logo 唯一事实源：`apps/web/public/brand/xuanan-anomaly-intercept-v04.svg`（v04“异常边界截获”矢量标志）。PPT 生成器直接引用该正式资产，不再使用独立复制件。
 - `assets/园区封面主视觉.png`：AI 生成的无文字磷煤化工园区主视觉。
 - `assets/过滤异常主视觉.png`：AI 生成的无文字过滤/管线异常叙事主视觉。
 - `assets/screenshots/公网在线回放_1440.png`：2026-08-29 Playwright 公网实拍。

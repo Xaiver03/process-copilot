@@ -17,7 +17,8 @@ const assets = path.join(build, 'assets');
 const project = path.resolve(build, '..', '..');
 const out = path.join(project, '04_交付成品', '序安_磷煤化工异常早期预警平台_黑客松路演_v14_ZH_REVIEW.pptx');
 const scriptOut = path.join(project, 'docs', 'submission', '序安_磷煤化工异常早期预警平台_黑客松路演逐字稿_v14_REVIEW.md');
-const logo = path.join(assets, '序安标志_v04.svg');
+// 正式品牌事实源：序安“异常边界截获”v04。禁止改回旧眼形标志或 favicon。
+const logo = path.join(project, 'apps/web/public/brand/xuanan-anomaly-intercept-v04.svg');
 const hero = path.join(assets, '园区封面主视觉.png');
 const processHero = path.join(assets, '过滤异常主视觉.png');
 const replayShot = path.join(assets, 'screenshots', '公网在线回放_1440.png');
@@ -31,7 +32,7 @@ function dot(slide,x,y,color=C.cyan,r=0.1){slide.addShape(pptx.ShapeType.ellipse
 function arrow(slide,x,y,w,color=C.cyan){slide.addShape(pptx.ShapeType.line,{x,y,w,h:0,line:{color,width:2.4,endArrowType:'triangle'}});}
 function badge(slide,value,x,y,w,fill=C.pale,color=C.teal){box(slide,x,y,w,0.38,fill,fill);text(slide,value,x+0.1,y+0.02,w-0.2,0.31,12,color,true,{align:'center'});}
 function header(slide,kicker,title,sub=''){text(slide,kicker,0.72,0.34,5.5,0.3,12,C.teal,true,{charSpacing:1.6});text(slide,title,0.72,0.75,11.7,0.62,30,C.navy,true);if(sub)text(slide,sub,0.74,1.42,11.5,0.36,16,C.gray);}
-function brand(slide,dark=false){slide.addImage({path:logo,x:11.85,y:0.28,w:0.5,h:0.5});text(slide,'序安',12.3,0.36,0.6,0.28,13,dark?C.white:C.navy,true);}
+function brand(slide,dark=false){slide.addImage({path:logo,x:11.66,y:0.22,w:0.62,h:0.62});text(slide,'序安',12.24,0.35,0.72,0.3,14,dark?C.white:C.navy,true);}
 function base(){const s=pptx.addSlide();s.background={color:C.bg};s.addShape(pptx.ShapeType.line,{x:0.72,y:7.08,w:11.9,h:0,line:{color:C.border,width:1}});text(s,'序安·磷煤化工异常早期预警平台',0.72,7.16,5.6,0.18,9,C.gray);text(s,String(pptx._slides.length).padStart(2,'0'),12.15,7.16,0.45,0.18,9,C.gray,true,{align:'right'});return s;}
 function note(slide,title,value){slide.addNotes(value);notes.push({title,value});}
 
@@ -40,7 +41,7 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
  const s=pptx.addSlide();s.background={color:C.deep};s.addImage({path:hero,x:0,y:0,w:13.333,h:7.5});
  s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:8.2,h:7.5,fill:{color:C.deep,transparency:12},line:{color:C.deep,transparency:100}});
  s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:7.5,fill:{color:'00101C',transparency:48},line:{color:'00101C',transparency:100}});
- s.addImage({path:logo,x:0.8,y:0.62,w:0.62,h:0.62});text(s,'序安',1.5,0.73,1.0,0.34,18,C.white,true);badge(s,'黑客松路演 · REVIEW',0.8,1.55,2.4,'12374A',C.cyan);
+ s.addImage({path:logo,x:0.8,y:0.56,w:0.82,h:0.82});text(s,'序安',1.68,0.76,1.12,0.38,21,C.white,true);badge(s,'黑客松路演 · REVIEW',0.8,1.55,2.4,'12374A',C.cyan);
  text(s,'磷煤化工异常\n早期预警平台',0.8,2.05,7.35,1.62,42,C.white,true);
  text(s,'让异常在事故之前、在化验结果之前被看见',0.82,4.02,7.7,0.55,22,C.cyan,true);
  text(s,'读懂 DCS 时序信号 · 给出原因证据 · 由人确认闭环',0.82,4.77,7.2,0.42,17,C.white);
