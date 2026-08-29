@@ -56,7 +56,7 @@ _CONTROL_ACTIONS_ZH = (
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
     r"降(?:低|至|温)|升温|重启|复位|上调|下调|增(?:加|大)|减(?:少|小)|"
     r"切换|暂停|恢复|保持|维持|合上|断开|投入|投用|退出|跳闸|"
-    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|传(?:送|输)|转发|发布|执行|控制|调控|激活"
+    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|传(?:送|输)|转发|发布|同步|广播|执行|控制|调控|激活"
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
@@ -66,7 +66,7 @@ _CONTROL_TARGETS_ZH = (
 _CONTROL_ACTIONS_EN = (
     r"set|write|change|adjust|open|close|increase|decrease|raise|lower|restart|"
     r"reboot|reset|switch|start|stop|enable|disable|execute|send|transmit|forward|relay|route|"
-    r"issue|dispatch|"
+    r"issue|dispatch|push|distribute|broadcast|sync|"
     r"command|maintain|keep|hold|"
     r"turn\s+(?:on|off)|power\s+(?:on|off)"
 )

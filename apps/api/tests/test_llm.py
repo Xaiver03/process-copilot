@@ -384,6 +384,13 @@ def test_read_only_control_system_disclaimers_are_accepted(
         "不涉及任何控制写回；请保持温度为 80℃。",
         "把流量调整至 20%。",
         "请将设定值改为 10%。",
+        "同步 P.L.C. 数据。",
+        "向 DCS 广播数据。",
+        "Push data to PLC.",
+        "Distribute data to DCS.",
+        "把阀门打开。",
+        "将压力设定值调高。",
+        "把流量调整至 20%。",
         "请将压\u200b力设定值调\u200b高 5%。",
     ],
 )
