@@ -59,9 +59,17 @@ _CONTROL_ACTIONS_ZH = (
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
-    r"设定值|给定值|输出|加热|冷却|进料|出料|回流|搅拌|风机|压缩机|电机|寄存器"
+    r"设定值|给定值|输出|加热|冷却|进料|出料|回流|搅拌|风机|压缩机|电机|"
+    r"寄存器|模式|报警|继电器|开关|接触器|断路器|控制器|执行器"
 )
-_CONTROL_DIRECTIVE_MARKERS_ZH = r"请|建议|应当|必须|需要|务必|立即|马上|把|将|可将|可以将"
+_CONTROL_ACTIONS_EN = (
+    r"set|write|change|adjust|open|close|increase|decrease|restart|reset|switch|"
+    r"start|stop|enable|disable|execute"
+)
+_CONTROL_TARGETS_EN = (
+    r"valve|pressure|flow|temperature|setpoint|output|motor|pump|relay|mode|alarm|"
+    r"controller|actuator|heater|cooler|compressor|fan"
+)
 _UNSAFE_RESPONSE_PATTERNS = tuple(
     re.compile(pattern, re.IGNORECASE)
     for pattern in (
@@ -455,10 +463,13 @@ def _unsafe_answer(answer: str) -> bool:
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     compact_text = re.sub(r"[\W_]+", "", text_to_check, flags=re.UNICODE)
-    if (
-        re.search(_CONTROL_DIRECTIVE_MARKERS_ZH, compact_text)
-        and re.search(_CONTROL_ACTIONS_ZH, compact_text)
-        and re.search(_CONTROL_TARGETS_ZH, compact_text)
+    if re.search(_CONTROL_ACTIONS_ZH, compact_text) and re.search(
+        _CONTROL_TARGETS_ZH, compact_text
+    ):
+        return True
+    lowercase_text = text_to_check.lower()
+    if re.search(rf"\b(?:{_CONTROL_ACTIONS_EN})\b", lowercase_text) and re.search(
+        rf"\b(?:{_CONTROL_TARGETS_EN})\b", lowercase_text
     ):
         return True
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)
