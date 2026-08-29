@@ -22,15 +22,20 @@ authoring/build_v14.cjs
 - `assets/过滤异常主视觉.png`：AI 生成的无文字过滤/管线异常叙事主视觉。
 - `assets/screenshots/公网在线回放_1440.png`：2026-08-29 Playwright 公网实拍。
 - `assets/screenshots/公网事件列表_1440.png`：2026-08-29 Playwright 公网实拍，作为备用证据。
+- `assets/screenshots/公网DeepSeek_AI研判与证据解释_首屏.png`：2026-08-30 Playwright 公网实拍，用于第 5 页真实 `llm_enhanced / deepseek-v4-flash` AI 研判链路。
+- `assets/screenshots/公网AI配置只读边界_全页.png` 与 `assets/screenshots/公网AI运行状态_全页.png`：2026-08-30 公网 AI 配置、运行状态与只读边界备用证据。
 
 ## QA
 
-- `qa/final-render/`：10 页 144 dpi 最终渲染。
-- `qa/final-contact-sheet.png`：最终逐页总览。
+- `qa/content-gate-final/render/`：12 页 144 dpi 最终渲染。
+- `qa/content-gate-final/contact-sheet.png`：12 页最终逐页总览。
+- `qa/content-gate-final/extracted.txt`：8 项强制内容的 PDF 文本检索事实源。
+- `qa/content-gate-final/pdf/`：12 页审核 PDF。
+- `qa/public-11of11-final/`：公网完整用户旅程 11/11 通过后的第 6 页证据渲染与同版 PDF；该结果证明 Demo 可复现，不代表生产验证。
 - `qa/slides-test.txt`：画布溢出检查。
 - `qa/notes-transcript-check.txt`：演讲者备注与逐字稿逐页一致性。
 - `qa/pdffonts.txt`：字体嵌入记录。
 - `qa/pdfinfo.txt`：页数与页面尺寸。
 - `qa/sha256.txt`：PPTX、PDF 哈希。
 
-真实 `llm_enhanced` 截图不在本版本中伪造；当前使用在线回放真实截图完成产品旅程展示。
+本版第 5 页已使用 2026-08-30 Playwright 公网真实截图，实测口径为 `llm_enhanced / deepseek-v4-flash`。该证据只说明公网 Demo 的语言模型解释链路已打通，不代表生产系统验证、自动控制能力或与贵州企业存在合作。
