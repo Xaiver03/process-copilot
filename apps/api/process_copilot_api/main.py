@@ -20,7 +20,15 @@ from pydantic import ValidationError
 from sqlalchemy import case, delete, select
 from sqlalchemy.exc import IntegrityError
 
-from .ai_config import AIConfigPatch, AIConfigService, AIConfigValidationError
+from .ai_config import (
+    AIConfig as DomainAIConfig,
+)
+from .ai_config import (
+    AIConfigPatch,
+    AIConfigService,
+    AIConfigValidationError,
+    resolve_config_from_env,
+)
 from .ai_config_store import AIConfigConflictError, SQLAlchemyAIConfigRepository
 from .auth import (
     ROLE_ORDER,
@@ -32,7 +40,7 @@ from .auth import (
     seed_operators,
 )
 from .catalog import DataCatalog
-from .crypto import EncryptionKeyError, decrypt_api_key
+from .crypto import EncryptionKeyError, decrypt_api_key, encrypt_api_key
 from .db import (
     AdminAuditRow,
     AIInteractionRow,
@@ -176,6 +184,28 @@ def _online_model_version(data_dir: Path) -> str:
         return "online-model-pending"
     version = payload.get("modelVersion")
     return version if isinstance(version, str) and version else "online-model-pending"
+
+
+def _initial_ai_config() -> tuple[DomainAIConfig, str | None]:
+    env_config = resolve_config_from_env()
+    if env_config is not None:
+        api_key = os.getenv("AI_API_KEY") or os.getenv("LLM_API_KEY")
+        return env_config, encrypt_api_key(api_key) if api_key else None
+    return (
+        DomainAIConfig(
+            enabled=False,
+            provider="disabled",
+            baseUrl="https://localhost",
+            model="not-configured",
+            timeout=8,
+            maxTokens=500,
+            temperature=0.2,
+            promptVersion="event-copilot-v01",
+            fallbackMode="template",
+            version=1,
+        ),
+        None,
+    )
 
 
 def _append_stream_message(
@@ -472,20 +502,9 @@ def create_app(
     seed_operators(app.state.database)
     app.state.ai_config_repository = SQLAlchemyAIConfigRepository(app.state.database)
     app.state.ai_config_service = AIConfigService(app.state.ai_config_repository)
-    if app.state.ai_config_service.get() is None:
-        app.state.ai_config_service.update(
-            AIConfigPatch(
-                enabled=False,
-                provider="disabled",
-                baseUrl="https://localhost",
-                model="not-configured",
-                timeout=8,
-                maxTokens=500,
-                temperature=0.2,
-                promptVersion="event-copilot-v01",
-                fallbackMode="template",
-            )
-        )
+    if app.state.ai_config_repository.load() is None:
+        config, api_key_ciphertext = _initial_ai_config()
+        app.state.ai_config_repository.save(config, api_key_ciphertext)
     app.state.ai_test_attempts = defaultdict(list)
 
     def runtime_llm_context() -> tuple[LLMSettings, int]:

@@ -6,10 +6,13 @@ from uuid import uuid4
 
 import pytest
 import yaml
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from process_copilot_api.auth import token_secret
 from process_copilot_api.catalog import DataCatalog
+from process_copilot_api.crypto import decrypt_api_key
 from process_copilot_api.db import (
+    AIConfigurationRow,
     AnomalyEventRow,
     ReplayRunRow,
     RunInferenceStateRow,
@@ -243,6 +246,81 @@ def test_create_app_runs_ready_database(tmp_path: Path):
     data_dir.mkdir()
     app = create_app(database_url=f"sqlite:///{tmp_path / 'api.db'}", data_dir=data_dir)
     assert app.state.database.check_ready() is None
+
+
+def test_create_app_bootstraps_ai_config_from_llm_environment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    for name in (
+        "AI_ENABLED",
+        "AI_PROVIDER",
+        "AI_BASE_URL",
+        "AI_MODEL",
+        "AI_API_KEY",
+        "AI_TIMEOUT",
+        "AI_MAX_TOKENS",
+        "AI_TEMPERATURE",
+        "AI_PROMPT_VERSION",
+        "AI_FALLBACK_MODE",
+        "AI_CONFIG_VERSION",
+        "APP_ENV",
+        "AI_ALLOWED_HOSTS",
+        "LLM_ALLOWED_HOSTS",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    encryption_key = Fernet.generate_key().decode("ascii")
+    monkeypatch.setenv("AI_CONFIG_ENCRYPTION_KEY", encryption_key)
+    monkeypatch.setenv("LLM_PROVIDER", "openai-compatible")
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm.example.test/v1")
+    monkeypatch.setenv("LLM_MODEL", "sentinel-explainer")
+    monkeypatch.setenv("LLM_API_KEY", "runtime-secret")
+    monkeypatch.setenv("LLM_ALLOWED_HOSTS", "llm.example.test")
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "12")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "900")
+    monkeypatch.setenv("LLM_PROMPT_VERSION", "event-copilot-v02")
+
+    data_dir = tmp_path / "processed"
+    data_dir.mkdir()
+    database_url = f"sqlite:///{tmp_path / 'api.db'}"
+    app = create_app(database_url=database_url, data_dir=data_dir)
+
+    with app.state.database.session() as session:
+        row = session.get(AIConfigurationRow, "default")
+        assert row is not None
+        assert row.enabled is True
+        assert row.provider == "openai-compatible"
+        assert row.base_url == "https://llm.example.test/v1"
+        assert row.model == "sentinel-explainer"
+        assert row.api_key_ciphertext is not None
+        stored_ciphertext = row.api_key_ciphertext
+        assert stored_ciphertext != "runtime-secret"
+        assert "runtime-secret" not in stored_ciphertext
+        assert decrypt_api_key(stored_ciphertext) == "runtime-secret"
+
+    with TestClient(app) as test_client:
+        admin_token = login_token(test_client, "system-admin", "demo-admin-2026")
+        response = test_client.get(
+            "/api/v1/admin/ai/config",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["enabled"] is True
+    assert payload["apiKeyConfigured"] is True
+    serialized_payload = json.dumps(payload)
+    assert "apiKey" not in payload
+    assert "runtime-secret" not in serialized_payload
+    assert stored_ciphertext not in serialized_payload
+
+    monkeypatch.setenv("LLM_MODEL", "should-not-overwrite")
+    monkeypatch.setenv("LLM_API_KEY", "replacement-secret")
+    restarted = create_app(database_url=database_url, data_dir=data_dir)
+    with restarted.state.database.session() as session:
+        restarted_row = session.get(AIConfigurationRow, "default")
+        assert restarted_row is not None
+        assert restarted_row.model == "sentinel-explainer"
+        assert decrypt_api_key(restarted_row.api_key_ciphertext) == "runtime-secret"
 
 
 def test_catalog_reads_agent_generated_scenario_and_event_template(tmp_path: Path):
