@@ -33,6 +33,14 @@ make infra-check     # bash infra/tests/validate_infra.sh
 
 根 `pyproject.toml` 定义 pytest/ruff 配置（ruff: line-length 100, 规则 E/F/I/B/UP），但各包需用各自的 `-c <pyproject>` 或 `--project` 运行。
 
+## 多 Claude Code 并行门禁
+
+- 只要存在两个或以上互不依赖同一中间状态、且能划分为不重叠写集的任务，必须优先启动多个 Claude Code 会话并行处理；不得让调研、实现、测试设计和文档审阅无故串行等待。
+- 每个会话启动前必须写清目标、基线提交、唯一可写路径、禁止范围、验证命令、提交要求和验收证据。边界不清或会修改同一共享文件时，先由 Codex 拆分或改为串行。
+- 并行实现必须使用独立 Git worktree 和独立 `codex/` 分支；每个任务只做单一职责提交，不 push、不改写历史、不操作生产服务器。
+- 共享契约、数据库迁移、部署配置、README、中央 LaTeX 主文件、版本号和最终 Git 集成只由 Codex 处理。Claude Code 可以运行局部门禁，但其自报结果不能代替 Codex 的 diff 复核、全量测试、Playwright、视觉 QA 和部署后 smoke。
+- 不向任何并行会话暴露无关密钥、生产凭据或个人数据。发现必须跨越写集才能解决的问题时，只报告证据与建议，由 Codex 重新编排。
+
 ## 架构
 
 三层数据流，契约先行：
