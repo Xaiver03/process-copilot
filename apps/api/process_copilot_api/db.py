@@ -112,6 +112,22 @@ class AIRuntimeProbeRow(Base):
     checked_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
 
 
+class ControlProposalRow(Base):
+    __tablename__ = "control_proposals"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    action_draft: Mapped[str] = mapped_column(String(2000), nullable=False)
+    source_trace_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    execution_mode: Mapped[str] = mapped_column(String(16), nullable=False)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    checks: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
+    requested_by: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    sent: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    trace_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    created_at: Mapped[Any] = mapped_column(DateTime, nullable=False, index=True)
+
+
 class AdminAuditRow(Base):
     __tablename__ = "admin_audit_events"
 

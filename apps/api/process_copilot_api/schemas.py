@@ -124,6 +124,31 @@ class DecisionRecord(ContractModel):
     trace_id: str
 
 
+class CreateControlProposalRequest(ContractModel):
+    action_draft: str = Field(min_length=1, max_length=2000)
+    source_trace_id: str | None = Field(default=None, max_length=128)
+
+
+class ControlCheck(ContractModel):
+    name: str
+    status: Literal["passed", "not_configured", "not_connected", "disabled"]
+    detail: str
+
+
+class ControlProposal(ContractModel):
+    id: UUID
+    event_id: UUID
+    action_draft: str
+    source_trace_id: str | None = None
+    execution_mode: Literal["shadow"]
+    state: Literal["blocked_demo_boundary"]
+    checks: list[ControlCheck]
+    requested_by: str
+    sent: Literal[False]
+    trace_id: str
+    created_at: datetime
+
+
 class AskEventRequest(ContractModel):
     question: str = Field(min_length=1, max_length=500)
 

@@ -27,6 +27,7 @@ def test_upgrade_head_builds_fresh_sqlite_schema(tmp_path) -> None:
         "ai_runtime_probes",
         "operators",
         "decision_records",
+        "control_proposals",
         "replay_runs",
         "run_inference_state",
         "run_stream_messages",

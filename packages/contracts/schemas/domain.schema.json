@@ -324,6 +324,43 @@
       },
       "additionalProperties": false
     },
+    "CreateControlProposalRequest": {
+      "type": "object",
+      "required": ["actionDraft"],
+      "properties": {
+        "actionDraft": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "sourceTraceId": {"type": ["string", "null"], "maxLength": 128}
+      },
+      "additionalProperties": false
+    },
+    "ControlCheck": {
+      "type": "object",
+      "required": ["name", "status", "detail"],
+      "properties": {
+        "name": {"type": "string"},
+        "status": {"enum": ["passed", "not_configured", "not_connected", "disabled"]},
+        "detail": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "ControlProposal": {
+      "type": "object",
+      "required": ["id", "eventId", "actionDraft", "executionMode", "state", "checks", "requestedBy", "sent", "traceId", "createdAt"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "eventId": {"type": "string", "format": "uuid"},
+        "actionDraft": {"type": "string"},
+        "sourceTraceId": {"type": ["string", "null"]},
+        "executionMode": {"enum": ["shadow"]},
+        "state": {"enum": ["blocked_demo_boundary"]},
+        "checks": {"type": "array", "items": {"$ref": "#/$defs/ControlCheck"}},
+        "requestedBy": {"type": "string"},
+        "sent": {"type": "boolean", "enum": [false]},
+        "traceId": {"type": "string"},
+        "createdAt": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
     "Decision": {
       "type": "object",
       "required": ["decision", "operatorName", "note"],

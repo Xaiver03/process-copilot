@@ -204,6 +204,56 @@ paths:
           $ref: "#/components/responses/Problem"
         "422":
           $ref: "#/components/responses/Problem"
+  /api/v1/events/{eventId}/control-proposals:
+    post:
+      summary: Evaluate a human-edited action draft in read-only shadow mode
+      operationId: createControlProposal
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateControlProposalRequest"
+      responses:
+        "201":
+          description: Shadow evaluation recorded; no control command was sent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ControlProposal"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      summary: List durable shadow evaluations for an anomaly event
+      operationId: listControlProposals
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Recorded shadow evaluations, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ControlProposal"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
   /api/v1/events/{eventId}/decision:
     post:
       summary: Record a human decision
@@ -828,6 +878,37 @@ components:
           items:
             $ref: "#/components/schemas/AdminAuditEntry"
         total: {type: integer, minimum: 0}
+    CreateControlProposalRequest:
+      type: object
+      required: [actionDraft]
+      properties:
+        actionDraft: {type: string, minLength: 1, maxLength: 2000}
+        sourceTraceId: {type: [string, "null"], maxLength: 128}
+    ControlCheck:
+      type: object
+      required: [name, status, detail]
+      properties:
+        name: {type: string}
+        status: {enum: [passed, not_configured, not_connected, disabled]}
+        detail: {type: string}
+    ControlProposal:
+      type: object
+      required: [id, eventId, actionDraft, executionMode, state, checks, requestedBy, sent, traceId, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        eventId: {type: string, format: uuid}
+        actionDraft: {type: string}
+        sourceTraceId: {type: [string, "null"]}
+        executionMode: {enum: [shadow]}
+        state: {enum: [blocked_demo_boundary]}
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ControlCheck"
+        requestedBy: {type: string}
+        sent: {type: boolean, enum: [false]}
+        traceId: {type: string}
+        createdAt: {type: string, format: date-time}
     DecisionRequest:
       type: object
       required: [decision, note]

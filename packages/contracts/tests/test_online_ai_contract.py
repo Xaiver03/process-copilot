@@ -144,3 +144,33 @@ def test_auth_contract_includes_admin_without_registration(openapi: dict) -> Non
     assert schema(openapi, "LoginResponse")["properties"]["role"]["enum"] == expected_roles
     assert schema(openapi, "OperatorInfo")["properties"]["role"]["enum"] == expected_roles
     assert "/api/v1/auth/register" not in openapi["paths"]
+
+
+def test_control_proposals_are_shadow_only_and_never_sent(
+    openapi: dict, domain: dict
+) -> None:
+    path = openapi["paths"]["/api/v1/events/{eventId}/control-proposals"]
+    assert path["post"]["operationId"] == "createControlProposal"
+    assert path["get"]["operationId"] == "listControlProposals"
+
+    proposal = schema(openapi, "ControlProposal")
+    required = {
+        "id",
+        "eventId",
+        "actionDraft",
+        "executionMode",
+        "state",
+        "checks",
+        "requestedBy",
+        "sent",
+        "traceId",
+        "createdAt",
+    }
+    assert required <= set(proposal["required"])
+    assert proposal["properties"]["executionMode"]["enum"] == ["shadow"]
+    assert proposal["properties"]["state"]["enum"] == ["blocked_demo_boundary"]
+    assert proposal["properties"]["sent"]["enum"] == [False]
+    assert required <= set(domain["$defs"]["ControlProposal"]["required"])
+    assert domain["$defs"]["ControlProposal"]["properties"]["sent"]["enum"] == [
+        False
+    ]

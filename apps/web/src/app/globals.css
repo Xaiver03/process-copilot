@@ -238,6 +238,12 @@ textarea { resize: vertical; }
 .writeback-result { display: flex; gap: 10px; padding: 12px; border: 1px solid color-mix(in srgb, var(--process-normal) 40%, var(--wuno-border-subtle)); border-radius: 8px; background: color-mix(in srgb, var(--process-normal) 7%, white); }
 .writeback-result > svg { flex: 0 0 auto; width: 24px; height: 24px; color: var(--process-normal); }
 .writeback-result p { margin: 0; }.writeback-result strong, .writeback-result span { display: block; }.writeback-result span { margin-top: 3px; color: var(--wuno-text-secondary); font-size: var(--font-support); line-height: 1.55; }
+.writeback-shadow-result > div { display: grid; flex: 1; gap: 12px; min-width: 0; }
+.writeback-shadow-result ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.writeback-shadow-result li { min-width: 0; padding: 10px 12px; border: 1px solid var(--wuno-border-subtle); border-radius: 8px; background: white; }
+.writeback-shadow-result li:last-child { grid-column: 1 / -1; }
+.writeback-shadow-result li strong { color: var(--wuno-text-primary); font-size: var(--font-support); }
+.writeback-shadow-result small { color: var(--wuno-text-secondary); overflow-wrap: anywhere; }
 .evidence-chart { height: 540px !important; }
 .event-window-label { padding: 6px 10px; border-radius: 8px; color: #8a5600; background: color-mix(in srgb, var(--process-drift) 14%, white); font-size: var(--font-support); font-weight: 800; }
 .evidence-panel { padding: 16px; border: 1px solid var(--wuno-border-subtle); border-radius: 12px; background: var(--wuno-surface-panel); }
@@ -302,6 +308,8 @@ textarea { resize: vertical; }
   .ai-stepper li { min-height: 72px; }
   .ai-evidence-detail { grid-template-columns: 1fr; }
   .writeback-preview ol { grid-template-columns: 1fr; }
+  .writeback-shadow-result ul { grid-template-columns: 1fr; }
+  .writeback-shadow-result li:last-child { grid-column: auto; }
   .mode-notice { grid-template-columns: auto 1fr; }.mode-notice span { grid-column: 2; }
   .evidence-track { grid-template-columns: 1fr auto; }.spark-placeholder { grid-column: 1 / -1; grid-row: 2; }
   .record-summary dl { grid-template-columns: 1fr 1fr; }

@@ -150,6 +150,76 @@ def test_decision_requires_authentication_and_role(client: TestClient):
     assert admin_confirmed.json()["operatorRole"] == "admin"
 
 
+def test_control_proposal_runs_real_shadow_checks_but_never_sends(client: TestClient):
+    run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
+    event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
+    url = f"/api/v1/events/{event['id']}/control-proposals"
+
+    anonymous = client.post(url, json={"actionDraft": "提高监视频率"})
+    assert anonymous.status_code == 401
+
+    operator_token = login_token(client, "operator-01", "demo-op-2026")
+    headers = {
+        "Authorization": f"Bearer {operator_token}",
+        "Idempotency-Key": "shadow-proposal-1",
+    }
+    created = client.post(
+        url,
+        headers=headers,
+        json={
+            "actionDraft": "保持当前控制策略，提高关键变量监视频率并上报班长复核。",
+            "sourceTraceId": "trace-ai-answer-1",
+        },
+    )
+
+    assert created.status_code == 201, created.text
+    proposal = created.json()
+    assert proposal["eventId"] == event["id"]
+    assert proposal["executionMode"] == "shadow"
+    assert proposal["state"] == "blocked_demo_boundary"
+    assert proposal["sent"] is False
+    assert proposal["requestedBy"] == "operator-01"
+    assert proposal["sourceTraceId"] == "trace-ai-answer-1"
+    assert [check["status"] for check in proposal["checks"]] == [
+        "passed",
+        "passed",
+        "not_configured",
+        "not_connected",
+        "disabled",
+    ]
+    assert proposal["checks"][-1]["name"] == "控制网关"
+
+    repeated = client.post(
+        url,
+        headers=headers,
+        json={
+            "actionDraft": "保持当前控制策略，提高关键变量监视频率并上报班长复核。",
+            "sourceTraceId": "trace-ai-answer-1",
+        },
+    )
+    assert repeated.status_code == 201
+    assert repeated.json()["id"] == proposal["id"]
+
+    listed = client.get(url, headers={"Authorization": f"Bearer {operator_token}"})
+    assert listed.status_code == 200
+    assert listed.json() == [proposal]
+
+
+def test_control_proposal_rejects_executable_control_coordinates(client: TestClient):
+    run = client.post("/api/v1/runs", json={"scenarioId": "tep-fault-05"}).json()
+    event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
+    operator_token = login_token(client, "operator-01", "demo-op-2026")
+
+    response = client.post(
+        f"/api/v1/events/{event['id']}/control-proposals",
+        headers={"Authorization": f"Bearer {operator_token}"},
+        json={"actionDraft": "向 PLC 寄存器 0x10 写入 1"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "unsafe_control_draft"
+
+
 def test_health_and_readiness_expose_trace_id(client: TestClient):
     health = client.get("/healthz", headers={"X-Trace-ID": "trace-health"})
     assert health.status_code == 200

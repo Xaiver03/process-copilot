@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -38,6 +39,7 @@ from .db import (
     AIRuntimeProbeRow,
     AnomalyEventRow,
     AuditRow,
+    ControlProposalRow,
     Database,
     DecisionRow,
     IdempotencyRow,
@@ -60,6 +62,9 @@ from .schemas import (
     AIStatus,
     AnomalyEvent,
     AskEventRequest,
+    ControlCheck,
+    ControlProposal,
+    CreateControlProposalRequest,
     CreateRunRequest,
     DecisionRecord,
     DecisionRequest,
@@ -85,6 +90,11 @@ DEGRADED_FALLBACK_RISK = (
 )
 DEFAULT_SSE_HEARTBEAT_INTERVAL_SECONDS = 15.0
 DEFAULT_SSE_HEARTBEAT_COUNT: int | None = None
+UNSAFE_CONTROL_DRAFT = re.compile(
+    r"(?:寄存器|点位地址|\b0x[0-9a-f]+\b|\b(?:DB|MW|MD|M|Q)\d+\b|"
+    r"https?://|\b(?:ssh|curl|modbus)\b)",
+    re.IGNORECASE,
+)
 
 
 class APIError(Exception):
@@ -285,6 +295,22 @@ def _admin_audit_response(row: AdminAuditRow) -> AdminAuditEntry:
             current_version=str(summary.get("currentVersion", "unknown")),
             api_key_changed=summary.get("apiKeyChanged"),
         ),
+    )
+
+
+def _control_proposal_response(row: ControlProposalRow) -> ControlProposal:
+    return ControlProposal(
+        id=UUID(row.id),
+        event_id=UUID(row.event_id),
+        action_draft=row.action_draft,
+        source_trace_id=row.source_trace_id,
+        execution_mode="shadow",
+        state="blocked_demo_boundary",
+        checks=[ControlCheck.model_validate(item) for item in row.checks],
+        requested_by=row.requested_by,
+        sent=False,
+        trace_id=row.trace_id,
+        created_at=row.created_at.replace(tzinfo=UTC),
     )
 
 
@@ -1314,6 +1340,138 @@ def create_app(
         return AIAnswer.model_validate(result.to_dict())
 
     @app.post(
+        "/api/v1/events/{eventId}/control-proposals",
+        response_model=ControlProposal,
+        status_code=201,
+        operation_id="createControlProposal",
+    )
+    def create_control_proposal(
+        request: Request,
+        eventId: UUID,
+        body: CreateControlProposalRequest,
+        operator: Annotated[Any, Depends(require_role("operator"))],
+        idempotency_key: str | None = Header(
+            default=None, alias="Idempotency-Key", max_length=128
+        ),
+    ) -> Any:
+        action_draft = body.action_draft.strip()
+        if UNSAFE_CONTROL_DRAFT.search(action_draft):
+            raise APIError(
+                422,
+                "unsafe_control_draft",
+                "Control coordinates and executable commands are not allowed in demo proposals",
+            )
+        payload = body.model_dump(mode="json", by_alias=True)
+        scope = f"control-proposal:{eventId}"
+        checks = [
+            {
+                "name": "人工提交",
+                "status": "passed",
+                "detail": "草案由已登录人员主动提交，未由模型自动触发。",
+            },
+            {
+                "name": "身份与角色",
+                "status": "passed",
+                "detail": f"已识别 {operator.role} 角色；本次只允许影子评估。",
+            },
+            {
+                "name": "工艺上下限",
+                "status": "not_configured",
+                "detail": "Demo 未接入真实装置上下限，不能判定动作可执行。",
+            },
+            {
+                "name": "联锁与设备状态",
+                "status": "not_connected",
+                "detail": "Demo 未连接 SIS、PLC 或 DCS，无法完成联锁读回。",
+            },
+            {
+                "name": "控制网关",
+                "status": "disabled",
+                "detail": "控制网关保持关闭，系统不会生成或发送控制指令。",
+            },
+        ]
+        try:
+            with app.state.database.session() as session:
+                previous = _idempotent(session, scope, idempotency_key, payload)
+                if previous:
+                    return JSONResponse(
+                        status_code=previous.status_code,
+                        content=previous.response,
+                    )
+                event = session.get(AnomalyEventRow, str(eventId))
+                if event is None:
+                    raise APIError(404, "event_not_found", "Anomaly event not found")
+                proposal_id = uuid4()
+                created_at = _now()
+                row = ControlProposalRow(
+                    id=str(proposal_id),
+                    event_id=str(eventId),
+                    action_draft=action_draft,
+                    source_trace_id=body.source_trace_id,
+                    execution_mode="shadow",
+                    state="blocked_demo_boundary",
+                    checks=checks,
+                    requested_by=operator.username,
+                    sent=False,
+                    trace_id=request.state.trace_id,
+                    created_at=created_at,
+                )
+                session.add(row)
+                proposal = _control_proposal_response(row)
+                session.add(
+                    AuditRow(
+                        id=str(uuid4()),
+                        event_id=str(eventId),
+                        record_id=str(proposal_id),
+                        action="control_proposal_shadow_evaluated",
+                        actor=f"{operator.display_name} ({operator.username})",
+                        payload=proposal.model_dump(mode="json", by_alias=True),
+                        trace_id=request.state.trace_id,
+                        created_at=created_at,
+                    )
+                )
+                _save_idempotency(
+                    session,
+                    scope,
+                    idempotency_key,
+                    payload,
+                    proposal,
+                    201,
+                )
+                return proposal
+        except IntegrityError:
+            if not idempotency_key:
+                raise
+            with app.state.database.session() as session:
+                previous = _idempotent(session, scope, idempotency_key, payload)
+                if previous:
+                    return JSONResponse(
+                        status_code=previous.status_code,
+                        content=previous.response,
+                    )
+            raise
+
+    @app.get(
+        "/api/v1/events/{eventId}/control-proposals",
+        response_model=list[ControlProposal],
+        operation_id="listControlProposals",
+    )
+    def list_control_proposals(
+        eventId: UUID,
+        _operator: Annotated[Any, Depends(require_role("operator"))],
+    ) -> list[ControlProposal]:
+        with app.state.database.session() as session:
+            event = session.get(AnomalyEventRow, str(eventId))
+            if event is None:
+                raise APIError(404, "event_not_found", "Anomaly event not found")
+            rows = session.scalars(
+                select(ControlProposalRow)
+                .where(ControlProposalRow.event_id == str(eventId))
+                .order_by(ControlProposalRow.created_at.desc())
+            ).all()
+            return [_control_proposal_response(row) for row in rows]
+
+    @app.post(
         "/api/v1/events/{eventId}/decision",
         response_model=DecisionRecord,
         status_code=201,
@@ -1461,6 +1619,18 @@ def create_app(
             "/api/v1/runs/{runId}/events": {"200", "404"},
             "/api/v1/events/{eventId}": {"200", "404"},
             "/api/v1/events/{eventId}/ask": {"200", "401", "404", "422"},
+            ("/api/v1/events/{eventId}/control-proposals", "post"): {
+                "201",
+                "401",
+                "404",
+                "409",
+                "422",
+            },
+            ("/api/v1/events/{eventId}/control-proposals", "get"): {
+                "200",
+                "401",
+                "404",
+            },
             "/api/v1/events/{eventId}/decision": {"201", "401", "403", "404", "409", "422"},
             "/api/v1/records/{recordId}": {"200", "404"},
             "/api/v1/admin/overview": {"200", "401", "403"},

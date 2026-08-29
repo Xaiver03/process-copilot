@@ -15,6 +15,26 @@ const answer = {
   traceId: "trace-ask-001",
 };
 
+const controlProposal = {
+  id: "99999999-9999-4999-8999-999999999999",
+  eventId: demoEvent.id,
+  actionDraft: "保持当前控制策略并提高关键变量监视频率",
+  sourceTraceId: "trace-ask-001",
+  executionMode: "shadow" as const,
+  state: "blocked_demo_boundary" as const,
+  checks: [
+    { name: "人工提交", status: "passed" as const, detail: "已记录" },
+    { name: "身份与角色", status: "passed" as const, detail: "仅影子评估" },
+    { name: "工艺上下限", status: "not_configured" as const, detail: "未配置" },
+    { name: "联锁与设备状态", status: "not_connected" as const, detail: "未连接" },
+    { name: "控制网关", status: "disabled" as const, detail: "保持关闭" },
+  ],
+  requestedBy: "operator-01",
+  sent: false as const,
+  traceId: "trace-shadow-001",
+  createdAt: "2026-08-29T00:00:00Z",
+};
+
 describe("事件协同研判在线 AI", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -142,5 +162,44 @@ describe("事件协同研判在线 AI", () => {
     await user.click(screen.getByRole("button", { name: "为什么不是传感器故障？" }));
     await waitFor(() => expect(screen.getByText("在线 AI 请求失败，请重试。")).toBeInTheDocument());
     expect(screen.queryByText(secret)).not.toBeInTheDocument();
+  });
+
+  it("把在线 AI 证据交给人工编辑后执行真实影子门禁并明确从未发送", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(answer), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(controlProposal), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    saveSession({
+      token: "operator-token",
+      username: "operator-01",
+      role: "operator",
+      displayName: "中控操作员",
+      expiresAt: "2099-01-01T00:00:00Z",
+    });
+
+    render(<EventCopilot event={demoEvent} />);
+    await user.click(screen.getByRole("button", { name: "为什么不是传感器故障？" }));
+    expect(await screen.findByText(answer.answer)).toBeInTheDocument();
+
+    const draft = screen.getByRole("textbox", { name: "拟议处置动作" });
+    await user.clear(draft);
+    await user.type(draft, controlProposal.actionDraft);
+    await user.click(screen.getByRole("button", { name: "运行影子门禁" }));
+
+    expect(await screen.findByText("影子评估已记录，控制网关保持关闭")).toBeInTheDocument();
+    expect(screen.getByText(/5 项门禁中 2 项通过，3 项阻断/)).toBeInTheDocument();
+    expect(screen.getByText(/Trace：trace-shadow-001/)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [url, init] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(url).toBe(`/api/v1/events/${demoEvent.id}/control-proposals`);
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      "Bearer operator-token",
+    );
+    expect(JSON.parse(String(init.body))).toEqual({
+      actionDraft: controlProposal.actionDraft,
+      sourceTraceId: "trace-ask-001",
+    });
   });
 });

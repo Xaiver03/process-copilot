@@ -174,6 +174,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/control-proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List durable shadow evaluations for an anomaly event */
+        get: operations["listControlProposals"];
+        put?: never;
+        /** Evaluate a human-edited action draft in read-only shadow mode */
+        post: operations["createControlProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/decision": {
         parameters: {
             query?: never;
@@ -615,6 +633,35 @@ export interface components {
             items: components["schemas"]["AdminAuditEntry"][];
             total: number;
         };
+        CreateControlProposalRequest: {
+            actionDraft: string;
+            sourceTraceId?: string | null;
+        };
+        ControlCheck: {
+            name: string;
+            /** @enum {unknown} */
+            status: "passed" | "not_configured" | "not_connected" | "disabled";
+            detail: string;
+        };
+        ControlProposal: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            eventId: string;
+            actionDraft: string;
+            sourceTraceId?: string | null;
+            /** @enum {unknown} */
+            executionMode: "shadow";
+            /** @enum {unknown} */
+            state: "blocked_demo_boundary";
+            checks: components["schemas"]["ControlCheck"][];
+            requestedBy: string;
+            /** @enum {boolean} */
+            sent: false;
+            traceId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         DecisionRequest: {
             /** @enum {unknown} */
             decision: "confirm" | "reject" | "escalate";
@@ -937,6 +984,62 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listControlProposals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recorded shadow evaluations, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlProposal"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createControlProposal: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateControlProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Shadow evaluation recorded; no control command was sent. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlProposal"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
