@@ -47,6 +47,16 @@ type AIConfig = {
   version: number;
 };
 
+type ControlProposal = {
+  eventId: string;
+  actionDraft: string;
+  sourceTraceId: string | null;
+  executionMode: "shadow";
+  state: "blocked_demo_boundary";
+  checks: Array<{ name: string; status: string }>;
+  sent: false;
+};
+
 const target = process.env.PLAYWRIGHT_EVIDENCE_TARGET ?? "local";
 const evidenceRoot = path.resolve(
   process.env.PLAYWRIGHT_EVIDENCE_DIR
@@ -455,5 +465,52 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await expect(page.getByText("密钥值不会出现在配置响应、调用记录或审计详情中。")).toBeVisible();
     if (!config.enabled) await expect(page.getByRole("button", { name: "测试连接" })).toBeDisabled();
     await capture(page, testInfo, "UJ10-02_AI配置密钥与只读边界");
+  });
+
+  test("UJ-11 操作员以 AI Trace 编辑拟议动作并完成只读影子门禁核验", async ({ page, request }, testInfo) => {
+    const shadowQuestion = `E2E 影子门禁 ${journeyStamp}：请给出安全的现场检查与监视建议。`;
+    const editedDraft = "保持当前控制策略，提高关键变量监视频率，并由班长复核现场检查结果。";
+
+    await login(page, accounts.operator);
+    await page.goto(`/events/${onlineEvent.id}`);
+    const answerMessages = page.locator(".assistant-message");
+    const previousAnswerCount = await answerMessages.count();
+    await page.getByLabel("向序安追问").fill(shadowQuestion);
+    await page.getByRole("button", { name: "发送问题" }).click();
+    await expect(answerMessages).toHaveCount(previousAnswerCount + 1, { timeout: 30_000 });
+    const answerMeta = page.locator(".copilot-answer-meta").last();
+    await expect(answerMeta).toContainText(/Trace：.+/);
+    const traceId = (await answerMeta.textContent())?.match(/Trace：([^\s]+)/)?.[1];
+    expect(traceId).toBeTruthy();
+
+    const draft = page.getByRole("textbox", { name: "拟议处置动作" });
+    await draft.fill(editedDraft);
+    await page.getByRole("button", { name: "运行影子门禁" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "影子评估已记录，控制网关保持关闭" }))
+      .toBeVisible({ timeout: 20_000 });
+    await expect(page.getByLabel("影子门禁结果").getByRole("listitem")).toHaveCount(5);
+    await expect(page.getByText("5 项门禁中 2 项通过，3 项阻断；从未向 PLC/DCS 发送。"))
+      .toBeVisible();
+    await capture(page, testInfo, "UJ11-01_AI人工编辑影子门禁");
+
+    const operatorToken = await getAuthToken(request, accounts.operator);
+    const proposalsResponse = await request.get(`/api/v1/events/${onlineEvent.id}/control-proposals`, {
+      headers: { Authorization: `Bearer ${operatorToken}` },
+    });
+    expect(proposalsResponse.ok()).toBeTruthy();
+    const proposals = await proposalsResponse.json() as ControlProposal[];
+    const proposal = proposals.find((candidate) => candidate.sourceTraceId === traceId);
+    expect(proposal).toBeDefined();
+    expect(proposal).toMatchObject({
+      eventId: onlineEvent.id,
+      actionDraft: editedDraft,
+      sourceTraceId: traceId,
+      executionMode: "shadow",
+      state: "blocked_demo_boundary",
+      sent: false,
+    });
+    expect(proposal?.checks).toHaveLength(5);
+    expect(proposal?.checks.filter((check) => check.status === "passed")).toHaveLength(2);
+    expect(proposal?.checks.filter((check) => check.status !== "passed")).toHaveLength(3);
   });
 });
