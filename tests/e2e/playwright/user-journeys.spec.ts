@@ -58,6 +58,7 @@ type ControlProposal = {
 };
 
 const target = process.env.PLAYWRIGHT_EVIDENCE_TARGET ?? "local";
+const expectedPublicModel = process.env.PLAYWRIGHT_EXPECTED_LLM_MODEL ?? "gpt-5.5";
 const evidenceRoot = path.resolve(
   process.env.PLAYWRIGHT_EVIDENCE_DIR
     ?? `90_构建与分析缓存/用户旅程验收_v01/${target}`,
@@ -196,8 +197,11 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await page.getByRole("button", { name: "开始回放" }).click();
     await expect.poll(async () => Number(await sample.textContent()), { timeout: 20_000 }).toBeGreaterThan(paused);
 
-    await expect(page.getByRole("link", { name: /进入事件研判/ })).toBeVisible({ timeout: 90_000 });
+    const eventLink = page.getByRole("link", { name: /进入事件研判/ });
+    await expect(eventLink).toBeVisible({ timeout: 90_000 });
     await capture(page, testInfo, "UJ01-03_偏移捕获");
+    await eventLink.click();
+    await expect(page.getByRole("heading", { name: "AI 研判结论" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
@@ -327,6 +331,7 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     const viewports = [
       { name: "桌面1440", width: 1440, height: 900 },
       { name: "平板1024", width: 1024, height: 768 },
+      { name: "平板768", width: 768, height: 1024 },
       { name: "手机390", width: 390, height: 844 },
     ];
     const routes = [
@@ -343,6 +348,10 @@ test.describe.serial("序安完整前后端用户旅程", () => {
         await expectNoHorizontalOverflow(page);
       }
       await page.goto(`/events/${onlineEvent.id}`);
+      const explanationStep = page.locator('a[href="#step-03-explanation"]');
+      await explanationStep.click();
+      await expect(explanationStep).toHaveAttribute("aria-current", "step");
+      await expect(page.locator("#step-03-explanation")).toBeFocused();
       await capture(page, testInfo, `UJ08-${viewport.name}_事件页`);
     }
   });
@@ -370,6 +379,11 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     expect(answer.evidenceRefs.length).toBeGreaterThanOrEqual(1);
     expect(answer.latencyMs).toBeGreaterThanOrEqual(0);
     expect(answer.traceId.trim()).not.toBe("");
+    if (target === "public") {
+      expect(answer.mode).toBe("llm_enhanced");
+      expect(answer.model).toBe(expectedPublicModel);
+      expect(answer.latencyMs).toBeGreaterThan(0);
+    }
     const evidenceIds = new Set(detail.evidence.map((item) => item.variableId));
     for (const ref of answer.evidenceRefs) expect(evidenceIds.has(ref), ref).toBeTruthy();
 
@@ -381,6 +395,7 @@ test.describe.serial("序安完整前后端用户旅程", () => {
     await page.getByRole("button", { name: "发送问题" }).click();
     await expect(page.locator(".assistant-message")).toBeVisible({ timeout: 30_000 });
     await expect(page.locator(".copilot-answer-meta")).toContainText(/在线 AI|模板降级/);
+    if (target === "public") await expect(page.locator(".copilot-answer-meta")).toContainText("在线 AI");
     await expect(page.locator(".copilot-answer-meta")).toContainText(/模型：.+证据：.+Trace：/);
     await capture(page, testInfo, "UJ09-01_AI研判与证据解释");
 

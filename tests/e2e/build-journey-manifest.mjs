@@ -60,7 +60,7 @@ export async function buildManifest({ target, baseURL, evidenceRoot, sourceCommi
       fullPageScreenshotCount: screenshots.filter((item) => item.kind === "full_page").length,
     },
     journeys,
-    screenshotPolicy: "每个关键用户状态同时保存当前视口与完整页面，响应式旅程覆盖 1440、1024、390 像素宽度。",
+    screenshotPolicy: "每个关键用户状态同时保存当前视口与完整页面，响应式旅程覆盖 1440、1024、768、390 像素宽度。",
     screenshots,
   };
 }

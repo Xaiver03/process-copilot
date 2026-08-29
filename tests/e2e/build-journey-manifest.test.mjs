@@ -40,6 +40,7 @@ test("buildManifest 汇总旅程状态并为截图生成 SHA-256", async () => {
     assert.equal(manifest.journeys[0].title, "UJ-01 演示回放");
     assert.equal(manifest.screenshots.length, 1);
     assert.match(manifest.screenshots[0].sha256, /^[a-f0-9]{64}$/);
+    assert.match(manifest.screenshotPolicy, /1440、1024、768、390/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
