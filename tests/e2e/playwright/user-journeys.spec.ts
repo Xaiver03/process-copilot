@@ -284,7 +284,13 @@ test.describe.serial("序安完整前后端用户旅程", () => {
 
     await page.getByRole("link", { name: "AI 配置" }).click();
     await expect(page.getByRole("heading", { name: "AI 运行配置" })).toBeVisible();
-    await expect(page.getByRole("status").filter({ hasText: "在线增强当前已禁用" })).toBeVisible();
+    const onlineEnhancement = page.getByRole("checkbox", { name: "启用在线语言模型增强" });
+    if (await onlineEnhancement.isChecked()) {
+      await expect(page.locator("span").filter({ hasText: /语言模型：/ }).first()).toBeVisible();
+      await expect(page.getByLabel("API 密钥（只写）")).toHaveValue("");
+    } else {
+      await expect(page.getByRole("status").filter({ hasText: "在线增强当前已禁用" })).toBeVisible();
+    }
     await page.getByRole("button", { name: "保存配置" }).click();
     await expect(page.getByRole("alert").filter({ hasText: /公开演示环境的 AI 配置为只读|read-only/i }))
       .toBeVisible();
