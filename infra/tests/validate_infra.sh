@@ -189,6 +189,12 @@ for script in rollback.sh backup-postgres.sh; do
   fi
 done
 
+if ! grep -q -- '-U "$POSTGRES_USER"' "$ROOT_DIR/infra/scripts/backup-postgres.sh" \
+  || ! grep -q -- '-d "$POSTGRES_DB"' "$ROOT_DIR/infra/scripts/backup-postgres.sh"; then
+  printf 'postgres backup must use the configured database role and database\n' >&2
+  exit 1
+fi
+
 if grep -qE '^    ports:' <<<"$(sed -n '/^  postgres:/,/^  [^ ]/p' <<<"$compose_config")"; then
   printf 'postgres must not publish host ports\n' >&2
   exit 1

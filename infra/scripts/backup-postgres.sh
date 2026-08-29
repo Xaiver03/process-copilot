@@ -26,7 +26,8 @@ STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 TARGET="$BACKUP_DIR/postgres-$STAMP.dump"
 TEMP_TARGET="$TARGET.partial"
 docker compose --env-file "$RUNTIME_ENV" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" exec -T postgres \
-  pg_dump --format=custom --no-owner --no-acl > "$TEMP_TARGET"
+  sh -c 'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner --no-acl' \
+  > "$TEMP_TARGET"
 mv "$TEMP_TARGET" "$TARGET"
 sha256sum "$TARGET" > "$TARGET.sha256"
 printf 'backup created: %s\n' "$TARGET"
