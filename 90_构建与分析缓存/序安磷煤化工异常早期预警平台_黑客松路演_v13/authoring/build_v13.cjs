@@ -2,7 +2,7 @@ const pptxgen = require('pptxgenjs');
 const path = require('path');
 
 const ROOT = '/Users/rocalight/Desktop/All in one Data/01_PROJECTS/FDE任务/03_产品与解决方案/03_连续化工过程偏移副驾驶';
-const WORK = path.join(ROOT, '90_构建与分析缓存/序安DCS智能预判平台_黑客松路演_v12_园区背景融合');
+const WORK = path.join(ROOT, '90_构建与分析缓存/序安磷煤化工异常早期预警平台_黑客松路演_v13');
 const ASSET = path.join(WORK, 'assets');
 const OUTPUT = path.join(ROOT, '04_交付成品/序安_磷煤化工异常早期预警平台_黑客松路演_v13_ZH_REVIEW.pptx');
 
@@ -50,7 +50,7 @@ function notes(slide, spoken, sources) {
   slide.addNotes(`[逐字稿]\n${spoken}\n\n[Sources]\n${sources.map(s=>`- ${s}`).join('\n')}`);
 }
 function addLogo(slide,x=0.7,y=0.55,w=0.72,h=0.72) {
-  slide.addImage({path:path.join(ASSET,'序安候选标志_v03.svg'),x,y,w,h});
+  slide.addImage({path:path.join(ROOT,'apps/web/public/brand/xuanan-anomaly-intercept-v04.svg'),x,y,w,h});
 }
 
 // 1 cover
@@ -109,13 +109,25 @@ function addLogo(slide,x=0.7,y=0.55,w=0.72,h=0.72) {
 {
   const s=pptx.addSlide('CONTENT'); addTitle(s,'04 · 技术验证','公开数据验证预测链路','公开城市污水数据只用于验证“预测—证据—人工确认”');
   box(s,0.72,2.1,7.55,4.25,C.navy2,C.navy2);
-  s.addText('滞后结果风险趋势',{x:1.08,y:2.47,w:2.8,h:0.35,fontFace:FONT,fontSize:22,bold:true,color:C.white,margin:0});
-  s.addText('公开数据验证｜非园区现场画面',{x:4.67,y:2.5,w:3.05,h:0.26,fontFace:FONT,fontSize:13,color:'A7CBD2',align:'right',margin:0});
-  const pts=[[1.2,5.55],[2.1,5.2],[3,5.33],[3.9,4.82],[4.8,4.42],[5.7,4.58],[6.6,3.74],[7.45,3.28]];
-  for(let i=0;i<pts.length-1;i++) s.addShape(pptx.ShapeType.line,{x:pts[i][0],y:pts[i][1],w:pts[i+1][0]-pts[i][0],h:pts[i+1][1]-pts[i][1],line:{color:C.cyan2,width:4}});
-  s.addShape(pptx.ShapeType.line,{x:1.15,y:5.85,w:6.35,h:0,line:{color:'5F8390',width:1}});
-  s.addShape(pptx.ShapeType.line,{x:6.25,y:3.05,w:0,h:2.8,line:{color:C.amber,width:2,dash:'dash'}});
-  s.addText('风险窗口',{x:6.35,y:3.05,w:1.15,h:0.3,fontFace:FONT,fontSize:15,bold:true,color:C.amber,margin:0});
+  s.addText('从“已发生”看向“可能发生”',{x:1.08,y:2.42,w:4.3,h:0.38,fontFace:FONT,fontSize:22,bold:true,color:C.white,margin:0});
+  s.addText('趋势结构示意 · 非真实效果数据',{x:5.05,y:2.48,w:2.72,h:0.26,fontFace:FONT,fontSize:12.5,color:'A7CBD2',align:'right',margin:0});
+  // 清晰图表语义：左侧是已观测结果，右侧是模型预测，红色区域才是风险区。
+  s.addShape(pptx.ShapeType.rect,{x:1.18,y:3.18,w:6.55,h:0.63,fill:{color:C.red,transparency:82},line:{color:C.red,transparency:100}});
+  s.addShape(pptx.ShapeType.line,{x:1.18,y:3.81,w:6.55,h:0,line:{color:C.red,width:1.8,dash:'dash'}});
+  s.addText('风险阈值（示意）',{x:1.34,y:3.35,w:1.8,h:0.24,fontFace:FONT,fontSize:12.5,bold:true,color:'FFD6D3',margin:0});
+  s.addShape(pptx.ShapeType.line,{x:1.18,y:5.75,w:6.55,h:0,line:{color:'5F8390',width:1.2}});
+  s.addShape(pptx.ShapeType.line,{x:1.18,y:3.1,w:0,h:2.65,line:{color:'5F8390',width:1.2}});
+  const observed=[[1.28,5.28],[1.95,5.18],[2.62,5.24],[3.29,5.03],[3.96,4.91],[4.63,4.72],[5.30,4.55]];
+  const forecast=[[5.30,4.55],[5.88,4.30],[6.46,3.86],[7.04,3.53],[7.60,3.38]];
+  for(let i=0;i<observed.length-1;i++) s.addShape(pptx.ShapeType.line,{x:observed[i][0],y:observed[i][1],w:observed[i+1][0]-observed[i][0],h:observed[i+1][1]-observed[i][1],line:{color:C.cyan2,width:3.5}});
+  for(let i=0;i<forecast.length-1;i++) s.addShape(pptx.ShapeType.line,{x:forecast[i][0],y:forecast[i][1],w:forecast[i+1][0]-forecast[i][0],h:forecast[i+1][1]-forecast[i][1],line:{color:C.amber,width:3.5,dash:'dash'}});
+  s.addShape(pptx.ShapeType.line,{x:5.30,y:3.1,w:0,h:2.65,line:{color:C.white,width:1.4,dash:'dash',transparency:35}});
+  s.addShape(pptx.ShapeType.ellipse,{x:5.20,y:4.45,w:0.2,h:0.2,fill:{color:C.white},line:{color:C.white}});
+  s.addText('当前时刻',{x:4.76,y:5.88,w:1.12,h:0.25,fontFace:FONT,fontSize:12.5,bold:true,color:C.white,align:'center',margin:0});
+  s.addText('已观测结果',{x:1.34,y:5.88,w:1.45,h:0.25,fontFace:FONT,fontSize:12.5,color:C.cyan2,margin:0});
+  s.addText('未来预测区间',{x:6.18,y:5.88,w:1.42,h:0.25,fontFace:FONT,fontSize:12.5,color:C.amber,align:'right',margin:0});
+  s.addText('尚未越界',{x:4.12,y:4.34,w:1.0,h:0.25,fontFace:FONT,fontSize:13,color:'D2E7EA',margin:0});
+  s.addText('预测进入风险区',{x:6.05,y:3.04,w:1.62,h:0.3,fontFace:FONT,fontSize:14,bold:true,color:C.amber,align:'right',margin:0});
   box(s,8.62,2.1,4.0,1.1,C.pale,C.line);s.addText('数据来源',{x:8.92,y:2.36,w:1.3,h:0.28,fontFace:FONT,fontSize:16,bold:true,color:C.blue,margin:0});s.addText('UCI 公开城市污水处理数据',{x:8.92,y:2.72,w:3.25,h:0.28,fontFace:FONT,fontSize:18,bold:true,color:C.ink,margin:0,fit:'shrink'});
   box(s,8.62,3.45,4.0,1.35,C.panel,C.line);s.addText('官网原始记录',{x:8.95,y:3.72,w:1.7,h:0.28,fontFace:FONT,fontSize:16,color:C.muted,margin:0});s.addText('527 条',{x:10.72,y:3.62,w:1.45,h:0.45,fontFace:FONT,fontSize:26,bold:true,color:C.navy,align:'right',margin:0});s.addText('当前演示本地镜像：520 条',{x:8.95,y:4.25,w:3.25,h:0.3,fontFace:FONT,fontSize:16,bold:true,color:C.blue,margin:0});
   box(s,8.62,5.05,4.0,1.3,'FFF6E8','F2C97B');s.addText('重要边界',{x:8.95,y:5.32,w:1.6,h:0.3,fontFace:FONT,fontSize:17,bold:true,color:'9A5E00',margin:0});s.addText('不是贵州企业或息烽园区数据\n不代表真实工厂效果',{x:8.95,y:5.72,w:3.2,h:0.45,fontFace:FONT,fontSize:16,bold:true,color:C.ink,margin:0,fit:'shrink'});
