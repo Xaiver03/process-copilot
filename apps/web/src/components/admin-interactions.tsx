@@ -7,6 +7,12 @@ import { listAIInteractions, type AIInteractionPage } from "@/lib/admin-api";
 import styles from "./admin-console.module.css";
 import { AdminEmpty, AdminError, AdminLoading, errorMessage, formatAdminTime } from "./admin-state";
 
+const modeLabels: Record<AIInteractionPage["items"][number]["mode"], string> = {
+  llm_enhanced: "在线增强（真实调用）",
+  template: "模板降级（未调用语言模型）",
+  degraded: "服务降级（未获得在线回答）",
+};
+
 const PAGE_SIZE = 20;
 
 export function AdminInteractionsPage() {
@@ -39,7 +45,7 @@ export function AdminInteractionsPage() {
         <div>
           <p className={styles.eyebrow}>TRACEABILITY</p>
           <h2>AI 调用记录</h2>
-          <p>查看问题、回答模式、证据引用、延迟与 Trace ID；记录来自真实管理 API。</p>
+          <p>查看问题、回答模式、证据引用、延迟与 Trace ID；只有标记为“在线增强（真实调用）”的记录才表示实际调用了语言模型。</p>
         </div>
         <button className={styles.buttonSecondary} type="button" onClick={() => void load(offset)} disabled={loading}>
           <ArrowClockwise aria-hidden="true" />{loading ? "刷新中" : "刷新"}
@@ -57,7 +63,7 @@ export function AdminInteractionsPage() {
               <tbody>
                 {data.items.map((item) => (
                   <tr key={item.id}>
-                    <td>{formatAdminTime(item.createdAt)}<br /><span className={`${styles.badge} ${item.mode === "llm_enhanced" ? styles.ready : styles.degraded}`}>{item.mode}</span></td>
+                    <td>{formatAdminTime(item.createdAt)}<br /><span className={`${styles.badge} ${item.mode === "llm_enhanced" ? styles.ready : styles.degraded}`}>{modeLabels[item.mode]}</span></td>
                     <td><code>{item.eventId}</code><br />{item.question}</td>
                     <td>{item.answer.length > 180 ? `${item.answer.slice(0, 180)}…` : item.answer}<br /><span className={styles.secondary}>证据 {item.evidenceRefs.length} 项</span></td>
                     <td>{item.model}<br /><code>{item.latencyMs} ms</code></td>

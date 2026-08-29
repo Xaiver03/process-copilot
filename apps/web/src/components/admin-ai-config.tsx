@@ -15,6 +15,13 @@ import {
 import styles from "./admin-console.module.css";
 import { AdminError, AdminLoading, errorMessage } from "./admin-state";
 
+const runtimeStatusLabels: Record<AIStatus["languageModel"]["status"], string> = {
+  ready: "已验证可用",
+  degraded: "降级",
+  offline: "离线",
+  unknown: "未知",
+};
+
 function toDraft(config: AIConfig): AdminAIConfigDraft {
   return { ...config, apiKey: "", clearApiKey: false };
 }
@@ -60,7 +67,11 @@ export function AdminAIConfig() {
       const updated = await updateAIConfig(draft);
       setConfig(updated);
       setDraft(toDraft(updated));
-      setNotice(draft.clearApiKey ? "配置已保存，API 密钥已显式清除。" : "配置已保存并写入审计记录。密钥内容不会回显。");
+      setNotice(
+        draft.clearApiKey
+          ? "配置已提交并写入配置审计；已保存密钥已显式清除。运行状态尚未重新探测。"
+          : "配置已提交并写入配置审计。密钥内容不会回显；保存不代表运行时已在线。",
+      );
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -75,8 +86,8 @@ export function AdminAIConfig() {
     try {
       const result = await testAIConnection();
       setNotice(result.ok
-        ? `连接测试成功：${result.provider} / ${result.model}，${result.latencyMs} ms，Trace ${result.traceId}`
-        : `连接测试未通过：${result.error ?? "服务返回降级结果"}`);
+        ? `本次真实探测通过：${result.provider} / ${result.model}，${result.latencyMs} ms，Trace ${result.traceId}。这只代表本次探测，不代表后续请求持续在线。`
+        : `本次真实探测未通过：${result.error ?? "服务返回降级结果"}。结果已进入调用审计。`);
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -84,25 +95,26 @@ export function AdminAIConfig() {
     }
   }
 
-  if (loading) return <AdminLoading label="正在读取在线 AI 配置" />;
+  if (loading) return <AdminLoading label="正在读取 AI 运行配置与最近探测状态" />;
   if (!draft || !config || !status) return <AdminError message={error || "配置响应为空。"} onRetry={() => void load()} />;
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>ONLINE AI</p>
-          <h2>在线 AI 配置</h2>
-          <p>密钥仅写入，不回显。所有配置变更和连接测试都使用管理员身份并产生可追踪记录。</p>
+          <p className={styles.eyebrow}>AI RUNTIME ADMIN</p>
+          <h2>AI 运行配置</h2>
+          <p>配置写入和运行探测是两件事：这里仅写入 AI 服务配置，不会写入 DCS/PLC；运行状态以最近一次真实探测为准。所有配置变更、探测和调用均可追溯。</p>
         </div>
-        <span className={`${styles.badge} ${status.languageModel.status === "ready" ? styles.ready : styles.degraded}`}>
-          语言模型：{status.languageModel.status}
+        <span className={`${styles.badge} ${styles[status.languageModel.status]}`}>
+          语言模型：{runtimeStatusLabels[status.languageModel.status]}
         </span>
       </header>
 
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
       {notice ? <div className={styles.success} role="status" aria-live="polite">{notice}</div> : null}
-      {!draft.enabled ? <div className={styles.notice} role="status">在线 AI 当前已禁用；事件研判将按后端策略进入模板或降级模式。</div> : null}
+      {!draft.enabled ? <div className={styles.notice} role="status">在线增强当前已禁用；事件研判将按后端策略进入模板或降级模式。启用配置不会自动写入 DCS/PLC。</div> : null}
+      {status.languageModel.reason ? <div className={styles.notice} role="status">最近探测说明：{status.languageModel.reason}</div> : null}
 
       <form className={`${styles.panel} ${styles.form}`} onSubmit={save}>
         <label className={styles.field}>
@@ -167,7 +179,7 @@ export function AdminAIConfig() {
         </label>
 
         <div className={styles.formFooter}>
-          <p className={styles.hint}>密钥值不会出现在配置响应、调用记录或审计详情中。</p>
+          <p className={styles.hint}>密钥值不会出现在配置响应、调用记录或审计详情中。保存只提交配置并写入审计；此状态来自刚刚读取的运行时探测。</p>
           <div className={styles.actions}>
             <button className={styles.buttonSecondary} type="button" onClick={() => void runConnectionTest()} disabled={saving || testing || !draft.enabled}>
               <PlugsConnected aria-hidden="true" />{testing ? "正在测试" : "测试连接"}

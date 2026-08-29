@@ -10,7 +10,7 @@ import { AdminEmpty, AdminError, AdminLoading, errorMessage, formatAdminTime } f
 type ServiceState = AdminOverview["worker"]["status"];
 
 const serviceLabels: Record<ServiceState, string> = {
-  ready: "就绪",
+  ready: "已验证可用",
   degraded: "降级",
   offline: "离线",
   unknown: "未知",
@@ -65,7 +65,7 @@ export function AdminOverviewPage() {
         <div>
           <p className={styles.eyebrow}>OPERATIONS</p>
           <h2>AI 运行概览</h2>
-          <p>确认在线推理、工业模型和语言模型的真实可用状态，不把降级结果伪装成在线调用。</p>
+          <p>状态只反映接口提供的最近一次真实探测：已验证可用、未知、离线和降级不互相替代；这不是持续在线承诺。运行状态不是配置是否启用。</p>
         </div>
         <div className={styles.actions}>
           <button className={styles.buttonSecondary} type="button" onClick={() => void load()}>
@@ -77,13 +77,16 @@ export function AdminOverviewPage() {
       <section className={styles.statusGrid} aria-label="服务状态摘要">
         <article className={styles.card}>
           <div className={styles.cardHead}><span>推理模式</span></div>
-          <strong>{data.inferenceMode === "online" ? "在线 AI" : "模板降级"}</strong>
+          <strong>{data.inferenceMode === "online" ? "在线增强路径" : "模板降级路径"}</strong>
           <code>{data.dataBuildHash === "unavailable" ? "数据版本未上报" : data.dataBuildHash}</code>
+          <p className={styles.secondary}>推理路径不等于语言模型已在线；请以语言模型卡片的最近探测状态为准。</p>
         </article>
         <ServiceCard title="任务 Worker" service={data.worker} />
         <ServiceCard title="工业模型" service={data.industrialModel} />
         <ServiceCard title="语言模型" service={data.languageModel} />
       </section>
+
+      <p className={styles.hint}>状态更新时间：未提供（管理 API 未返回探测时间）。配置写入、单次探测和实际调用分别记录在对应审计/调用记录中。</p>
 
       <section className={styles.overviewGrid}>
         <div className={styles.panel}>

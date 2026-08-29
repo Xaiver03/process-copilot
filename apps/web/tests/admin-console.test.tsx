@@ -97,7 +97,10 @@ describe("admin 权限和 AI 配置", () => {
     render(<AdminAccess><AdminAIConfig /></AdminAccess>);
 
     expect(screen.getByRole("status")).toHaveTextContent(/正在读取|正在验证/);
-    expect(await screen.findByRole("heading", { name: "在线 AI 配置" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "AI 运行配置" })).toBeInTheDocument();
+    expect(screen.getByText("语言模型：已验证可用")).toBeInTheDocument();
+    expect(screen.getByText(/此状态来自刚刚读取的运行时探测/)).toBeInTheDocument();
+    expect(screen.getByText(/保存只提交配置并写入审计/)).toBeInTheDocument();
   });
 
   it("留空保留密钥，勾选后才显式清除", async () => {
@@ -136,7 +139,7 @@ describe("admin 权限和 AI 配置", () => {
     view.unmount();
     mocks.getAIConfig.mockResolvedValue({ ...config, enabled: false });
     render(<AdminAccess><AdminAIConfig /></AdminAccess>);
-    expect(await screen.findByText(/在线 AI 当前已禁用/)).toBeInTheDocument();
+    expect(await screen.findByText(/在线增强当前已禁用/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "测试连接" })).toBeDisabled();
   });
 
@@ -149,6 +152,49 @@ describe("admin 权限和 AI 配置", () => {
     expect(screen.getByText("模板降级", { selector: "span" })).toBeInTheDocument();
     expect(screen.queryByText("null ms")).not.toBeInTheDocument();
     expect(screen.queryByText("unavailable")).not.toBeInTheDocument();
+    expect(screen.getByText(/状态更新时间：未提供/)).toBeInTheDocument();
+    expect(screen.getByText(/不是持续在线承诺/)).toBeInTheDocument();
+  });
+
+  it("区分未知、离线和降级，并展示最近探测错误", async () => {
+    mocks.getAdminOverview.mockResolvedValueOnce({
+      inferenceMode: "template",
+      worker: { status: "unknown", version: null, latencyMs: null, reason: "尚未执行探测" },
+      industrialModel: { status: "degraded", version: "model-v1", latencyMs: 24, reason: "模型探测超时" },
+      languageModel: { status: "offline", version: null, latencyMs: null, reason: "最近一次探测失败：连接被拒绝" },
+      dataBuildHash: "unavailable",
+      recentLLMCalls: [],
+      degradedReasons: ["语言模型最近一次探测失败"],
+    });
+
+    render(<AdminOverviewPage />);
+
+    expect(await screen.findByText("未知")).toBeInTheDocument();
+    expect(screen.getByText("离线")).toBeInTheDocument();
+    expect(screen.getByText("降级")).toBeInTheDocument();
+    expect(screen.getByText("最近一次探测失败：连接被拒绝")).toBeInTheDocument();
+    expect(screen.getByText(/运行状态不是配置是否启用/)).toBeInTheDocument();
+  });
+
+  it("测试连接只报告单次真实探测，不宣称持续在线", async () => {
+    const user = userEvent.setup();
+    mocks.testAIConnection.mockResolvedValueOnce({
+      ok: true,
+      mode: "llm_enhanced",
+      provider: "openai-compatible",
+      model: "model-a",
+      latencyMs: 42,
+      traceId: "probe-1",
+    });
+    saveSession(adminSession);
+    render(<AdminAccess><AdminAIConfig /></AdminAccess>);
+    await screen.findByDisplayValue("model-a");
+
+    await user.click(screen.getByRole("button", { name: "测试连接" }));
+
+    expect(await screen.findByText(/本次真实探测通过/)).toBeInTheDocument();
+    expect(screen.getByText(/不代表后续请求持续在线/)).toBeInTheDocument();
+    expect(mocks.testAIConnection).toHaveBeenCalledOnce();
   });
 
   it("CSS module 对桌面、中屏和 390px 视口保持局部滚动而非页面溢出", () => {
