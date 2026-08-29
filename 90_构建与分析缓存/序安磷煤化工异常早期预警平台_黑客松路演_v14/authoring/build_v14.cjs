@@ -96,8 +96,8 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
  steps.forEach((a,i)=>{const y=2.05+i*1.25;badge(s,a[0],0.72,y,0.62,i===2?'FFF5E4':C.pale,i===2?C.amber:C.teal);text(s,a[1],1.58,y-0.01,2.15,0.38,20,C.navy,true);text(s,a[2],1.58,y+0.43,2.52,0.45,14,C.gray);});
  box(s,0.72,5.95,3.4,0.72,C.deep,C.deep);text(s,'当前 Demo：只读 / 影子建议',0.94,6.12,2.95,0.34,17,C.white,true,{align:'center'});
  box(s,4.48,1.98,8.08,4.73,C.white,C.border);s.addImage({path:replayShot,x:4.62,y:2.12,w:7.8,h:4.39});
- badge(s,'PLAYWRIGHT 公网实拍',9.75,6.12,2.42,'12374A',C.cyan);
- note(s,'Demo 复现','评委可以现场复现。第一步，打开 https://huagong.finlaw.cloud/demo，用 operator-01 和口令 demo-op-2026 登录。第二步，选择污水出水风险或 TEP 场景，开始过程回放。第三步，进入捕获到的风险事件，向序安追问并做人工确认。当前 Demo 只读，不会向 PLC 或 DCS 发送指令。');
+ badge(s,'公网用户旅程 11/11 通过',9.3,6.12,2.87,'12374A',C.cyan);
+ note(s,'Demo 复现','评委可以现场复现。第一步，打开 https://huagong.finlaw.cloud/demo，用 operator-01 和口令 demo-op-2026 登录。第二步，选择污水出水风险或 TEP 场景，开始过程回放。第三步，进入捕获到的风险事件，向序安追问并做人工确认。2026 年 8 月 30 日公网完整 Playwright 用户旅程 11/11 通过，耗时约 2.6 分钟，覆盖双场景、AI 同链 Trace、人工决策、后台审计和多端无横向溢出。这是 Demo 可复现证据，不是生产验证。当前 Demo 只读，不会向 PLC 或 DCS 发送指令。');
 }
 
 // 07 产业参照
@@ -121,7 +121,7 @@ function note(slide,title,value){slide.addNotes(value);notes.push({title,value})
 {
  const s=base();header(s,'07 / 开发边界','48 小时做了什么，哪些不是这次才有','如实区分本次增量与赛前 / 开源基线');brand(s);
  box(s,0.74,1.92,5.72,4.72,C.white,C.border);badge(s,'赛前 / 开源基线',1.02,2.22,2.35);text(s,'不算本次独立从零开发',1.02,2.82,4.92,0.42,22,C.navy,true);['Next.js / FastAPI / PostgreSQL 工程骨架','TEP 与 UCI 公开数据','基础过程回放与只读理念','开源依赖和通用工具链'].forEach((v,i)=>{dot(s,1.15,3.66+i*0.58,C.teal,0.08);text(s,v,1.38,3.45+i*0.58,4.42,0.36,17,C.gray,i===0);});
- box(s,6.82,1.92,5.75,4.72,C.deep,C.deep);badge(s,'本次 48 小时新增 / 重构',7.12,2.22,2.72,'12374A',C.cyan);text(s,'可验证的增量',7.12,2.82,4.72,0.42,23,C.white,true);['磷煤化工异常早期预警定位','污水软测量 + TEP 双场景旅程','DeepSeek 真实在线解释与 Trace','人工确认、影子闸门与公网 Demo','Playwright 复现证据与路演材料'].forEach((v,i)=>{dot(s,7.24,3.56+i*0.54,i===2?C.amber:C.cyan,0.08);text(s,v,7.48,3.35+i*0.54,4.38,0.34,16,C.white,i===2);});
+ box(s,6.82,1.92,5.75,4.72,C.deep,C.deep);badge(s,'本次 48 小时新增 / 重构',7.12,2.22,2.72,'12374A',C.cyan);text(s,'可验证的增量',7.12,2.82,4.72,0.42,23,C.white,true);['磷煤化工异常早期预警定位','污水软测量 + TEP 双场景旅程','DeepSeek 真实在线解释与 Trace','人工确认、影子闸门与公网 Demo','公网 Playwright 用户旅程 11/11 通过'].forEach((v,i)=>{dot(s,7.24,3.56+i*0.54,i===2?C.amber:C.cyan,0.08);text(s,v,7.48,3.35+i*0.54,4.38,0.34,16,C.white,i===2);});
  note(s,'48 小时增量','我们不把开源框架和赛前工作包装成四十八小时内从零完成。赛前和开源基线包括 Next.js、FastAPI、PostgreSQL 工程骨架，TEP 和 UCI 公开数据，基础回放和只读理念。本次四十八小时新增或重构的是：磷煤化工定位、污水与 TEP 双场景旅程、DeepSeek 真实在线解释与 Trace、人工确认和影子闸门，以及公网 Demo 和 Playwright 复现证据。');
 }
 
