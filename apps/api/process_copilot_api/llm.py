@@ -58,8 +58,8 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
 _SAFE_OBSERVATION_DESCRIPTION_PATTERNS = tuple(
     re.compile(pattern, re.IGNORECASE)
     for pattern in (
-        r"(?:多个|多项|三项|这些)(?:独立)?(?:过程)?(?:变量|测量|测点|指标)"
-        r"(?:的)?(?:同时|同步|共同)(?:变化|偏移|波动)",
+        r"(?:过程变量|变量|测量点?|测点|指标).{0,32}"
+        r"(?:同时|同步|共同)(?:变化|偏移|偏离|波动)",
         r"(?:这种|该)同步模式",
     )
 )
