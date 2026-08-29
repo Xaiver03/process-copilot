@@ -47,6 +47,8 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
         r"(?:control\s+)?(?:write[- ]?back|commands?)\s+(?:to|into)\s+"
         r"(?:the\s+)?(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*",
+        r"(?:不涉及|不包含|不提供)\s*(?:任何)?\s*(?:自动)?\s*(?:控制)?\s*"
+        r"(?:写回|下发(?:控制)?命令|发送(?:控制)?指令)",
     )
 )
 _UNSAFE_RESPONSE_PATTERNS = tuple(
