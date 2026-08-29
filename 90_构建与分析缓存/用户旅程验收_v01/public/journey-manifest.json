@@ -3,15 +3,15 @@
   "product": "序安 Process Sentinel（序安·过程哨兵）",
   "target": "public",
   "baseURL": "https://huagong.finlaw.cloud",
-  "sourceCommit": "5d04377",
-  "generatedAt": "2026-08-29T07:54:53.238Z",
+  "sourceCommit": "48a979cd95a87e082027a9e4b68e7a2b0211f574",
+  "generatedAt": "2026-08-29T09:40:46.258Z",
   "summary": {
     "expected": 11,
     "passed": 11,
     "failed": 0,
     "skipped": 0,
     "flaky": 0,
-    "durationMs": 125220.109,
+    "durationMs": 253469.071,
     "screenshotCount": 48,
     "viewportScreenshotCount": 24,
     "fullPageScreenshotCount": 24
@@ -21,67 +21,67 @@
       "id": "UJ-01",
       "title": "UJ-01 访客从演示入口创建回放，样本推进、暂停、恢复并捕获事件",
       "status": "passed",
-      "durationMs": 34332
+      "durationMs": 33624
     },
     {
       "id": "UJ-02",
       "title": "UJ-02 未登录用户看见完整 AI 依据、登录门和只读写回预演",
       "status": "passed",
-      "durationMs": 2006
+      "durationMs": 7147
     },
     {
       "id": "UJ-03",
       "title": "UJ-03 中控操作员在线追问 AI，只能升级并形成可追溯记录",
       "status": "passed",
-      "durationMs": 11645
+      "durationMs": 25288
     },
     {
       "id": "UJ-04",
       "title": "UJ-04 当班班长可以确认偏移并留下身份、模型与 Trace",
       "status": "passed",
-      "durationMs": 4660
+      "durationMs": 16504
     },
     {
       "id": "UJ-05",
       "title": "UJ-05 工艺工程师可以驳回偏移并留下独立审计记录",
       "status": "passed",
-      "durationMs": 2706
+      "durationMs": 15050
     },
     {
       "id": "UJ-06",
       "title": "UJ-06 管理后台执行 RBAC、运行概览、只读 AI 配置、调用与配置审计",
       "status": "passed",
-      "durationMs": 14951
+      "durationMs": 28053
     },
     {
       "id": "UJ-07",
       "title": "UJ-07 系统状态同时验证前端可见健康信息与后端 health/readiness",
       "status": "passed",
-      "durationMs": 1825
+      "durationMs": 8616
     },
     {
       "id": "UJ-08",
       "title": "UJ-08 核心页面在桌面、平板与手机均无水平溢出",
       "status": "passed",
-      "durationMs": 6446
+      "durationMs": 32872
     },
     {
       "id": "UJ-09",
       "title": "UJ-09 AI 从工业模型研判、证据解释到调用审计保持同一条可追溯链路",
       "status": "passed",
-      "durationMs": 19655
+      "durationMs": 33984
     },
     {
       "id": "UJ-10",
       "title": "UJ-10 AI 运行模式、降级原因、密钥不回显和公网只读边界全部透明",
       "status": "passed",
-      "durationMs": 2985
+      "durationMs": 11390
     },
     {
       "id": "UJ-11",
       "title": "UJ-11 操作员以 AI Trace 编辑拟议动作并完成只读影子门禁核验",
       "status": "passed",
-      "durationMs": 9590
+      "durationMs": 17747
     }
   ],
   "screenshotPolicy": "每个关键用户状态同时保存当前视口与完整页面，响应式旅程覆盖 1440、1024、768、390 像素宽度。",
@@ -89,38 +89,38 @@
     {
       "file": "screenshots/UJ01-01_演示入口_全页.png",
       "kind": "full_page",
-      "bytes": 98487,
-      "sha256": "934ed1b8f9b47232082e6ed6c71d5347040f362105575a62f9e9b3071acedf00"
+      "bytes": 87929,
+      "sha256": "468d5fc8a4603c9c4b899b8f59eec4a2c064e967aadc9ac2e9fd9b98fdbb13ae"
     },
     {
       "file": "screenshots/UJ01-01_演示入口_首屏.png",
       "kind": "viewport",
-      "bytes": 93859,
-      "sha256": "480689426bd42edd6429920566ffb3cbe9e53ee5e7de639703140e68c2e61bc8"
+      "bytes": 83223,
+      "sha256": "845695ecc40c5d885037d2652a9aeb6d65dfef19f310a40bca348920b0dae6ae"
     },
     {
       "file": "screenshots/UJ01-02_在线回放推进_全页.png",
       "kind": "full_page",
-      "bytes": 160029,
-      "sha256": "21fcb6ed8d07344daa9d3b92102afea31b77ef53ab28257a7a90d2698a635c3b"
+      "bytes": 140208,
+      "sha256": "767fbc8b92ea9f7ea57babda973605d153e46995948ccf960478e4c80dccf5d9"
     },
     {
       "file": "screenshots/UJ01-02_在线回放推进_首屏.png",
       "kind": "viewport",
-      "bytes": 111688,
-      "sha256": "14681b4cc25e4b26a4198adba601af541faab85f54bc8be77ce82b7fe2ca7006"
+      "bytes": 111230,
+      "sha256": "ebd00abfa067b9ddabc160ce7f631bbe27648176bf6b176653b2dccf962a4b40"
     },
     {
       "file": "screenshots/UJ01-03_偏移捕获_全页.png",
       "kind": "full_page",
-      "bytes": 162734,
-      "sha256": "145a44507316ce7e602aa2159dbcc211d680dc659a629d90f653b7022e9b2578"
+      "bytes": 160945,
+      "sha256": "e12b3c0d9648a5469679d9f885ee8b2db574ff158e5db928bf4c12ede0044266"
     },
     {
       "file": "screenshots/UJ01-03_偏移捕获_首屏.png",
       "kind": "viewport",
-      "bytes": 112190,
-      "sha256": "91847f0870bac41f34232300190eb369550ad9086a97580c6c71200422d57114"
+      "bytes": 111910,
+      "sha256": "862b21eb43a11e9ba468fcacb709a773976035277c028089368c7a4e36807b1a"
     },
     {
       "file": "screenshots/UJ02-01_未登录事件研判_全页.png",
@@ -132,67 +132,67 @@
       "file": "screenshots/UJ02-01_未登录事件研判_首屏.png",
       "kind": "viewport",
       "bytes": 148035,
-      "sha256": "c0b2f3a171e1cfa8416ca416dbbae43e2b74d9e863e6847ba10b54017c504c20"
+      "sha256": "11c2ec8942f59ab91f743aae36361d434cc8aa4505221fb0a35591a9ab14cd2c"
     },
     {
       "file": "screenshots/UJ02-02_受控写回仅预演_全页.png",
       "kind": "full_page",
-      "bytes": 485972,
-      "sha256": "671b912b22d35f1df9bf174634b948ad77c34d5e0ef99c64a8e2e277d7ad00e2"
+      "bytes": 526128,
+      "sha256": "37cd3a2380c6aea39e772f99cd8db862565637d3ca7f5eb81cd66ef7c9291bad"
     },
     {
       "file": "screenshots/UJ02-02_受控写回仅预演_首屏.png",
       "kind": "viewport",
-      "bytes": 96619,
-      "sha256": "1e92b08e38c935cd567ce067b19cd1d4669bb1508c87ce6b5e8bd35b58d575c0"
+      "bytes": 117571,
+      "sha256": "0a1a6aabd719249bd3b6e3eb33126e01699ac87673afc4e7cd8610ad7029f1de"
     },
     {
       "file": "screenshots/UJ03-01_操作员AI追问_全页.png",
       "kind": "full_page",
-      "bytes": 583187,
-      "sha256": "10cb8afd7955ea01e0a0b56117ed4f653b372af2c6c99ca249119212c71c8a2d"
+      "bytes": 577547,
+      "sha256": "a48253339adefc53327aa51988002b54eef305eb0c565136e91f9866eaa3b3d3"
     },
     {
       "file": "screenshots/UJ03-01_操作员AI追问_首屏.png",
       "kind": "viewport",
-      "bytes": 139331,
-      "sha256": "022b916153ae37ee7a7945b173042c7574c4973758aae87a76bf128dcdfabcbe"
+      "bytes": 139140,
+      "sha256": "f98c954bac48243396c8bec6c94c10284890437e10e8f7537b389d7c08835f21"
     },
     {
       "file": "screenshots/UJ03-02_操作员升级记录_全页.png",
       "kind": "full_page",
-      "bytes": 112897,
-      "sha256": "025c1d09af15873b08a1a2d08c3d6d22b4aa2ddaa8bab704571d84032b1796e4"
+      "bytes": 111601,
+      "sha256": "9400a2a95aab1a0fc86f74519489d868d97e23356a02be870354bf190474f265"
     },
     {
       "file": "screenshots/UJ03-02_操作员升级记录_首屏.png",
       "kind": "viewport",
-      "bytes": 102445,
-      "sha256": "03d09310e6ea7a2c3d9c578380a8ed0b8b61d4bada8bf5e4b84b02ff3c098914"
+      "bytes": 101188,
+      "sha256": "2d78b6c73eb70ee566cacffecbdcabb3984de35b38771a5aa074a2f2852d35c1"
     },
     {
       "file": "screenshots/UJ04-01_班长确认记录_全页.png",
       "kind": "full_page",
-      "bytes": 109431,
-      "sha256": "e0ac4cefdfa9df49a9387b92b3d7a46d99b876d9f246273e9520cdaf56eb56d3"
+      "bytes": 109833,
+      "sha256": "ff685b498d31622b84796f0b4314f4df9b534dd3d0c25a5c880e0a43b0e40a7e"
     },
     {
       "file": "screenshots/UJ04-01_班长确认记录_首屏.png",
       "kind": "viewport",
-      "bytes": 99105,
-      "sha256": "ccd0ce62cb081c4c9f5513f5873497d93b0e66f7f9514ed0aec3da7a6668022b"
+      "bytes": 99301,
+      "sha256": "b8a3da572e760807208a8421bfd7eacb2e6b984d13d539becfbdc610034d77ca"
     },
     {
       "file": "screenshots/UJ05-01_工程师驳回记录_全页.png",
       "kind": "full_page",
-      "bytes": 111342,
-      "sha256": "c64ed648f809e8853bbb412280d1171b3aabeca8837d0cd37d101a2dd0ff76f4"
+      "bytes": 110375,
+      "sha256": "33447fa34e0a361381e8ed422de30ec9c22db697bebe0a4813f17066b1b6c417"
     },
     {
       "file": "screenshots/UJ05-01_工程师驳回记录_首屏.png",
       "kind": "viewport",
-      "bytes": 99527,
-      "sha256": "c6063a35511615b5297f6334831d194558dd6fa1d4ef01631e7576b1cbc00a99"
+      "bytes": 99065,
+      "sha256": "11ff2b41307a343eaac1169dff34c69a7439a16419d194c572736c84135c84a2"
     },
     {
       "file": "screenshots/UJ06-01_普通账号拒绝后台_全页.png",
@@ -209,14 +209,14 @@
     {
       "file": "screenshots/UJ06-02_管理运行概览_全页.png",
       "kind": "full_page",
-      "bytes": 213402,
-      "sha256": "3e58e4eaeeee9c0fbf9d28a73306d41e0ae28b22e1054b6638429127f1aea241"
+      "bytes": 211906,
+      "sha256": "9146e91fc2e130f7b9dfaf5eaf052bec4594331d333bec624b57281f42fc2a3c"
     },
     {
       "file": "screenshots/UJ06-02_管理运行概览_首屏.png",
       "kind": "viewport",
-      "bytes": 137541,
-      "sha256": "c849d4e4c9b9f1291d08e4cf5fdbf6027511e6846c3c6a6eb8daeafa85b1d56e"
+      "bytes": 137418,
+      "sha256": "251dfd921c925db5ff0a9f58ae4a22bcdf187a30acc443336c385cb5d485fbea"
     },
     {
       "file": "screenshots/UJ06-03_AI配置只读边界_全页.png",
@@ -233,14 +233,14 @@
     {
       "file": "screenshots/UJ06-04_AI调用记录_全页.png",
       "kind": "full_page",
-      "bytes": 1457511,
-      "sha256": "6868dfcfc985ad3386e6e15d69da50518430d0a76bc5289c0ae9ee0db64202f7"
+      "bytes": 1370136,
+      "sha256": "1124a61386604828d7aefb368ef79cc1eb4094935c077097de382ef5a6a8e1f7"
     },
     {
       "file": "screenshots/UJ06-04_AI调用记录_首屏.png",
       "kind": "viewport",
-      "bytes": 150660,
-      "sha256": "324a2ae196a330df0a5c2dd52ece936c05db9c01792bd0d69b7315597076e514"
+      "bytes": 150187,
+      "sha256": "aa55c241846287b8a0c3bc3fac5459e54ff5f4c5d4eca2046ca13fe77061d9fb"
     },
     {
       "file": "screenshots/UJ06-05_配置审计_全页.png",
@@ -269,86 +269,86 @@
     {
       "file": "screenshots/UJ08-平板1024_事件页_全页.png",
       "kind": "full_page",
-      "bytes": 456841,
-      "sha256": "f7c4c45434ab982a563f300ce0f96ca29dbea56dfecebfda3ed4b88760bae031"
+      "bytes": 456009,
+      "sha256": "72b211ac8c4d82ccdb0ed508af5468d5dcd297822c65ff7f7ac02a8ad82c673d"
     },
     {
       "file": "screenshots/UJ08-平板1024_事件页_首屏.png",
       "kind": "viewport",
-      "bytes": 118198,
-      "sha256": "1c812af04040deb1ab20b6f206817438283633c9a3e2d972bf462fae107c992c"
+      "bytes": 118277,
+      "sha256": "58688319ebd395abdaef3c0f4dc4d1034d6e4b2a3c4175b19cde243243105457"
     },
     {
       "file": "screenshots/UJ08-平板768_事件页_全页.png",
       "kind": "full_page",
-      "bytes": 449924,
-      "sha256": "c07e48eb5df01363ed63e2fc753171c594ae22f0f4f16982c8cb6cbb5be476fd"
+      "bytes": 450992,
+      "sha256": "991756a94e37aea5c4fa741dbcc265352f8215cfce594b442693f696bdedf28f"
     },
     {
       "file": "screenshots/UJ08-平板768_事件页_首屏.png",
       "kind": "viewport",
-      "bytes": 81413,
-      "sha256": "45949fb92c82f0a654deb94cd6267987bfc59c09ae3eb8e56f69db398c9b1895"
+      "bytes": 78323,
+      "sha256": "d5f97bd41df9522f3628b6c0aa4fd969e17c8742283877e1d6b2397f51395cbc"
     },
     {
       "file": "screenshots/UJ08-手机390_事件页_全页.png",
       "kind": "full_page",
-      "bytes": 403713,
-      "sha256": "c9ae044e237dbe5d5ed5156dc3e00f445849f1fdf62ace8a9fe6c6601759b761"
+      "bytes": 403915,
+      "sha256": "39a92c740ea305e359cb9b45078a9f4a5b57edd1fd1a7702b7f52709257fe1a9"
     },
     {
       "file": "screenshots/UJ08-手机390_事件页_首屏.png",
       "kind": "viewport",
-      "bytes": 58588,
-      "sha256": "617248c71a42a0d5ded5e00f2555f261ce21ba3065aaee860566f58eb11b4b2a"
+      "bytes": 58409,
+      "sha256": "851624f56d6a8dc964476465ce714bebb6ae7ae107cec28266d06e25a816ee2f"
     },
     {
       "file": "screenshots/UJ08-桌面1440_事件页_全页.png",
       "kind": "full_page",
-      "bytes": 488408,
-      "sha256": "92821d8f25ffeba2773423c75239ac24ec6d5a7b6ad5cd5517a1a24fd05b0c0b"
+      "bytes": 537042,
+      "sha256": "f0dcb8ff448c293c7a513ce220047e8ff90908818b7002c93a6308516270b6fc"
     },
     {
       "file": "screenshots/UJ08-桌面1440_事件页_首屏.png",
       "kind": "viewport",
-      "bytes": 166927,
-      "sha256": "69287fc2e4d96c51d5a83ef19d375596a43416c4dfe5d0f3d409e870658082bf"
+      "bytes": 250112,
+      "sha256": "84b00d2c3c980717a619f5de6b082f7fc2c8d990c7db7512df96f89d27eaa1db"
     },
     {
       "file": "screenshots/UJ09-01_AI研判与证据解释_全页.png",
       "kind": "full_page",
-      "bytes": 594073,
-      "sha256": "98f5f125dce7bbdbcfc66bc5b4cc21788b79f51f375ab064d0bdaa2fb5d1170b"
+      "bytes": 640750,
+      "sha256": "d5a712fbcd4230e32e6cc2cca44d31713f66b47027e364fd865443ab70288a1c"
     },
     {
       "file": "screenshots/UJ09-01_AI研判与证据解释_首屏.png",
       "kind": "viewport",
-      "bytes": 138096,
-      "sha256": "c9c698d412927242c40b6e6cf97f327d6fbcba3cd00e1c374bfb5451bc31791e"
+      "bytes": 138037,
+      "sha256": "6912d18a72e4bdbb5d4a647b6229b3853fc2da400f1836ca82d559fc55d5ef3d"
     },
     {
       "file": "screenshots/UJ09-02_AI调用同链审计_全页.png",
       "kind": "full_page",
-      "bytes": 1455567,
-      "sha256": "3b71fed5daa78aace3cafae9f3871f3ee7760d334a81c844a041a0ec4b7e26f9"
+      "bytes": 1372228,
+      "sha256": "7015e04152f99457f4ba9cb6aab8ef1c2f1e6773beb64a6debefbd08931e10d4"
     },
     {
       "file": "screenshots/UJ09-02_AI调用同链审计_首屏.png",
       "kind": "viewport",
-      "bytes": 156468,
-      "sha256": "a1c70b47347ebe090a9830f2a5ff8004ac8b43a92ed45fbc5398565a5f94c21e"
+      "bytes": 156164,
+      "sha256": "d08127d69257bd0cd5984b129883d3b04f1c6287bcedc541c0a6357a65219fb6"
     },
     {
       "file": "screenshots/UJ10-01_AI运行与降级状态透明_全页.png",
       "kind": "full_page",
-      "bytes": 199712,
-      "sha256": "51989a6ea46b958754d29b596903d45699f651dc5948d290241b04dd58114de5"
+      "bytes": 212143,
+      "sha256": "96bfc6d4e2a66107aed2afa4fbacf50a616e8406f0477a92cc9ab26266e9fd22"
     },
     {
       "file": "screenshots/UJ10-01_AI运行与降级状态透明_首屏.png",
       "kind": "viewport",
-      "bytes": 137345,
-      "sha256": "ec3f270637b730cd189687d08e2470bdf96c1df43f8a8776fbd2690da0647469"
+      "bytes": 137526,
+      "sha256": "4a17b868b2ee959e45bd042c2ef97a410030820ab3b2548ee29a753f11e78908"
     },
     {
       "file": "screenshots/UJ10-02_AI配置密钥与只读边界_全页.png",
@@ -365,8 +365,8 @@
     {
       "file": "screenshots/UJ11-01_AI人工编辑影子门禁_全页.png",
       "kind": "full_page",
-      "bytes": 696414,
-      "sha256": "b404908c59a8b680db719d18d11141236b260d74cc3922f94c34730f18ca70c4"
+      "bytes": 707193,
+      "sha256": "e9e347511a00ff29bed2ee6da24fad93b34909dfe8538022d52b26dd59d67b8e"
     },
     {
       "file": "screenshots/UJ11-01_AI人工编辑影子门禁_首屏.png",
