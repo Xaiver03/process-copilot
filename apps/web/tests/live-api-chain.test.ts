@@ -2,12 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ApiProblemError,
+  controlRunWithFallback,
   getEventWithFallback,
   getRecordWithFallback,
   startOnlineScenarioWithFallback,
   startScenarioWithFallback,
   submitDecisionWithFallback,
 } from "@/lib/api-client";
+import { formatScenarioPresentation } from "@/lib/presentation";
 
 const jsonResponse = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -18,6 +20,26 @@ const jsonResponse = (data: unknown, status = 200) =>
 describe("真实 API 主链路与降级边界", () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it("污水场景使用全中文泛化呈现，不追加故障 ID", () => {
+    const presentation = formatScenarioPresentation({
+      id: "uci-wastewater",
+      name: "UCI Water Treatment Plant",
+      description: "污水传感器场景",
+      faultId: 0,
+      sampleCount: 300,
+      faultOnsetSample: 120,
+      sourceLabel: "UCI Water Treatment Plant public sensor data",
+      domain: "wastewater",
+      modelFamily: "uci-wtp-rf-softsensor",
+      sampleIntervalSeconds: 86400,
+      recommendedInferenceMode: "template",
+    });
+
+    expect(presentation.name).toBe("污水出水风险预判");
+    expect(presentation.name).not.toContain("故障");
+    expect(presentation.description).toContain("污水");
+    expect(presentation.source).toContain("UCI");
+  });
   it("使用后端返回的 run id、event id 和 record id 串起主链路", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(jsonResponse({
@@ -128,6 +150,41 @@ describe("真实 API 主链路与降级边界", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     await expect(getEventWithFallback("any-event")).rejects.toThrow("Failed to fetch");
+  });
+
+  it("TEP 回放创建断网时拒绝串入污水静态事件", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    await expect(startScenarioWithFallback("tep-f06-a-feed-loss", 10)).rejects.toThrow(
+      "所选场景断网后不能替换为默认污水静态事件",
+    );
+    await expect(startOnlineScenarioWithFallback("tep-f06-a-feed-loss", 10)).rejects.toThrow(
+      "所选场景断网后不能替换为默认污水静态事件",
+    );
+  });
+
+  it("静态回放暂停时保留当前样本、场景和模型元数据", async () => {
+    const staticRun = {
+      id: "22222222-2222-4222-8222-222222222222",
+      scenarioId: "uci-wtp-effluent-cod-risk",
+      state: "playing" as const,
+      speed: 10,
+      currentSample: 37,
+      createdAt: "2026-08-28T08:20:00+08:00",
+      inferenceMode: "template" as const,
+      modelVersion: "uci-wtp-rf-softsensor-5e5ff4f8",
+    };
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    const result = await controlRunWithFallback(staticRun.id, { action: "pause" }, staticRun);
+
+    expect(result.mode).toBe("static-demo");
+    expect(result.data).toMatchObject({
+      state: "paused",
+      currentSample: 37,
+      scenarioId: staticRun.scenarioId,
+      modelVersion: staticRun.modelVersion,
+    });
   });
 
   it("普通异常不会触发静态降级", async () => {

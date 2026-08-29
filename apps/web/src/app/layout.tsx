@@ -5,9 +5,9 @@ import "./globals.css";
 import { ShellProvider } from "@/components/shell-provider";
 
 export const metadata: Metadata = {
-  title: "序安 Process Sentinel | 连续化工过程偏移副驾驶",
-  description: "基于田纳西-伊士曼过程（TEP）公开仿真数据的连续过程偏移研判 Demo。",
-  icons: { icon: "/brand/process-sentinel-mark-v01.png", apple: "/brand/process-sentinel-mark-v01.png" },
+  title: "序安·磷煤化工异常早期预警平台",
+  description: "基于 DCS 时序数据提前发现磷煤化工过程异常，给出原因证据和处置建议，并由人员确认闭环。",
+  icons: { icon: "/favicon.ico", apple: "/icon.png" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -39,6 +39,14 @@ describe("工业状态组件", () => {
     expect(screen.getByRole("table", { name: "关键变量证据数据表" })).toBeInTheDocument();
   });
 
+  it("默认污水事件携带出水预测证据", () => {
+    expect(demoEvent.prediction).toMatchObject({
+      targetName: "出水化学需氧量",
+      horizonLabel: "下一化验周期",
+      historicalHighBoundary: 147,
+      riskLevel: "elevated",
+    });
+  });
   it("班长可以确认偏移并说明建议采纳情况", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn().mockResolvedValue(undefined);

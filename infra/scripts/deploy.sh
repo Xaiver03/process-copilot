@@ -90,6 +90,12 @@ for path in infra apps services packages data; do
     copy_tree "$SOURCE_DIR/$path" "$RELEASE_DIR/$path"
   fi
 done
+
+# Keep the restrictive process umask for secrets while making only the public,
+# read-only model/demo artifacts traversable by the non-root API and worker.
+find "$RELEASE_DIR/data/processed" -type d -exec chmod 755 {} +
+find "$RELEASE_DIR/data/processed" -type f -exec chmod 644 {} +
+
 for path in package.json pnpm-workspace.yaml pnpm-lock.yaml pyproject.toml .env.example; do
   if [[ -e "$SOURCE_DIR/$path" ]]; then
     cp "$SOURCE_DIR/$path" "$RELEASE_DIR/"

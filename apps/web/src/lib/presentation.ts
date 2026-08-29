@@ -4,6 +4,7 @@ type AnomalyEvent = components["schemas"]["AnomalyEvent"];
 type FaultCandidate = components["schemas"]["FaultCandidate"];
 type EvidenceItem = components["schemas"]["EvidenceItem"];
 type Scenario = components["schemas"]["Scenario"];
+type PredictionRiskLevel = NonNullable<components["schemas"]["EventDetail"]["prediction"]>["riskLevel"];
 
 const tepFaultLabelZh: Partial<Record<number, string>> = {
   1: "进料组成阶跃偏移",
@@ -13,6 +14,14 @@ const tepFaultLabelZh: Partial<Record<number, string>> = {
 };
 
 export function formatScenarioPresentation(scenario: Scenario) {
+  if (scenario.domain === "wastewater") {
+    return {
+      name: "污水出水风险预判",
+      description: `基于污水时序传感器数据，预测下一化验周期的出水风险；共 ${scenario.sampleCount} 个样本。`,
+      source: "UCI 污水处理厂公开传感器数据",
+    };
+  }
+
   const localizedName = tepFaultLabelZh[scenario.faultId]
     ?? (/[㐀-鿿]/.test(scenario.name) ? scenario.name : `连续过程故障 ${scenario.faultId}`);
   return {
@@ -62,6 +71,16 @@ export const eventSeverityPresentation: Record<
   warning: { state: "warning", label: "偏移" },
   critical: { state: "critical", label: "严重" },
 };
+
+export function formatPredictionRisk(riskLevel: PredictionRiskLevel) {
+  const presentation: Record<PredictionRiskLevel, { state: "normal" | "warning" | "critical"; label: string }> = {
+    normal: { state: "normal", label: "正常" },
+    elevated: { state: "warning", label: "需关注" },
+    high: { state: "critical", label: "高风险" },
+    unknown: { state: "warning", label: "未知 · 待人工确认" },
+  };
+  return presentation[riskLevel];
+}
 
 export function formatFaultCandidate(candidate: FaultCandidate) {
   if (candidate.faultId === 0) {

@@ -1,0 +1,104 @@
+{
+  "sampleIndex": 42,
+  "detectionSample": 42,
+  "diagnosisSample": 42,
+  "diagnosisDelaySamples": 0,
+  "diagnosisState": "updated",
+  "anomalyScore": 0.31,
+  "diagnosisAnomalyScore": 0.31,
+  "anomalyLatched": true,
+  "initialCandidates": [
+    {
+      "faultId": 1,
+      "label": "初沉池出口 pH 偏离（核查权重）",
+      "probability": 0.407
+    },
+    {
+      "faultId": 2,
+      "label": "进水 pH 偏离（核查权重）",
+      "probability": 0.407
+    },
+    {
+      "faultId": 3,
+      "label": "进水流量偏离（核查权重）",
+      "probability": 0.186
+    }
+  ],
+  "candidates": [
+    {
+      "faultId": 1,
+      "label": "初沉池出口 pH 偏离（核查权重）",
+      "probability": 0.407
+    },
+    {
+      "faultId": 2,
+      "label": "进水 pH 偏离（核查权重）",
+      "probability": 0.407
+    },
+    {
+      "faultId": 3,
+      "label": "进水流量偏离（核查权重）",
+      "probability": 0.186
+    }
+  ],
+  "evidence": [
+    {
+      "variableId": "PH-P",
+      "variableName": "初沉池出口 pH",
+      "unit": "pH",
+      "contribution": 1.0,
+      "direction": "mixed",
+      "summary": "最近五点相对训练中位数/IQR 的绝对偏离约 1.00；作为检查优先级证据，不代表已证实因果。",
+      "values": [7.7, 7.6, 7.8, 7.4, 7.6]
+    },
+    {
+      "variableId": "PH-E",
+      "variableName": "进水 pH",
+      "unit": "pH",
+      "contribution": 1.0,
+      "direction": "mixed",
+      "summary": "最近五点相对训练中位数/IQR 的绝对偏离约 1.00；作为检查优先级证据，不代表已证实因果。",
+      "values": [7.8, 7.5, 7.6, 7.2, 7.5]
+    },
+    {
+      "variableId": "Q-E",
+      "variableName": "进水流量",
+      "unit": "m³/day",
+      "contribution": 0.455,
+      "direction": "mixed",
+      "summary": "最近五点相对训练中位数/IQR 的绝对偏离约 0.455；作为检查优先级证据，不代表已证实因果。",
+      "values": [33239, 32100, 32538, 35571, 33210]
+    }
+  ],
+  "recommendation": {
+    "mode": "template",
+    "risk": "预测中心值 117.45 mg/L 低于训练段历史高位边界 147.0 mg/L，但不确定区间上界 157.49 mg/L 跨过该边界，因此标记为关注级。",
+    "checks": [
+      "优先复核 PH-P、PH-E 与 Q-E 的仪表状态、取样时间和最近五点趋势。",
+      "核对后续化验结果与采样链路；上述偏离用于检查排序，不构成已证实因果。",
+      "确认该历史高位边界为训练段 DQO-S P95，而非法律排放限值。"
+    ],
+    "actions": [
+      "记录软测量预测并由操作员确认是否升级人工复核。",
+      "按现场批准的操作规程处理，不执行自动控制写回。"
+    ],
+    "safetyBoundary": "Read-only advice. No automatic control write-back."
+  },
+  "prediction": {
+    "targetId": "DQO-S",
+    "targetName": "出水化学需氧量",
+    "unit": "mg/L",
+    "horizonSamples": 1,
+    "horizonLabel": "下一条公开记录（演示下一化验周期）",
+    "predictedValue": 117.45,
+    "observedValue": null,
+    "historicalHighBoundary": 147.0,
+    "uncertaintyMae": 33.93930693069307,
+    "lowerBound": 40.13,
+    "upperBound": 157.49,
+    "riskLevel": "elevated",
+    "boundaryBasis": "训练段 DQO-S P95，不是法律排放限值。"
+  },
+  "modelVersion": "uci-wtp-rf-softsensor-5e5ff4f8",
+  "dataSourceDisclosure": "Public UCI wastewater sensor data, not real Guizhou plant data."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "uci-wtp-effluent-cod-risk",
+  "name": "出水 COD 风险预判",
+  "description": "基于公开污水处理传感器记录，按文件行序预测下一条出水 COD，用于演示下一化验周期的风险预判。",
+  "faultId": 0,
+  "sampleCount": 101,
+  "faultOnsetSample": 42,
+  "sourceLabel": "UCI Water Treatment Plant public sensor data",
+  "domain": "wastewater",
+  "modelFamily": "uci-wtp-rf-softsensor",
+  "sampleIntervalSeconds": 86400,
+  "recommendedInferenceMode": "template"
+}

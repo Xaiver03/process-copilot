@@ -7,9 +7,24 @@ const evidenceNames = (event: EventDetail) =>
   event.evidence.map((item) => `${item.variableId} ${localizeIndustrialCopy(item.variableName)}`);
 
 export function answerEventQuestion(event: EventDetail, question: string): string {
-  const candidate = event.candidates[0] ? formatFaultCandidate(event.candidates[0]).label : "当前故障候选";
+  const candidate = event.candidates[0]
+    ? event.prediction ? event.candidates[0].label : formatFaultCandidate(event.candidates[0]).label
+    : "当前故障候选";
   const evidence = evidenceNames(event);
   const normalized = question.trim();
+
+  if (event.prediction) {
+    const prediction = event.prediction;
+    if (/关注|不确定区间|预测原因/.test(normalized)) {
+      return `预测中心值 ${prediction.predictedValue.toFixed(2)} ${prediction.unit} 低于历史高位边界 ${prediction.historicalHighBoundary.toFixed(2)} ${prediction.unit}，但不确定区间上界 ${prediction.upperBound.toFixed(2)} ${prediction.unit} 已跨过边界，因此进入关注级。这是风险提示，不是已超标的实测结论。`;
+    }
+    if (/限值|法规|排放标准|边界/.test(normalized)) {
+      return `${prediction.boundaryBasis}它用于演示历史工况的高位风险，不能替代现场许可证限值、实测化验或合规判定。`;
+    }
+    if (/三项|变量|怎么查|检查顺序|核对/.test(normalized)) {
+      return `建议按顺序核对：1）${evidence[0] ?? "首个过程变量"}；2）${evidence[1] ?? "第二个过程变量"}；3）${evidence[2] ?? "第三个过程变量"}。这个顺序来自训练中位数/IQR 偏离幅度，不代表已证实因果。`;
+    }
+  }
 
   if (/传感器|仪表|测点/.test(normalized)) {
     const directionText = { up: "上升", down: "下降", mixed: "波动方向混合" } as const;

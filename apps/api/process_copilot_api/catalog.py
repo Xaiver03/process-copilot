@@ -6,7 +6,22 @@ from typing import Any
 
 from .schemas import Scenario
 
-SOURCE_LABEL = "Tennessee Eastman Process public simulation"
+TEP_SOURCE_LABEL = "Tennessee Eastman Process public simulation"
+WASTEWATER_SOURCE_LABEL = "UCI Water Treatment Plant public sensor data"
+SOURCE_DEFAULTS: dict[str, dict[str, Any]] = {
+    TEP_SOURCE_LABEL: {
+        "domain": "continuous_chemical",
+        "model_family": "tep-pca-hgb",
+        "sample_interval_seconds": 180,
+        "recommended_inference_mode": "online",
+    },
+    WASTEWATER_SOURCE_LABEL: {
+        "domain": "wastewater",
+        "model_family": "uci-wtp-rf-softsensor",
+        "sample_interval_seconds": 86400,
+        "recommended_inference_mode": "template",
+    },
+}
 
 
 class DataCatalog:
@@ -84,7 +99,8 @@ class DataCatalog:
                     fault_id=1,
                     sample_count=500,
                     fault_onset_sample=120,
-                    source_label=SOURCE_LABEL,
+                    source_label=TEP_SOURCE_LABEL,
+                    **SOURCE_DEFAULTS[TEP_SOURCE_LABEL],
                 )
             ], "invalid"
         return [
@@ -95,7 +111,8 @@ class DataCatalog:
                 fault_id=1,
                 sample_count=500,
                 fault_onset_sample=120,
-                source_label=SOURCE_LABEL,
+                source_label=TEP_SOURCE_LABEL,
+                **SOURCE_DEFAULTS[TEP_SOURCE_LABEL],
             )
         ], "fallback"
 
@@ -146,10 +163,28 @@ class DataCatalog:
                 "sample_count": raw.get("sampleCount", raw.get("sample_count")),
                 "fault_onset_sample": raw.get("faultOnsetSample", raw.get("fault_onset_sample", 0)),
                 "source_label": raw.get("sourceLabel", raw.get("source_label")),
+                "domain": raw.get("domain"),
+                "model_family": raw.get("modelFamily", raw.get("model_family")),
+                "sample_interval_seconds": raw.get(
+                    "sampleIntervalSeconds", raw.get("sample_interval_seconds")
+                ),
+                "recommended_inference_mode": raw.get(
+                    "recommendedInferenceMode", raw.get("recommended_inference_mode")
+                ),
             }
-            if normalized["source_label"] != SOURCE_LABEL:
+            source_defaults = SOURCE_DEFAULTS.get(normalized["source_label"])
+            if source_defaults is None:
                 self._provenance_invalid = True
                 continue
+            provenance_mismatch = any(
+                normalized[key] is not None and normalized[key] != expected
+                for key, expected in source_defaults.items()
+            )
+            if provenance_mismatch:
+                self._provenance_invalid = True
+                continue
+            for key, value in source_defaults.items():
+                normalized[key] = value
             try:
                 result.append(Scenario.model_validate(normalized))
             except ValueError:

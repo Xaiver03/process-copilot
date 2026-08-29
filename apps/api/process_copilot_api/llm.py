@@ -31,7 +31,10 @@ IDs from the supplied event summary). Explain the supplied facts only. Do not al
 invent anomaly scores, samples, severity, candidates, evidence, model versions, or plant
 data. Do not provide PLC/DCS addresses, registers, control instructions, executable steps,
 tool calls, or write-back commands. The system is read-only and a human operator makes
-all decisions.
+all decisions. For prediction summaries, distinguish the predicted center, uncertainty
+interval, observed value, and historical operating boundary. Never describe a historical
+boundary as a regulatory limit or a prediction as a measured exceedance. Treat ranked
+process variables as check-priority evidence, not proven causation.
 """.strip()
 
 _ALLOWED_RESPONSE_KEYS = frozenset({"answer", "narrative", "evidenceRefs"})
@@ -42,9 +45,10 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
         r"(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*"
         r"(?:\s*系统)?\s*(?:执行)?"
-        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令)",
+        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令|同步|分发|推送|广播)",
         r"(?:do(?:es)? not|will not|never|no)\s+(?:automatic\s+)?"
-        r"(?:control\s+)?(?:write[- ]?back|commands?)\s+(?:to|into)\s+"
+        r"(?:control\s+)?(?:write[- ]?back|commands?|sync(?:hronize|hronization)?|"
+        r"distribut(?:e|ion)|push|broadcast)\s+(?:to|into|with)\s+"
         r"(?:the\s+)?(?:plc|dcs|scada|modbus|opc[ -]?ua)"
         r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*",
         r"(?:不涉及|不包含|不提供)\s*(?:任何)?\s*(?:自动)?\s*(?:控制)?\s*"
@@ -56,7 +60,7 @@ _CONTROL_ACTIONS_ZH = (
     r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
     r"降(?:低|至|温)|升温|重启|复位|上调|下调|增(?:加|大)|减(?:少|小)|"
     r"切换|暂停|恢复|保持|维持|合上|断开|投入|投用|退出|跳闸|"
-    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|执行|控制"
+    r"写(?:入|回|值)|赋值|下(?:发|达)|发送|传(?:送|输)|转发|发布|同步|广播|推送|分发|执行|控制|调控|激活"
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温(?:度)?|液位|转速|功率|频率|电流|电压|扭矩|开度|"
@@ -65,7 +69,8 @@ _CONTROL_TARGETS_ZH = (
 )
 _CONTROL_ACTIONS_EN = (
     r"set|write|change|adjust|open|close|increase|decrease|raise|lower|restart|"
-    r"reboot|reset|switch|start|stop|enable|disable|execute|send|issue|dispatch|"
+    r"reboot|reset|switch|start|stop|enable|disable|execute|send|transmit|forward|relay|route|"
+    r"issue|dispatch|push|distribute|broadcast|sync|"
     r"command|maintain|keep|hold|"
     r"turn\s+(?:on|off)|power\s+(?:on|off)"
 )
@@ -247,18 +252,16 @@ class ExplanationEnhancer:
 
     def _request(self, event_summary: dict[str, Any], question: str) -> Any:
         base_url = validate_provider_base_url(self.settings.base_url, enabled=True)
+        user_content = json.dumps(
+            {"eventSummary": event_summary, "question": question},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
         request_payload = {
             "model": self.settings.model,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        {"eventSummary": event_summary, "question": question},
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                    ),
-                },
+                {"role": "user", "content": user_content},
             ],
             "temperature": self.settings.temperature,
             "max_tokens": self.settings.max_tokens,
@@ -277,6 +280,26 @@ class ExplanationEnhancer:
                 headers=headers,
                 json=request_payload,
             )
+            if response.status_code in {400, 403, 404, 405, 422} or response.status_code >= 500:
+                response = client.post(
+                    f"{base_url}/responses",
+                    headers=headers,
+                    json={
+                        "model": self.settings.model,
+                        "input": [
+                            {
+                                "role": "system",
+                                "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+                            },
+                            {
+                                "role": "user",
+                                "content": [{"type": "input_text", "text": user_content}],
+                            },
+                        ],
+                        "max_output_tokens": self.settings.max_tokens,
+                        "text": {"format": {"type": "json_object"}},
+                    },
+                )
         if not 200 <= response.status_code < 300:
             raise RuntimeError(f"provider_status_{response.status_code}")
         return response.json()
@@ -387,6 +410,32 @@ def _sanitize_event_summary(summary: Mapping[str, Any]) -> dict[str, Any] | None
                 ]
             result["evidence"].append(safe_item)
 
+    prediction = _value(summary, "prediction")
+    if isinstance(prediction, Mapping):
+        safe_prediction: dict[str, Any] = {}
+        for aliases in (
+            ("targetId", "target_id"),
+            ("targetName", "target_name"),
+            ("unit",),
+            ("horizonSamples", "horizon_samples"),
+            ("horizonLabel", "horizon_label"),
+            ("predictedValue", "predicted_value"),
+            ("observedValue", "observed_value"),
+            ("historicalHighBoundary", "historical_high_boundary"),
+            ("uncertaintyMae", "uncertainty_mae"),
+            ("lowerBound", "lower_bound"),
+            ("upperBound", "upper_bound"),
+            ("riskLevel", "risk_level"),
+            ("boundaryBasis", "boundary_basis"),
+        ):
+            value = _value(prediction, *aliases)
+            if isinstance(value, (str, int, float, bool)) or (
+                aliases[0] == "observedValue" and value is None
+            ):
+                safe_prediction[aliases[0]] = value
+        if safe_prediction:
+            result["prediction"] = safe_prediction
+
     recommendation = _value(summary, "recommendation")
     if isinstance(recommendation, Mapping):
         safe_recommendation: dict[str, Any] = {}
@@ -427,6 +476,28 @@ def _parse_provider_result(payload: Any, allowed_refs: list[str]) -> tuple[str, 
         if not isinstance(message, Mapping):
             return None
         content = message.get("content")
+    elif isinstance(payload, Mapping) and "output" in payload:
+        content = payload.get("output_text")
+        if not isinstance(content, str):
+            content = None
+            output = payload.get("output")
+            if isinstance(output, list):
+                for item in output:
+                    if not isinstance(item, Mapping):
+                        continue
+                    parts = item.get("content")
+                    if not isinstance(parts, list):
+                        continue
+                    for part in parts:
+                        if (
+                            isinstance(part, Mapping)
+                            and part.get("type") == "output_text"
+                            and isinstance(part.get("text"), str)
+                        ):
+                            content = part["text"]
+                            break
+                    if content is not None:
+                        break
     else:
         content = payload
     if isinstance(content, str):
@@ -457,7 +528,28 @@ def _unsafe_answer(answer: str) -> bool:
     # deny-list; affirmative instructions and every other PLC/DCS mention remain blocked.
     text_to_check = unicodedata.normalize("NFKC", answer)
     text_to_check = text_to_check.translate(
-        str.maketrans({"Р": "P", "р": "p", "Ρ": "P", "ρ": "p", "С": "C", "с": "c"})
+        str.maketrans(
+            {
+                "Р": "P",
+                "р": "p",
+                "Ρ": "P",
+                "ρ": "p",
+                "С": "C",
+                "с": "c",
+                "О": "O",
+                "о": "o",
+                "Ο": "O",
+                "ο": "o",
+                "М": "M",
+                "м": "m",
+                "Μ": "M",
+                "μ": "m",
+                "ѕ": "s",
+                "Ѕ": "S",
+                "ӏ": "l",
+                "Ӏ": "I",
+            }
+        )
     )
     text_to_check = "".join(
         character
@@ -478,16 +570,28 @@ def _unsafe_answer(answer: str) -> bool:
     lowercase_text = text_to_check.lower()
     protocols = ("plc", "dcs", "scada", "modbus", "opcua")
     if any(protocol in compact_text.lower() for protocol in protocols):
+        if re.search(r"命令|指令|控制量", compact_text):
+            return True
         if re.search(_CONTROL_ACTIONS_ZH, compact_text) or re.search(
-            rf"\b(?:{_CONTROL_ACTIONS_EN})\b", lowercase_text
+            rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text
         ):
             return True
     if re.search(_CONTROL_ACTIONS_ZH, compact_text) and re.search(
         _CONTROL_TARGETS_ZH, compact_text
     ):
         return True
-    if re.search(rf"\b(?:{_CONTROL_ACTIONS_EN})\b", lowercase_text) and re.search(
-        rf"\b(?:{_CONTROL_TARGETS_EN})\b", lowercase_text
+    if (
+        re.search(rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text)
+        and re.search(_CONTROL_TARGETS_ZH, compact_text)
+    ) or (
+        re.search(_CONTROL_ACTIONS_ZH, compact_text)
+        and re.search(rf"(?<![a-z])(?:{_CONTROL_TARGETS_EN})(?![a-z])", lowercase_text)
+    ):
+        return True
+    if re.search(
+        rf"(?<![a-z])(?:{_CONTROL_ACTIONS_EN})(?![a-z])", lowercase_text
+    ) and re.search(
+        rf"(?<![a-z])(?:{_CONTROL_TARGETS_EN})(?![a-z])", lowercase_text
     ):
         return True
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)

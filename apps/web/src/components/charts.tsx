@@ -59,12 +59,13 @@ export function ProcessHeatmapChart({
   );
 }
 
-export function EvidenceTrendChart({ evidence }: { evidence: EvidenceItem[] }) {
+export function EvidenceTrendChart({ evidence, onsetSample = 160 }: { evidence: EvidenceItem[]; onsetSample?: number }) {
+  const wastewater = evidence.some((item) => !/^(?:XMEAS|XMV)\(/.test(item.variableId));
   return (
     <section className="chart-panel evidence-chart-panel" aria-labelledby="trend-title">
-      <div className="section-heading"><div><span className="kicker">共享时间轴</span><h2 id="trend-title">三项证据对齐趋势</h2></div><span className="event-window-label">样本 160 起偏移</span></div>
-      <p role="status" className="sr-summary">三条趋势均从样本 160 后偏离基线。冷却水出口温度贡献最高，阀开度随后上升，反应器温度同步缓慢上行。</p>
-      <ReactECharts option={createEvidenceTrendOption(evidence)} className="evidence-chart" opts={{ renderer: "canvas" }} aria-hidden="true" />
+      <div className="section-heading"><div><span className="kicker">共享时间轴</span><h2 id="trend-title">三项证据对齐趋势</h2></div><span className="event-window-label">样本 {onsetSample} {wastewater ? "进入关注窗口" : "起偏移"}</span></div>
+      <p role="status" className="sr-summary">{wastewater ? `${evidence.map((item) => item.variableId).join("、")} 按公开数据文件行序对齐，仅用于排定人工核查顺序，不代表已证实根因。` : `三条趋势从样本 ${onsetSample} 后偏离基线，用于对齐故障候选与过程变量证据。`}</p>
+      <ReactECharts option={createEvidenceTrendOption(evidence, onsetSample)} className="evidence-chart" opts={{ renderer: "canvas" }} aria-hidden="true" />
     </section>
   );
 }

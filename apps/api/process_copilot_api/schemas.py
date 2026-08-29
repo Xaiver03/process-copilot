@@ -32,7 +32,14 @@ class Scenario(ContractModel):
     fault_id: int = Field(ge=0, le=21)
     sample_count: int = Field(ge=1)
     fault_onset_sample: int = Field(ge=0)
-    source_label: Literal["Tennessee Eastman Process public simulation"]
+    source_label: Literal[
+        "Tennessee Eastman Process public simulation",
+        "UCI Water Treatment Plant public sensor data",
+    ]
+    domain: Literal["continuous_chemical", "wastewater"]
+    model_family: Literal["tep-pca-hgb", "uci-wtp-rf-softsensor"]
+    sample_interval_seconds: int = Field(ge=1)
+    recommended_inference_mode: Literal["online", "template"]
 
 
 class CreateRunRequest(ContractModel):
@@ -91,10 +98,26 @@ class Recommendation(ContractModel):
     safety_boundary: Literal["Read-only advice. No automatic control write-back."]
 
 
+class PredictionEvidence(ContractModel):
+    target_id: str
+    target_name: str
+    unit: str
+    horizon_samples: int = Field(ge=1)
+    horizon_label: str
+    predicted_value: float
+    observed_value: float | None = None
+    historical_high_boundary: float
+    uncertainty_mae: float = Field(ge=0)
+    lower_bound: float
+    upper_bound: float
+    risk_level: Literal["normal", "elevated", "high", "unknown"]
+    boundary_basis: str
+
+
 class EventDetail(AnomalyEvent):
     detection_sample: int = Field(ge=0)
     diagnosis_sample: int = Field(ge=0)
-    diagnosis_delay_samples: Literal[20]
+    diagnosis_delay_samples: int = Field(ge=0)
     diagnosis_state: Literal["pending", "provisional", "updated"]
     diagnosis_anomaly_score: float
     anomaly_latched: Literal[True]
@@ -102,8 +125,12 @@ class EventDetail(AnomalyEvent):
     candidates: list[FaultCandidate] = Field(max_length=3)
     evidence: list[EvidenceItem] = Field(min_length=3, max_length=3)
     recommendation: Recommendation
+    prediction: PredictionEvidence | None = None
     model_version: str
-    data_source_disclosure: Literal["Public simulation data, not real Guizhou plant data."]
+    data_source_disclosure: Literal[
+        "Public simulation data, not real Guizhou plant data.",
+        "Public UCI wastewater sensor data, not real Guizhou plant data.",
+    ]
 
 
 class DecisionRequest(ContractModel):
