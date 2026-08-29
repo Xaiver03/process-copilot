@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -6,6 +6,16 @@ import { describe, expect, it } from "vitest";
 const publicAsset = (name: string) => resolve(process.cwd(), "public", name);
 
 describe("浏览器品牌资产", () => {
+  it("侧栏使用异常边界截获标志而不是旧眼形标志", () => {
+    const mark = readFileSync(publicAsset("brand/xuanan-anomaly-intercept-v04.svg"), "utf8");
+    const shell = readFileSync(resolve(process.cwd(), "src", "components", "app-shell.tsx"), "utf8");
+    expect(mark).toContain("序安候选标志：异常边界截获");
+    expect(mark).toContain('viewBox="0 0 512 512"');
+    expect(shell).toContain('/brand/xuanan-anomaly-intercept-v04.svg');
+    expect(shell).not.toContain('/brand/process-sentinel-mark-v01.png');
+    expect(existsSync(publicAsset("brand/process-sentinel-mark-v01.png"))).toBe(false);
+  });
+
   it("提供浏览器通用 favicon.ico", () => {
     const bytes = readFileSync(publicAsset("favicon.ico"));
     expect(Array.from(bytes.subarray(0, 4))).toEqual([0, 0, 1, 0]);

@@ -50,7 +50,7 @@ export function AppShell({
           href="/demo"
           aria-label="序安·磷煤化工异常早期预警平台首页"
         >
-          <span className="brand-mark" aria-hidden="true"><Image src="/brand/process-sentinel-mark-v01.png" alt="" width={38} height={38} priority /></span>
+          <span className="brand-mark" aria-hidden="true"><Image src="/brand/xuanan-anomaly-intercept-v04.svg" alt="" width={38} height={38} priority /></span>
           <span><strong>序安</strong><small>磷煤化工异常早期预警</small></span>
         </Link>
         <nav aria-label="主导航">

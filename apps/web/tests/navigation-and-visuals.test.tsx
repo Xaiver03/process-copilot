@@ -30,7 +30,7 @@ describe("应用框架与路由", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("序安")).toBeInTheDocument();
     expect(screen.getByText("磷煤化工异常早期预警")).toBeInTheDocument();
-    expect(container.querySelector('img[src*="process-sentinel-mark-v01"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src*="xuanan-anomaly-intercept-v04"]')).toBeInTheDocument();
     expect(screen.queryByText(/WUNO/i)).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "主导航" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /风险事件/ })).toHaveAttribute("aria-current", "page");
