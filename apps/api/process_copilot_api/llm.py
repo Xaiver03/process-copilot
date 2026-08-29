@@ -60,11 +60,13 @@ _UNSAFE_RESPONSE_PATTERNS = tuple(
         r"https?://|(?:\d{1,3}\.){3}\d{1,3}",
         r"(?:set|write|change|adjust|open|close|increase|decrease)\s+"
         r"(?:the\s+)?(?:valve|pressure|flow|temperature|setpoint|output)",
-        r"(?:设置|调整|打开|关闭|调高|调低|写入|下发).{0,20}"
+        r"(?:设置|调整|打开|关闭|开启|启用|启动|停用|停止|调高|调低|"
+        r"升高|提升|上调|下调|增加|减少|增大|减小|写入|下发).{0,20}"
         r"(?:阀|压力|流量|温度|设定值|setpoint|寄存器)",
         r"(?:阀门?|压力|流量|温度|设定值|setpoint|寄存器).{0,24}"
-        r"(?:设置|调整(?:至|为)?|打开|关闭|调高|调低|写入|下发|执行|控制|"
-        r"改为|提高|降低|设为)",
+        r"(?:设置|调整(?:至|为)?|打开|关闭|开启|启用|启动|停用|停止|"
+        r"调高|调低|升高|提升|上调|下调|增加|减少|增大|减小|写入|下发|"
+        r"执行|控制|改为|提高|降低|设为)",
         r"(?:valve|pressure|flow|temperature|setpoint|output).{0,24}"
         r"(?:set|write|change|adjust|open|close|increase|decrease)",
         r"(?:anomaly\s*score|异常分数|检测样本|严重等级|模型版本)"
@@ -430,7 +432,11 @@ def _unsafe_answer(answer: str) -> bool:
     # Remove only explicit negative control-system phrases before applying the strict
     # deny-list; affirmative instructions and every other PLC/DCS mention remain blocked.
     text_to_check = unicodedata.normalize("NFKC", answer)
-    text_to_check = re.sub(r"[\u200b-\u200d\u2060\ufeff]", "", text_to_check)
+    text_to_check = "".join(
+        character
+        for character in text_to_check
+        if unicodedata.category(character) != "Cf"
+    )
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)
