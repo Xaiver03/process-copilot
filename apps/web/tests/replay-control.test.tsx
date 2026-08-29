@@ -35,6 +35,51 @@ describe("回放控制", () => {
     vi.unstubAllGlobals();
   });
 
+  it("template 回放也会由本地时钟推进样本", async () => {
+    const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+    const run = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      scenarioId: "wastewater-risk",
+      state: "ready",
+      speed: 10,
+      currentSample: 0,
+      createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "template",
+      modelVersion: "uci-wtp-template-v1",
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response([{
+        id: "wastewater-risk",
+        name: "污水出水风险场景",
+        description: "污水出水风险预判",
+        faultId: 0,
+        sampleCount: 500,
+        faultOnsetSample: 160,
+        sourceLabel: "UCI Water Treatment Plant public sensor data",
+        domain: "wastewater",
+        modelFamily: "uci-wtp-rf-softsensor",
+        sampleIntervalSeconds: 86400,
+        recommendedInferenceMode: "template",
+      }]))
+      .mockResolvedValueOnce(response(run, 201))
+      .mockResolvedValueOnce(response({ ...run, state: "playing" }))
+      .mockResolvedValueOnce(response([{ id: "event-1", runId: run.id, sampleIndex: 160, severity: "warning", state: "open", anomalyScore: 0.8 }]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const user = userEvent.setup();
+    render(<ReplayScreen />);
+    await screen.findByRole("option", { name: "污水出水风险预判" });
+    await user.click(screen.getByRole("button", { name: "开始回放" }));
+    const createCall = fetchMock.mock.calls.find(([url]) => url === "/api/v1/runs");
+    expect(JSON.parse(String((createCall?.[1] as RequestInit).body))).toMatchObject({
+      scenarioId: "wastewater-risk",
+      inferenceMode: "template",
+    });
+    await waitFor(() => expect(screen.getByTestId("current-sample")).not.toHaveTextContent("0"), { timeout: 1200 });
+  });
   it("在线回放的倍速选择会调用 control API", async () => {
     const user = userEvent.setup();
     const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), {

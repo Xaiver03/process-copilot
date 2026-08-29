@@ -80,12 +80,18 @@ export function createProcessHeatmapOption(
   };
 }
 
-export function createEvidenceTrendOption(evidence: EvidenceItem[]): EChartsOption & {
+export function createEvidenceTrendOption(evidence: EvidenceItem[], onsetSample = 160): EChartsOption & {
   grid: Array<Record<string, unknown>>;
   series: Array<{ type: string }>;
 } {
   const items = evidence.slice(0, 3);
   const positions = [6, 36, 66];
+  const wastewater = items.some((item) => !/^(?:XMEAS|XMV)\(/.test(item.variableId));
+  const sampleCount = Math.max(1, ...items.map((item) => item.values.length));
+  const sampleStep = wastewater ? 1 : 2;
+  const firstSample = wastewater ? onsetSample - sampleCount + 1 : onsetSample - 20;
+  const axisData = Array.from({ length: sampleCount }, (_, index) => String(firstSample + index * sampleStep));
+  const lastSample = axisData.at(-1) ?? String(onsetSample);
   return {
     animation: false,
     axisPointer: { link: [{ xAxisIndex: "all" }] },
@@ -94,7 +100,7 @@ export function createEvidenceTrendOption(evidence: EvidenceItem[]): EChartsOpti
     xAxis: items.map((_, index) => ({
       type: "category",
       gridIndex: index,
-      data: Array.from({ length: 36 }, (_, sample) => String(140 + sample * 2)),
+      data: axisData,
       axisLabel: { show: index === 2 },
       axisTick: { show: false },
     })),
@@ -114,7 +120,22 @@ export function createEvidenceTrendOption(evidence: EvidenceItem[]): EChartsOpti
       data: item.values,
       showSymbol: false,
       lineStyle: { color: index === 0 ? "#24839b" : index === 1 ? "#13c2c2" : "#627987", width: 2, type: index === 2 ? "dashed" : "solid" },
-      markArea: { silent: true, itemStyle: { color: "rgba(242, 169, 59, 0.14)" }, data: [[{ xAxis: "160" }, { xAxis: "210" }]] },
+      ...(wastewater
+        ? {
+            markLine: {
+              silent: true,
+              symbol: "none",
+              lineStyle: { color: "#f2a93b", width: 2, type: "dashed" },
+              data: [{ name: "预测输入", xAxis: String(onsetSample) }],
+            },
+          }
+        : {
+            markArea: {
+              silent: true,
+              itemStyle: { color: "rgba(242, 169, 59, 0.14)" },
+              data: [[{ xAxis: String(onsetSample) }, { xAxis: lastSample }]],
+            },
+          }),
     })),
   };
 }

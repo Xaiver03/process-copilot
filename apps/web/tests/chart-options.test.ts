@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createProcessHeatmapData, createProcessHeatmapOption } from "@/lib/chart-options";
+import { createEvidenceTrendOption, createProcessHeatmapData, createProcessHeatmapOption } from "@/lib/chart-options";
+import { demoEvent } from "@/lib/demo-data";
 
 describe("过程回放热力图", () => {
   it("只生成当前样本之前的数据且正常基线不是空白", () => {
@@ -33,5 +34,17 @@ describe("过程回放热力图", () => {
     const coolingAfter = data.find(([sample, variable]) => sample === "190" && variable === 20)?.[2] ?? 0;
     expect(feedAfter).toBeGreaterThan(feedBefore + 0.3);
     expect(coolingAfter).toBeLessThan(feedAfter);
+  });
+});
+
+describe("证据趋势时间轴", () => {
+  it("污水预测按样本 42 对齐最近五条公开记录而不是沿用 TEP 固定轴", () => {
+    const option = createEvidenceTrendOption(demoEvent.evidence, 42);
+    const xAxis = option.xAxis as Array<{ data: string[] }>;
+    const series = option.series as Array<{ markLine?: { data: Array<{ xAxis: string; name: string }> } }>;
+
+    expect(xAxis[0].data).toEqual(["38", "39", "40", "41", "42"]);
+    expect(series[0].markLine?.data[0]).toEqual({ name: "预测输入", xAxis: "42" });
+    expect(xAxis[0].data).not.toContain("160");
   });
 });

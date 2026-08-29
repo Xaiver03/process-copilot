@@ -22,6 +22,12 @@ export interface ApiResult<T> {
   notice: string;
 }
 
+function rejectCrossScenarioStaticFallback(scenarioId: string) {
+  if (scenarioId !== demoScenario.id) {
+    throw new Error("所选场景断网后不能替换为默认污水静态事件，请恢复 API 后重试。");
+  }
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const STATIC_DEMO_NOTICE = "已打开明确标注的静态 Demo 数据，不会请求在线事件或写入服务器。";
 
@@ -135,11 +141,21 @@ export function createRunWithFallback(payload: CreateRunRequest): Promise<ApiRes
       headers: { "Idempotency-Key": crypto.randomUUID() },
       body: JSON.stringify(payload),
     }),
-    { ...demoRun, scenarioId: payload.scenarioId, speed: payload.speed ?? 10, state: "playing" },
+    {
+      ...demoRun,
+      scenarioId: payload.scenarioId,
+      speed: payload.speed ?? 10,
+      state: "playing",
+      inferenceMode: "template",
+    },
   );
 }
 
-export function controlRunWithFallback(runId: string, payload: RunControlRequest): Promise<ApiResult<ReplayRun>> {
+export function controlRunWithFallback(
+  runId: string,
+  payload: RunControlRequest,
+  fallbackRun: ReplayRun = demoRun,
+): Promise<ApiResult<ReplayRun>> {
   return withFallback(
     () => requestJson<ReplayRun>(`/api/v1/runs/${runId}/control`, {
       method: "POST",
@@ -147,10 +163,10 @@ export function controlRunWithFallback(runId: string, payload: RunControlRequest
       body: JSON.stringify(payload),
     }),
     {
-      ...demoRun,
-      state: payload.action === "play" ? "playing" : payload.action === "pause" ? "paused" : demoRun.state,
-      speed: payload.speed ?? demoRun.speed,
-      currentSample: payload.sampleIndex ?? (payload.action === "restart" ? 0 : demoRun.currentSample),
+      ...fallbackRun,
+      state: payload.action === "play" ? "playing" : payload.action === "pause" ? "paused" : fallbackRun.state,
+      speed: payload.speed ?? fallbackRun.speed,
+      currentSample: payload.sampleIndex ?? (payload.action === "restart" ? 0 : fallbackRun.currentSample),
     },
   );
 }
@@ -194,6 +210,7 @@ export async function startScenarioWithFallback(
 ): Promise<ApiResult<{ run: ReplayRun; event: AnomalyEvent }>> {
   const runResult = await createRunWithFallback({ scenarioId, speed, inferenceMode: "template" });
   if (runResult.mode === "static-demo") {
+    rejectCrossScenarioStaticFallback(scenarioId);
     return {
       data: { run: runResult.data, event: demoEvent },
       mode: runResult.mode,
@@ -236,6 +253,7 @@ export async function startOnlineScenarioWithFallback(
 ): Promise<ApiResult<{ run: ReplayRun; event?: AnomalyEvent }>> {
   const runResult = await createRunWithFallback({ scenarioId, speed, inferenceMode: "online" });
   if (runResult.mode === "static-demo") {
+    rejectCrossScenarioStaticFallback(scenarioId);
     return {
       data: { run: runResult.data, event: demoEvent },
       mode: runResult.mode,

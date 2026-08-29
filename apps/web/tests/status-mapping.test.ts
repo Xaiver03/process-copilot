@@ -6,6 +6,7 @@ import {
   formatContribution,
   formatEvidenceSummary,
   formatFaultCandidate,
+  formatPredictionRisk,
   localizeIndustrialCopy,
 } from "@/lib/presentation";
 
@@ -21,6 +22,11 @@ describe("事件与模型语义映射", () => {
   it("完整映射 warning 和 critical 严重度", () => {
     expect(eventSeverityPresentation.warning).toEqual({ state: "warning", label: "偏移" });
     expect(eventSeverityPresentation.critical).toEqual({ state: "critical", label: "严重" });
+  });
+
+  it("未知预测风险保持未知并要求人工确认，不误显示为正常", () => {
+    expect(formatPredictionRisk("unknown")).toEqual({ state: "warning", label: "未知 · 待人工确认" });
+    expect(formatPredictionRisk("normal")).toEqual({ state: "normal", label: "正常" });
   });
 
   it("fault candidate 0 显示正常或尚未收敛，不冒充故障真值", () => {

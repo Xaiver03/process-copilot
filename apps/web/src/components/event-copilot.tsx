@@ -19,10 +19,17 @@ type Conversation = {
   local: boolean;
 };
 
-const quickQuestions = [
+const processQuickQuestions = [
   "为什么不是传感器故障？",
   "如果先不处理会怎样？",
   "把检查顺序改成 10 分钟内能执行的",
+];
+
+const predictionQuickQuestions = [
+  "为什么进入关注级？",
+  "这个边界是排放限值吗？",
+  "先核对哪三项过程变量？",
+  "为什么不是传感器故障？",
 ];
 
 export function EventCopilot({ event }: { event: EventDetail }) {
@@ -38,7 +45,10 @@ export function EventCopilot({ event }: { event: EventDetail }) {
   const [proposalError, setProposalError] = useState<string | null>(null);
   const session = useAuthSession();
   const activeSession = session ?? readSession();
-  const topCandidate = event.candidates[0] ? formatFaultCandidate(event.candidates[0]).label : "候选尚未收敛";
+  const topCandidate = event.candidates[0]
+    ? event.prediction ? event.candidates[0].label : formatFaultCandidate(event.candidates[0]).label
+    : "候选尚未收敛";
+  const quickQuestions = event.prediction ? predictionQuickQuestions : processQuickQuestions;
 
   async function ask(nextQuestion: string) {
     const trimmed = nextQuestion.trim();
@@ -112,7 +122,7 @@ export function EventCopilot({ event }: { event: EventDetail }) {
 
       <div className="copilot-opening">
         <BrainMessage />
-        <p><strong>序安</strong><span>我已锁定异常窗口。当前首要假设是“{topCandidate}”，你可以继续追问原因、风险或现场检查顺序。</span></p>
+        <p><strong>序安</strong><span>{event.prediction ? `我已完成${event.prediction.horizonLabel}的 ${event.prediction.targetId} 软测量。当前首个核查项是“${topCandidate}”，你可以追问关注级原因、历史边界或核查顺序。` : `我已锁定异常窗口。当前首要假设是“${topCandidate}”，你可以继续追问原因、风险或现场检查顺序。`}</span></p>
       </div>
 
       {!activeSession ? <p className="copilot-auth-notice" role="status">未登录：请先登录后使用在线 AI，当前为本地模板演示。</p> : null}
@@ -132,7 +142,7 @@ export function EventCopilot({ event }: { event: EventDetail }) {
 
       <form className="copilot-question-form" onSubmit={submitQuestion}>
         <label htmlFor="copilot-question">向序安追问</label>
-        <div><input id="copilot-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="例如：为什么不是传感器故障？" disabled={loading} /><button type="submit" aria-label="发送问题" disabled={!question.trim() || loading}><PaperPlaneTilt weight="fill" aria-hidden="true" /></button></div>
+        <div><input id="copilot-question" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={event.prediction ? "例如：为什么进入关注级？" : "例如：为什么不是传感器故障？"} disabled={loading} /><button type="submit" aria-label="发送问题" disabled={!question.trim() || loading}><PaperPlaneTilt weight="fill" aria-hidden="true" /></button></div>
       </form>
 
       <div className="writeback-preview">

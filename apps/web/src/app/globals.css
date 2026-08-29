@@ -184,6 +184,14 @@ textarea { resize: vertical; }
 .ai-evidence-detail { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; align-items: start; margin-top: 16px; }
 .ai-evidence-detail > .evidence-panel, .ai-evidence-detail > .compact-chart { padding: 16px 0 0; border: 0; border-top: 1px solid var(--wuno-border-subtle); border-radius: 0; }
 .ai-recommendation { padding-bottom: 16px; }
+.prediction-evidence { display: grid; gap: 14px; margin-top: 18px; padding: 18px; border: 1px solid color-mix(in srgb, var(--process-alarm) 35%, var(--wuno-border-subtle)); border-radius: 12px; background: color-mix(in srgb, var(--process-alarm) 4%, white); }
+.prediction-evidence h3 { margin: 4px 0 0; font-size: 18px; }
+.prediction-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--wuno-border-subtle); }
+.prediction-grid div { min-width: 0; padding: 12px; background: white; }
+.prediction-grid dt { color: var(--wuno-text-secondary); font-size: var(--font-support); }
+.prediction-grid dd { margin: 5px 0 0; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
+.prediction-grid dd small { color: var(--wuno-text-secondary); font-family: var(--font-sans); font-size: var(--font-support); }
+.prediction-evidence > p { margin: 0; color: var(--wuno-text-secondary); font-size: var(--font-support); line-height: 1.6; }
 .ai-risk-copy { margin: 20px 0 0; padding: 14px 16px; border-left: 3px solid var(--process-alarm); color: var(--wuno-text-secondary); background: color-mix(in srgb, var(--process-alarm) 6%, white); font-size: var(--font-support); line-height: 1.65; }
 .ai-risk-copy strong { color: #a52f42; }
 .ai-action-group { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--wuno-border-subtle); }
@@ -285,6 +293,7 @@ textarea { resize: vertical; }
 
 @media (max-width: 900px) {
   .overview-grid { grid-template-columns: 1fr; }
+  .prediction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ai-workbench { grid-template-columns: 1fr; }
   .ai-conclusion, .ai-detection, .ai-explanation, .event-copilot, .ai-side-stack { grid-column: 1; }
   .writeback-preview ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -340,6 +349,7 @@ textarea { resize: vertical; }
   .desktop-chart { display: none; }.mobile-chart-fallback { display: block; }
   .heatmap-panel .legend-copy { display: none; }
   .evidence-chart { height: 470px !important; }
+  .prediction-grid { grid-template-columns: 1fr; }
   .record-summary dl { grid-template-columns: 1fr; }
   .ai-stepper { grid-template-columns: repeat(5, minmax(0, 1fr)); overflow-x: visible; }
   .ai-stepper li { grid-template-columns: 1fr; grid-template-rows: 22px auto; justify-items: center; gap: 4px; min-height: 58px; padding: 8px 2px; }
