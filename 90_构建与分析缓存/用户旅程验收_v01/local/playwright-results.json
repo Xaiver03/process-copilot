@@ -83,7 +83,7 @@
         {
           "title": "序安完整前后端用户旅程",
           "file": "user-journeys.spec.ts",
-          "line": 161,
+          "line": 162,
           "column": 15,
           "specs": [
             {
@@ -102,12 +102,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 31770,
+                      "duration": 31977,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T02:59:40.275Z",
+                      "startTime": "2026-08-29T08:06:52.560Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -148,7 +148,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-f01231497c2ad1c21ad7",
               "file": "user-journeys.spec.ts",
-              "line": 175,
+              "line": 176,
               "column": 7
             },
             {
@@ -167,12 +167,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1204,
+                      "duration": 1079,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:28.095Z",
+                      "startTime": "2026-08-29T08:07:36.516Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -203,7 +203,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-92c5153c049816181903",
               "file": "user-journeys.spec.ts",
-              "line": 204,
+              "line": 208,
               "column": 7
             },
             {
@@ -222,12 +222,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2117,
+                      "duration": 1938,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:29.304Z",
+                      "startTime": "2026-08-29T08:07:37.600Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -258,7 +258,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-812a5346507f9da47473",
               "file": "user-journeys.spec.ts",
-              "line": 217,
+              "line": 221,
               "column": 7
             },
             {
@@ -277,12 +277,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1611,
+                      "duration": 1528,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:31.426Z",
+                      "startTime": "2026-08-29T08:07:39.541Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -303,7 +303,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-760784987e6a0e2d6b24",
               "file": "user-journeys.spec.ts",
-              "line": 240,
+              "line": 244,
               "column": 7
             },
             {
@@ -322,12 +322,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1605,
+                      "duration": 1511,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:33.041Z",
+                      "startTime": "2026-08-29T08:07:41.073Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -348,7 +348,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-2a69a08c7aa7d3faf586",
               "file": "user-journeys.spec.ts",
-              "line": 254,
+              "line": 258,
               "column": 7
             },
             {
@@ -367,12 +367,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2717,
+                      "duration": 2506,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:34.651Z",
+                      "startTime": "2026-08-29T08:07:42.588Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -433,7 +433,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-bbebcb6c56add5eec463",
               "file": "user-journeys.spec.ts",
-              "line": 267,
+              "line": 271,
               "column": 7
             },
             {
@@ -452,12 +452,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 548,
+                      "duration": 525,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:37.374Z",
+                      "startTime": "2026-08-29T08:07:45.099Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -478,7 +478,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-adf5d4b3944e640f9003",
               "file": "user-journeys.spec.ts",
-              "line": 310,
+              "line": 314,
               "column": 7
             },
             {
@@ -497,12 +497,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2319,
+                      "duration": 3054,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:37.927Z",
+                      "startTime": "2026-08-29T08:07:45.627Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -526,6 +526,16 @@
                           "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-平板1024-事件页-full-page-039f4a841d15c1a738bb9c1d55c950ab1d16c464.png"
                         },
                         {
+                          "name": "UJ08-平板768_事件页-viewport",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-平板768-事件页-viewport-f6f33bfe2fc637fc10a0ae9792369aa9ff481e81.png"
+                        },
+                        {
+                          "name": "UJ08-平板768_事件页-full-page",
+                          "contentType": "image/png",
+                          "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-平板768-事件页-full-page-4475efc9dfb929326cffd9c5ed08ec95511bb69b.png"
+                        },
+                        {
                           "name": "UJ08-手机390_事件页-viewport",
                           "contentType": "image/png",
                           "path": "/Users/rocalight/.config/superpowers/worktrees/process-copilot/online-ai-implementation/90_构建与分析缓存/用户旅程验收_v01/local/test-results/user-journeys-序安完整前后端用户旅程-UJ-08-核心页面在桌面、平板与手机均无水平溢出/attachments/UJ08-手机390-事件页-viewport-37db7afedbb042cdd47230602a3bc3125e760220.png"
@@ -543,7 +553,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-dd6aefcd1211fa5bc0ae",
               "file": "user-journeys.spec.ts",
-              "line": 325,
+              "line": 329,
               "column": 7
             },
             {
@@ -562,12 +572,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1597,
+                      "duration": 1445,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:40.251Z",
+                      "startTime": "2026-08-29T08:07:48.686Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -598,7 +608,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-6130423b62ca0e9fec75",
               "file": "user-journeys.spec.ts",
-              "line": 350,
+              "line": 359,
               "column": 7
             },
             {
@@ -617,12 +627,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1243,
+                      "duration": 1138,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:41.853Z",
+                      "startTime": "2026-08-29T08:07:50.135Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -653,7 +663,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-b6b1ae59e7de59175e57",
               "file": "user-journeys.spec.ts",
-              "line": 413,
+              "line": 428,
               "column": 7
             },
             {
@@ -672,12 +682,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1011,
+                      "duration": 930,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-29T03:00:43.101Z",
+                      "startTime": "2026-08-29T08:07:51.276Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -698,7 +708,7 @@
               ],
               "id": "e47fcf35bc402c5fa352-0eed8b41d50c9f3d83cb",
               "file": "user-journeys.spec.ts",
-              "line": 476,
+              "line": 491,
               "column": 7
             }
           ]
@@ -708,8 +718,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-29T02:59:40.027Z",
-    "duration": 64145.342000000004,
+    "startTime": "2026-08-29T08:06:52.372Z",
+    "duration": 59888.321,
     "expected": 11,
     "skipped": 0,
     "unexpected": 0,
