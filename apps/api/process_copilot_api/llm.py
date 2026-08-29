@@ -34,6 +34,16 @@ all decisions.
 """.strip()
 
 _ALLOWED_RESPONSE_KEYS = frozenset({"answer", "narrative", "evidenceRefs"})
+_SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"(?:不|不会|不得|禁止|严禁|无需|无须)(?:直接)?(?:向|对)\s*"
+        r"(?:plc|dcs|scada|modbus|opc[ -]?ua)"
+        r"(?:\s*/\s*(?:plc|dcs|scada|modbus|opc[ -]?ua))*"
+        r"(?:\s*系统)?\s*(?:执行)?"
+        r"(?:写入|写回|下发(?:控制)?命令|发送(?:控制)?指令|控制)",
+    )
+)
 _UNSAFE_RESPONSE_PATTERNS = tuple(
     re.compile(pattern, re.IGNORECASE)
     for pattern in (
@@ -404,4 +414,10 @@ def _parse_provider_result(payload: Any, allowed_refs: list[str]) -> tuple[str, 
 
 
 def _unsafe_answer(answer: str) -> bool:
-    return any(pattern.search(answer) for pattern in _UNSAFE_RESPONSE_PATTERNS)
+    # Providers commonly restate the read-only boundary in otherwise valid answers.
+    # Remove only explicit negative control-system phrases before applying the strict
+    # deny-list; affirmative instructions and every other PLC/DCS mention remain blocked.
+    text_to_check = answer
+    for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
+        text_to_check = safe_pattern.sub("", text_to_check)
+    return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)

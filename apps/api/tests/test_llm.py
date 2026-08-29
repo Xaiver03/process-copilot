@@ -276,6 +276,82 @@ def test_schema_overreach_and_control_output_are_rejected(
         assert "寄存器" not in result.answer
 
 
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "三项证据共同偏移。当前仅提供只读建议，不向 PLC/DCS 写回，请由操作员核对趋势。",
+        "这里只解释已有证据，不会向 DCS 下发命令，最终由现场人员确认。",
+    ],
+)
+def test_read_only_control_system_disclaimers_are_accepted(
+    event_summary: dict[str, object],
+    answer: str,
+):
+    payload = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {
+                            "answer": answer,
+                            "evidenceRefs": ["XMEAS(1)", "XMV(1)"],
+                        },
+                        ensure_ascii=False,
+                    )
+                }
+            }
+        ]
+    }
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=payload)
+        ),
+    )
+
+    result = enhancer.enhance(event_summary, "为什么这样判断？")
+
+    assert result.mode == "llm_enhanced"
+    assert result.answer == answer
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "建议向 DCS 下发命令，将压力设定值调高 5%。",
+        "请对 PLC 写回控制指令并立即执行。",
+        "Open the coolant valve and increase the pressure setpoint.",
+    ],
+)
+def test_affirmative_control_instructions_remain_rejected(
+    event_summary: dict[str, object],
+    answer: str,
+):
+    payload = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {"answer": answer, "evidenceRefs": ["XMEAS(1)"]},
+                        ensure_ascii=False,
+                    )
+                }
+            }
+        ]
+    }
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=payload)
+        ),
+    )
+
+    result = enhancer.enhance(event_summary, "请给出建议")
+
+    assert result.mode == "template"
+    assert result.model == "template-v0.1"
+
+
 def test_api_key_never_enters_logs_on_provider_failure(
     event_summary: dict[str, object],
     caplog: pytest.LogCaptureFixture,
