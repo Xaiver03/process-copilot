@@ -131,6 +131,52 @@ def test_success_accepts_only_explanation_fields_and_filters_unknown_refs(
     assert body["response_format"] == {"type": "json_object"}
 
 
+def test_responses_api_request_and_native_output_are_supported(
+    event_summary: dict[str, object],
+):
+    captured: dict[str, object] = {}
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/chat/completions"):
+            return httpx.Response(404, json={"error": "chat completions unsupported"})
+        captured["url"] = str(request.url)
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": json.dumps(
+                                    {
+                                        "answer": "优先核对进料流量，再确认冷却水阀位。",
+                                        "evidenceRefs": ["XMEAS(1)"],
+                                    },
+                                    ensure_ascii=False,
+                                ),
+                            }
+                        ],
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(settings(), transport=httpx.MockTransport(respond))
+    result = enhancer.enhance(event_summary, "先看哪三个变量？", trace_id="trace-responses")
+
+    assert result.mode == "llm_enhanced"
+    assert result.answer == "优先核对进料流量，再确认冷却水阀位。"
+    assert result.evidence_refs == ["XMEAS(1)"]
+    assert captured["url"] == "https://llm.example/v1/responses"
+    body = captured["body"]
+    assert isinstance(body, dict)
+    assert body["input"][1]["content"][0]["type"] == "input_text"
+    assert body["text"] == {"format": {"type": "json_object"}}
+
+
 def test_wastewater_prediction_fields_are_forwarded_without_untrusted_extras():
     captured: dict[str, object] = {}
 

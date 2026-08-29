@@ -252,18 +252,16 @@ class ExplanationEnhancer:
 
     def _request(self, event_summary: dict[str, Any], question: str) -> Any:
         base_url = validate_provider_base_url(self.settings.base_url, enabled=True)
+        user_content = json.dumps(
+            {"eventSummary": event_summary, "question": question},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
         request_payload = {
             "model": self.settings.model,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        {"eventSummary": event_summary, "question": question},
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                    ),
-                },
+                {"role": "user", "content": user_content},
             ],
             "temperature": self.settings.temperature,
             "max_tokens": self.settings.max_tokens,
@@ -282,6 +280,26 @@ class ExplanationEnhancer:
                 headers=headers,
                 json=request_payload,
             )
+            if response.status_code in {400, 403, 404, 405, 422}:
+                response = client.post(
+                    f"{base_url}/responses",
+                    headers=headers,
+                    json={
+                        "model": self.settings.model,
+                        "input": [
+                            {
+                                "role": "system",
+                                "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+                            },
+                            {
+                                "role": "user",
+                                "content": [{"type": "input_text", "text": user_content}],
+                            },
+                        ],
+                        "max_output_tokens": self.settings.max_tokens,
+                        "text": {"format": {"type": "json_object"}},
+                    },
+                )
         if not 200 <= response.status_code < 300:
             raise RuntimeError(f"provider_status_{response.status_code}")
         return response.json()
@@ -458,6 +476,28 @@ def _parse_provider_result(payload: Any, allowed_refs: list[str]) -> tuple[str, 
         if not isinstance(message, Mapping):
             return None
         content = message.get("content")
+    elif isinstance(payload, Mapping) and "output" in payload:
+        content = payload.get("output_text")
+        if not isinstance(content, str):
+            content = None
+            output = payload.get("output")
+            if isinstance(output, list):
+                for item in output:
+                    if not isinstance(item, Mapping):
+                        continue
+                    parts = item.get("content")
+                    if not isinstance(parts, list):
+                        continue
+                    for part in parts:
+                        if (
+                            isinstance(part, Mapping)
+                            and part.get("type") == "output_text"
+                            and isinstance(part.get("text"), str)
+                        ):
+                            content = part["text"]
+                            break
+                    if content is not None:
+                        break
     else:
         content = payload
     if isinstance(content, str):
