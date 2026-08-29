@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { clearSession, useSession } from "@/lib/auth-store";
@@ -40,6 +41,13 @@ export function AppShell({
 }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const session = useSession();
+  const router = useRouter();
+
+  function handleLogout() {
+    clearSession();
+    router.replace("/login");
+  }
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">跳到主要内容</a>
@@ -80,7 +88,7 @@ export function AppShell({
           {session ? (
             <div className="operator-badge">
               <span className={`role-chip role-${session.role}`}>{session.displayName}</span>
-              <button type="button" className="text-link" onClick={clearSession}>
+              <button type="button" className="text-link" onClick={handleLogout}>
                 <SignOut aria-hidden="true" /> 退出
               </button>
             </div>

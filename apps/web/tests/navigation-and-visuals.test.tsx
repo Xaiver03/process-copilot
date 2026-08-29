@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { productTokens } from "@process-copilot/ui";
 
 import { AppShell, navigationItems } from "@/components/app-shell";
@@ -13,7 +13,18 @@ import {
 } from "@/lib/chart-options";
 import { demoEvent } from "@/lib/demo-data";
 
+const routerMock = vi.hoisted(() => ({ replace: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerMock,
+}));
+
 describe("应用框架与路由", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    routerMock.replace.mockReset();
+  });
+
   it("产品语义 token 只引用 Wuno 核心 token", () => {
     expect(productTokens.processAlarm).toBe("var(--wuno-status-error)");
     expect(productTokens.evidenceSelected).toBe("var(--wuno-primary-700)");
@@ -65,6 +76,23 @@ describe("应用框架与路由", () => {
       "aria-current",
       "page",
     );
+  });
+
+  it("退出登录会清除 session 并跳转登录页", async () => {
+    const user = userEvent.setup();
+    saveSession({
+      token: "admin-token",
+      username: "system-admin",
+      role: "admin",
+      displayName: "系统管理员",
+      expiresAt: "2099-01-01T00:00:00Z",
+    });
+    render(<AppShell currentPath="/admin"><p>后台内容</p></AppShell>);
+
+    await user.click(await screen.findByRole("button", { name: "退出" }));
+
+    expect(window.localStorage.getItem("copilot-auth")).toBeNull();
+    expect(routerMock.replace).toHaveBeenCalledWith("/login");
   });
 });
 

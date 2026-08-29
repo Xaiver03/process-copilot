@@ -168,6 +168,24 @@
 .panelHeader h3 { margin: 0; font-size: 18px; }
 .panelHeader span { color: var(--wuno-text-secondary); font-size: 14px; }
 
+.promptPanel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--wuno-border-subtle);
+  border-radius: 12px;
+  background: var(--wuno-surface-panel);
+}
+
+.promptPanel .panelHeader { margin-bottom: 0; }
+.promptGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.promptCard { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--wuno-border-subtle); border-radius: 10px; background: var(--wuno-surface-canvas); }
+.promptCard h4 { margin: 0; color: var(--wuno-text-primary); font-size: 15px; }
+.promptCard ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; color: var(--wuno-text-secondary); font-size: 14px; line-height: 1.55; }
+.promptCard li { overflow-wrap: anywhere; }
+.contractCode { min-width: 0; margin: 0; padding: 10px; overflow-x: auto; border-radius: 8px; color: var(--wuno-text-primary); background: white; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+
 .reasonList { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .reasonList li { padding: 12px 14px; border-left: 3px solid var(--wuno-status-warning); color: var(--wuno-text-secondary); background: color-mix(in srgb, var(--wuno-status-warning) 6%, white); font-size: 14px; line-height: 1.55; }
 
@@ -265,9 +283,11 @@
   .nav a { padding-inline: 12px; }
   .statusGrid,
   .form { grid-template-columns: 1fr; }
+  .promptGrid { grid-template-columns: 1fr; }
   .fieldWide,
   .formFooter { grid-column: auto; }
-  .panel { padding: 16px; }
+  .panel,
+  .promptPanel { padding: 16px; }
   .formFooter { align-items: stretch; }
   .formFooter .actions { display: grid; width: 100%; }
   .pager { align-items: flex-start; flex-direction: column; }

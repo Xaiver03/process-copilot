@@ -98,6 +98,11 @@ describe("admin 权限和 AI 配置", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent(/正在读取|正在验证/);
     expect(await screen.findByRole("heading", { name: "AI 运行配置" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "提示词工程" })).toBeInTheDocument();
+    expect(screen.getByText("当前版本 v1")).toBeInTheDocument();
+    expect(screen.getByText(/输入证据边界/)).toBeInTheDocument();
+    expect(screen.getByText(/evidenceRefs/)).toBeInTheDocument();
+    expect(screen.getByText(/Read-only advice/)).toBeInTheDocument();
     expect(screen.getByText("语言模型：已验证可用")).toBeInTheDocument();
     expect(screen.getByText(/此状态来自刚刚读取的运行时探测/)).toBeInTheDocument();
     expect(screen.getByText(/保存只提交配置并写入审计/)).toBeInTheDocument();

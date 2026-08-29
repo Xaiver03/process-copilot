@@ -26,6 +26,22 @@ function toDraft(config: AIConfig): AdminAIConfigDraft {
   return { ...config, apiKey: "", clearApiKey: false };
 }
 
+const promptInputBoundary = [
+  "当前事件摘要：事件 ID、样本位置、异常分数、严重度、诊断状态与模型版本",
+  "诊断证据：已对齐的 EvidenceItem（变量、单位、贡献方向、摘要与观测值）",
+  "可选预测证据：目标、预测区间、不确定性、历史高位边界与风险等级",
+  "操作员问题：用于主动追问；任何控制意图都不得进入模型输出或写回链路",
+] as const;
+
+const promptOutputContract = `{
+  "answer": "string",
+  "mode": "llm_enhanced | template | degraded",
+  "model": "string",
+  "evidenceRefs": ["string"],
+  "latencyMs": "number",
+  "traceId": "string"
+}`;
+
 export function AdminAIConfig() {
   const [status, setStatus] = useState<AIStatus | null>(null);
   const [config, setConfig] = useState<AIConfig | null>(null);
@@ -115,6 +131,38 @@ export function AdminAIConfig() {
       {notice ? <div className={styles.success} role="status" aria-live="polite">{notice}</div> : null}
       {!draft.enabled ? <div className={styles.notice} role="status">在线增强当前已禁用；事件研判将按后端策略进入模板或降级模式。启用配置不会自动写入 DCS/PLC。</div> : null}
       {status.languageModel.reason ? <div className={styles.notice} role="status">最近探测说明：{status.languageModel.reason}</div> : null}
+
+      <section className={styles.promptPanel} aria-labelledby="prompt-engineering-title">
+        <div className={styles.panelHeader}>
+          <div>
+            <p className={styles.eyebrow}>提示词策略</p>
+            <h3 id="prompt-engineering-title">提示词工程</h3>
+          </div>
+          <span className={`${styles.badge} ${styles.ready}`}>当前版本 {config.promptVersion}</span>
+        </div>
+        <div className={styles.promptGrid}>
+          <article className={styles.promptCard}>
+            <h4>输入证据边界</h4>
+            <ul>
+              {promptInputBoundary.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </article>
+          <article className={styles.promptCard}>
+            <h4>JSON 输出契约</h4>
+            <pre className={styles.contractCode} aria-label="JSON 输出契约">{promptOutputContract}</pre>
+          </article>
+          <article className={styles.promptCard}>
+            <h4>只读与降级规则</h4>
+            <ul>
+              <li>Read-only advice. No automatic control write-back.</li>
+              <li>禁止生成或发送 DCS/PLC 控制指令；处置仍需人工确认。</li>
+              <li>当前降级策略：{config.fallbackPolicy === "template" ? "模板建议" : "仅标记降级"}。</li>
+              <li>API 密钥只写入、不回显；本区不展示密钥内容。</li>
+            </ul>
+          </article>
+        </div>
+        <p className={styles.hint}>本区展示的是现有事件证据、AIAnswer JSON 契约与只读边界；不包含任何 API Key 或可执行控制参数。</p>
+      </section>
 
       <form className={`${styles.panel} ${styles.form}`} onSubmit={save}>
         <label className={styles.field}>
