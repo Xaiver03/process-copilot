@@ -63,6 +63,8 @@ def test_prediction_is_repeatable_and_has_metrics():
 @pytest.mark.parametrize(
     "bad",
     [
+        np.ones((len(ONLINE_FEATURE_COLUMNS), 2)),
+        {"Q-E": [1]},
         [1],
         [1, 2, 3, 4, 5, 6, np.nan],
         [1, 2, 3, 4, 5, 6, np.inf],

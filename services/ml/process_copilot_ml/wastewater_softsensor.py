@@ -138,6 +138,8 @@ class WastewaterSoftSensor:
             sample = np.asarray(row, dtype=float)
         except (TypeError, ValueError):
             return self._unknown("unparseable input")
+        if sample.ndim != 1:
+            return self._unknown("input must be one-dimensional")
         if not np.isfinite(sample).all():
             return self._unknown("missing or non-finite process variables")
         prediction = float(self._model.predict(sample.reshape(1, -1))[0])
