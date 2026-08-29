@@ -31,7 +31,10 @@ IDs from the supplied event summary). Explain the supplied facts only. Do not al
 invent anomaly scores, samples, severity, candidates, evidence, model versions, or plant
 data. Do not provide PLC/DCS addresses, registers, control instructions, executable steps,
 tool calls, or write-back commands. The system is read-only and a human operator makes
-all decisions.
+all decisions. For prediction summaries, distinguish the predicted center, uncertainty
+interval, observed value, and historical operating boundary. Never describe a historical
+boundary as a regulatory limit or a prediction as a measured exceedance. Treat ranked
+process variables as check-priority evidence, not proven causation.
 """.strip()
 
 _ALLOWED_RESPONSE_KEYS = frozenset({"answer", "narrative", "evidenceRefs"})
@@ -388,6 +391,32 @@ def _sanitize_event_summary(summary: Mapping[str, Any]) -> dict[str, Any] | None
                     value for value in values[:8] if isinstance(value, (int, float))
                 ]
             result["evidence"].append(safe_item)
+
+    prediction = _value(summary, "prediction")
+    if isinstance(prediction, Mapping):
+        safe_prediction: dict[str, Any] = {}
+        for aliases in (
+            ("targetId", "target_id"),
+            ("targetName", "target_name"),
+            ("unit",),
+            ("horizonSamples", "horizon_samples"),
+            ("horizonLabel", "horizon_label"),
+            ("predictedValue", "predicted_value"),
+            ("observedValue", "observed_value"),
+            ("historicalHighBoundary", "historical_high_boundary"),
+            ("uncertaintyMae", "uncertainty_mae"),
+            ("lowerBound", "lower_bound"),
+            ("upperBound", "upper_bound"),
+            ("riskLevel", "risk_level"),
+            ("boundaryBasis", "boundary_basis"),
+        ):
+            value = _value(prediction, *aliases)
+            if isinstance(value, (str, int, float, bool)) or (
+                aliases[0] == "observedValue" and value is None
+            ):
+                safe_prediction[aliases[0]] = value
+        if safe_prediction:
+            result["prediction"] = safe_prediction
 
     recommendation = _value(summary, "recommendation")
     if isinstance(recommendation, Mapping):

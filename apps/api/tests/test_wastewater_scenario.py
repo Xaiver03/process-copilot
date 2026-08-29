@@ -1,10 +1,8 @@
-import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-
+from process_copilot_api.db import AIInteractionRow
 from process_copilot_api.main import create_app
-
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = REPO_ROOT / "data" / "processed"
@@ -73,3 +71,41 @@ def test_default_wastewater_scenario_is_first_and_template_event_has_prediction(
     assert [item["faultId"] for item in detail["candidates"]] == [1, 2, 3]
     assert [item["probability"] for item in detail["candidates"]] == [0.407, 0.407, 0.186]
     assert "不确定区间上界" in detail["recommendation"]["risk"]
+
+
+def test_wastewater_event_question_uses_prediction_evidence_and_is_audited(tmp_path: Path):
+    app = create_app(
+        database_url=f"sqlite:///{tmp_path / 'ask.db'}",
+        data_dir=DATA_DIR,
+    )
+
+    with TestClient(app) as client:
+        run = client.post(
+            "/api/v1/runs",
+            json={"scenarioId": "uci-wtp-effluent-cod-risk", "inferenceMode": "template"},
+        ).json()
+        event = client.get(f"/api/v1/runs/{run['id']}/events").json()[0]
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"username": "operator-01", "password": "demo-op-2026"},
+        ).json()
+        response = client.post(
+            f"/api/v1/events/{event['id']}/ask",
+            headers={
+                "Authorization": f"Bearer {login['token']}",
+                "X-Trace-ID": "trace-wtp-ask",
+            },
+            json={"question": "为什么进入关注级？"},
+        )
+
+    assert response.status_code == 200, response.text
+    answer = response.json()
+    assert answer["mode"] == "template"
+    assert answer["evidenceRefs"] == ["PH-P", "PH-E", "Q-E"]
+    assert answer["traceId"] == "trace-wtp-ask"
+    with app.state.database.session() as session:
+        interaction = session.query(AIInteractionRow).one()
+        assert interaction.event_id == event["id"]
+        assert interaction.question == "为什么进入关注级？"
+        assert interaction.evidence_refs == ["PH-P", "PH-E", "Q-E"]
+        assert interaction.trace_id == "trace-wtp-ask"
