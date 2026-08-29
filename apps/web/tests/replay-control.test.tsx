@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/charts", () => ({
   ProcessHeatmapChart: () => <div>热力图测试替身</div>,
-  EvidenceTrendChart: () => null,
+  EvidenceTrendChart: () => <div className="evidence-chart">证据趋势图测试替身</div>,
   ContributionChart: () => null,
 }));
 
@@ -56,8 +56,8 @@ describe("回放控制", () => {
         name: "污水出水风险场景",
         description: "污水出水风险预判",
         faultId: 0,
-        sampleCount: 500,
-        faultOnsetSample: 160,
+        sampleCount: 101,
+        faultOnsetSample: 42,
         sourceLabel: "UCI Water Treatment Plant public sensor data",
         domain: "wastewater",
         modelFamily: "uci-wtp-rf-softsensor",
@@ -66,7 +66,7 @@ describe("回放控制", () => {
       }]))
       .mockResolvedValueOnce(response(run, 201))
       .mockResolvedValueOnce(response({ ...run, state: "playing" }))
-      .mockResolvedValueOnce(response([{ id: "event-1", runId: run.id, sampleIndex: 160, severity: "warning", state: "open", anomalyScore: 0.8 }]));
+      .mockResolvedValueOnce(response([{ id: "event-1", runId: run.id, sampleIndex: 42, severity: "warning", state: "open", anomalyScore: 0.8 }]));
     vi.stubGlobal("fetch", fetchMock);
 
     const user = userEvent.setup();
@@ -79,6 +79,19 @@ describe("回放控制", () => {
       inferenceMode: "template",
     });
     await waitFor(() => expect(screen.getByTestId("current-sample")).not.toHaveTextContent("0"), { timeout: 1200 });
+    expect(await screen.findByText(/当前 run 事件 ID：event-1/, {}, { timeout: 4000 })).toBeInTheDocument();
+  });
+
+  it("API 离线时静态回放仍会推进，并明确标识静态事件", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    const user = userEvent.setup();
+    render(<ReplayScreen />);
+    await screen.findByRole("option", { name: "污水出水风险预判" });
+    await user.click(screen.getByRole("button", { name: "开始回放" }));
+
+    expect(await screen.findByText(/静态演示事件 ID：11111111-1111-4111-8111-111111111111/, {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.queryByText(/当前 run 事件 ID/)).not.toBeInTheDocument();
   });
   it("在线回放的倍速选择会调用 control API", async () => {
     const user = userEvent.setup();
@@ -191,11 +204,62 @@ describe("回放控制", () => {
 
     await waitFor(() => expect(screen.getByTestId("current-sample")).toHaveTextContent("175"));
     expect(await screen.findByText(/样本 170 捕获严重偏移/)).toBeInTheDocument();
+    expect(screen.getByText(/风险分数 0.91/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看本次事件队列" })).toHaveAttribute("href", `/events?runId=${run.id}`);
 
     await user.click(screen.getByRole("button", { name: "暂停回放" }));
     const pausedSample = screen.getByTestId("current-sample").textContent;
     await new Promise((resolve) => setTimeout(resolve, 600));
     expect(screen.getByTestId("current-sample")).toHaveTextContent(pausedSample ?? "");
+  });
+
+  it("WTP 完成时在长图表前显示当前事件 CTA", async () => {
+    const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+    const run = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      scenarioId: "wastewater-risk",
+      state: "ready",
+      speed: 20,
+      currentSample: 40,
+      createdAt: "2026-08-28T09:00:00+08:00",
+      inferenceMode: "template",
+      modelVersion: "uci-wtp-template-v1",
+    };
+    const event = { id: "wtp-event-current", runId: run.id, sampleIndex: 42, severity: "warning", state: "open", anomalyScore: 0.8 };
+    const completed = streamMessage("completed", run.id, 2, { state: "completed", sampleIndex: 101 });
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(response([{
+        id: "wastewater-risk",
+        name: "污水出水风险场景",
+        description: "污水出水风险预判",
+        faultId: 0,
+        sampleCount: 101,
+        faultOnsetSample: 42,
+        sourceLabel: "UCI Water Treatment Plant public sensor data",
+        domain: "wastewater",
+        modelFamily: "uci-wtp-rf-softsensor",
+        sampleIntervalSeconds: 86400,
+        recommendedInferenceMode: "template",
+      }]))
+      .mockResolvedValueOnce(response(run, 201))
+      .mockResolvedValueOnce(response({ ...run, state: "playing" }))
+      .mockResolvedValueOnce(response([event]))
+      .mockResolvedValueOnce(streamResponse([completed])));
+
+    const user = userEvent.setup();
+    const { container } = render(<ReplayScreen />);
+    await screen.findByRole("option", { name: "污水出水风险预判" });
+    await user.click(screen.getByRole("button", { name: "开始回放" }));
+
+    expect(await screen.findByText("回放完成")).toBeInTheDocument();
+    expect(screen.getByTestId("current-sample")).toHaveTextContent("101");
+    const cta = await screen.findByRole("link", { name: "进入事件研判" });
+    expect(cta).toHaveAttribute("href", "/events/wtp-event-current");
+    const chart = container.querySelector(".evidence-chart");
+    expect(cta.compareDocumentPosition(chart as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("使用场景样本总数并在末尾停止回放", async () => {

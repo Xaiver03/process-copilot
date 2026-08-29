@@ -113,30 +113,29 @@ export function OverviewScreen() {
     ? { label: demoEvent.candidates[0]?.label ?? "过程变量核查", probability: `${Math.round((demoEvent.candidates[0]?.probability ?? 0) * 100)}%` }
     : formatFaultCandidate(demoEvent.candidates[0]);
   return (
-    <div className="page-stack">
-      <PageHeader kicker="AI 运营总览" title="工业过程风险状态" summary="先看 AI 发现的风险、当前预测和待确认事件，再进入证据页完成人工研判。" />
+    <div className="page-stack overview-page">
+      <PageHeader kicker="AI 运营总览" title="工业过程风险状态" summary="先看当前风险队列、场景覆盖和待确认动作，再进入回放或事件研判；此页使用公开演示数据，不代表现场实时数据。" />
       <ResourceBoundary {...resource}>{(result) => (
         <>
           <ModeNotice mode={result.mode} notice={result.notice} />
           <section className="metric-strip" aria-label="关键运行指标">
-            <div><span>当前风险</span><strong className="metric-alert">需关注</strong><small>样本 {demoEvent.detectionSample} 进入预测窗口</small></div>
+            <div><span>当前风险</span><strong className="metric-alert">需关注</strong><small>公开演示样本 {demoEvent.detectionSample} 进入预测窗口</small></div>
             <div><span>下一周期预测</span><strong>{prediction?.predictedValue.toFixed(1)}</strong><small>{prediction?.targetId} · {prediction?.unit}</small></div>
             <div><span>不确定区间</span><strong className="metric-hypothesis">{prediction?.lowerBound.toFixed(1)}–{prediction?.upperBound.toFixed(1)}</strong><small>上界跨过历史 P95 {prediction?.historicalHighBoundary.toFixed(1)}</small></div>
             <div><span>待人工确认</span><strong>1</strong><small>AI 已完成证据整理</small></div>
           </section>
-          <div className="overview-grid">
-            <EvidenceTrendChart evidence={demoEvent.evidence} onsetSample={demoEvent.detectionSample} />
-              <aside className="event-rail">
-              <div className="section-heading"><div><span className="kicker">AI 当前判断</span><h2>优先原因</h2></div></div>
-              <p className="event-ai-summary">预测中心值未越过历史高位边界，但不确定区间上界已跨过边界。AI 将<strong>{overviewCandidate.label}</strong>列为首个核查项，不代表已证实根因。</p>
-              <dl className="priority-reasons">
-                <div><dt>发现</dt><dd>样本 {demoEvent.detectionSample} 进入关注窗口</dd></div>
-                <div><dt>判断</dt><dd>区间上界 {prediction?.upperBound.toFixed(1)} {prediction?.unit}</dd></div>
-                <div><dt>解释</dt><dd>{demoEvent.evidence[0].variableId} 核查权重 {overviewCandidate.probability}</dd></div>
-                <div><dt>下一步</dt><dd>等待当班人员确认</dd></div>
-              </dl>
-              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/demo"}>查看 AI 研判依据 <ArrowRight aria-hidden="true" /></Link>
-            </aside>
+          <div className="overview-dashboard">
+            <section className="dashboard-panel risk-queue" aria-labelledby="risk-queue-title">
+              <div className="section-heading"><div><span className="kicker">待处理队列</span><h2 id="risk-queue-title">风险队列</h2></div><StatusTag state="warning" label="1 项待确认" /></div>
+              <div className="queue-item"><div><strong>污水出水风险预测</strong><span>样本 {demoEvent.detectionSample} · {overviewCandidate.label} · 公开演示数据</span></div><span className="queue-score">{demoEvent.anomalyScore.toFixed(2)}</span></div>
+              <p className="dashboard-note">预测中心值未越过历史高位边界，但不确定区间上界已跨过边界；这不是法规超限结论。</p>
+              <Link className="primary-button link-button" href={result.mode === "static-demo" ? "/events/demo-event" : "/replay"}>查看 AI 研判依据 <ArrowRight aria-hidden="true" /></Link>
+            </section>
+            <section className="dashboard-panel" aria-labelledby="scenario-coverage-title">
+              <div className="section-heading"><div><span className="kicker">可用演示路径</span><h2 id="scenario-coverage-title">场景覆盖</h2></div></div>
+              <ul className="scenario-coverage">{result.data.map((scenario) => <li key={scenario.id}><div><strong>{formatScenarioPresentation(scenario).name}</strong><span>{scenario.domain === "wastewater" ? "预测型污水风险" : "连续化工偏移"} · {scenario.sampleCount} 个样本</span></div><StatusTag state="normal" label="可回放" /></li>)}</ul>
+              <Link className="secondary-button link-button" href="/replay">开始 WTP 回放 <ArrowRight aria-hidden="true" /></Link>
+            </section>
           </div>
         </>
       )}</ResourceBoundary>
@@ -322,8 +321,9 @@ export function ReplayScreen() {
         <label className="replay-field replay-speed-field">倍速<select aria-label="回放倍速" value={String(journey?.data.run.speed ?? 10)} disabled={!journey || busy || replayCompleted} onChange={(event) => void changeSpeed(Number(event.target.value) as 1 | 5 | 10 | 20)}><option value="1">1×</option><option value="5">5×</option><option value="10">10×</option><option value="20">20×</option></select></label>
         <div className="sample-readout"><span>{replayCompleted ? "回放已完成" : journey?.data.run.state === "playing" ? "回放进行中" : journey?.data.run.state === "paused" ? "回放已暂停" : "当前样本"}</span><strong data-testid="current-sample">{displaySample}</strong><small>/ {totalSamples}</small></div>
       </section>
-      {journey ? <section className={`replay-stage replay-stage-${replayStage.state}`}>
+      {journey ? <section className={`replay-stage replay-stage-${replayStage.state}${replayCompleted ? " replay-stage-complete" : ""}`}>
         <div role="status" aria-live="polite"><span className="replay-live-dot" aria-hidden="true" /><p><strong>{replayCompleted ? "回放完成" : replayStage.title}</strong><span>{replayCompleted ? `已读取 ${totalSamples} 个样本，可进入事件研判。` : replayStage.detail}</span></p></div>
+        {journey.data.event && eventVisible ? <div className="replay-handoff"><div><Warning weight="fill" aria-hidden="true" /><p><strong>{selectedScenario?.domain === "wastewater" ? `事件已捕获 · 样本 ${journey.data.event.sampleIndex}` : `样本 ${journey.data.event.sampleIndex} 捕获${journey.data.event.severity === "critical" ? "严重" : ""}偏移`}</strong><span>{journey.mode === "static-demo" ? `静态演示事件 ID：${journey.data.event.id}` : `风险分数 ${journey.data.event.anomalyScore.toFixed(2)} · 当前 run 事件 ID：${journey.data.event.id}`}</span></p></div><div className="replay-handoff-actions"><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div></div> : null}
         <div className="replay-progress"><span style={{ width: `${Math.min(100, displaySample / totalSamples * 100)}%` }} /></div>
         {telemetry.length > 0 ? <dl className="replay-telemetry">{telemetry.map((item) => <div key={item.id}><dt>{item.id}<span>{item.name}</span></dt><dd>{item.value.toFixed(2)} <small>{item.unit}</small></dd></div>)}</dl> : <p className="simulation-disclosure">在线 AI 推理样本通过实时事件流更新，不展示替代遥测。</p>}
         {isStaticReplay ? <p className="simulation-disclosure">场景仿真变量 · 非现场实时遥测</p> : null}
@@ -331,10 +331,6 @@ export function ReplayScreen() {
       {selectedScenario?.domain === "wastewater"
         ? <EvidenceTrendChart evidence={demoEvent.evidence} onsetSample={faultOnsetSample} />
         : <ProcessHeatmapChart currentSample={journey ? displaySample : Math.max(0, faultOnsetSample - 10)} faultOnsetSample={faultOnsetSample} totalSamples={totalSamples} evidenceVariables={replaySignals.map(({ id, name }) => ({ id, name }))} />}
-      {journey && eventVisible && journey.data.event ? <section className="capture-banner">
-        <div><Warning weight="fill" aria-hidden="true" /><p><strong>样本 {journey.data.event.sampleIndex} {selectedScenario?.domain === "wastewater" ? "进入出水风险关注窗口" : `捕获${journey.data.event.severity === "critical" ? "严重" : ""}偏移`}</strong><span>风险分数 {journey.data.event.anomalyScore.toFixed(2)}，事件 ID 来自当前 run。</span></p></div>
-        <div><Link className="primary-button link-button" href={journey.mode === "static-demo" ? "/events/demo-event" : `/events/${journey.data.event.id}`}>进入事件研判 <ArrowRight aria-hidden="true" /></Link>{journey.mode === "live" ? <Link className="text-link" href={`/events?runId=${journey.data.run.id}`}>查看本次事件队列</Link> : null}</div>
-      </section> : null}
     </div>
   );
 }

@@ -212,7 +212,7 @@ export async function startScenarioWithFallback(
   if (runResult.mode === "static-demo") {
     rejectCrossScenarioStaticFallback(scenarioId);
     return {
-      data: { run: runResult.data, event: demoEvent },
+      data: { run: { ...runResult.data, state: "playing", speed }, event: demoEvent },
       mode: runResult.mode,
       notice: runResult.notice,
     };

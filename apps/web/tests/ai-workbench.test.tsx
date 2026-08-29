@@ -127,15 +127,45 @@ describe("AI 装置总览", () => {
     vi.unstubAllGlobals();
   });
 
-  it("突出 AI 当前判断、优先原因和人工确认入口", async () => {
+  it("总览使用运营仪表盘而非回放趋势图，并提供开始回放动作", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    const { container } = render(<OverviewScreen />);
+
+    expect(await screen.findByText("风险队列")).toBeInTheDocument();
+    expect(screen.getByText("场景覆盖")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /开始 WTP 回放/ })).toHaveAttribute("href", "/replay");
+    expect(screen.queryByText("证据趋势图")).not.toBeInTheDocument();
+    expect(container.querySelector(".evidence-chart")).not.toBeInTheDocument();
+  });
+
+  it("保留预测摘要和人工确认入口", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     render(<OverviewScreen />);
 
-    expect(await screen.findByText("AI 当前判断")).toBeInTheDocument();
-    expect(screen.getByText("优先原因")).toBeInTheDocument();
-    expect(screen.getByText("下一周期预测")).toBeInTheDocument();
+    expect(await screen.findByText("下一周期预测")).toBeInTheDocument();
     expect(screen.getByText("不确定区间")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /查看 AI 研判依据/ })).toBeInTheDocument();
+  });
+
+  it("在线总览的研判入口进入现有回放，而不是创建新的演示", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{
+      id: "wastewater-risk",
+      name: "污水出水风险场景",
+      description: "污水出水风险预判",
+      faultId: 0,
+      sampleCount: 101,
+      faultOnsetSample: 42,
+      sourceLabel: "UCI Water Treatment Plant public sensor data",
+      domain: "wastewater",
+      modelFamily: "uci-wtp-rf-softsensor",
+      sampleIntervalSeconds: 86400,
+      recommendedInferenceMode: "template",
+    }]), { status: 200, headers: { "Content-Type": "application/json" } })));
+
+    render(<OverviewScreen />);
+
+    expect(await screen.findByRole("link", { name: /查看 AI 研判依据/ })).toHaveAttribute("href", "/replay");
   });
 });
