@@ -52,9 +52,9 @@ _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
     )
 )
 _CONTROL_ACTIONS_ZH = (
-    r"设置|设定|设为|置于|修改|改为|调整|调节|打开|关闭|开启|启用|"
-    r"启动|停用|停止|调高|调低|升高|提升|提高|降低|上调|下调|增加|"
-    r"减少|增大|减小|切换|写入|下发|执行|控制"
+    r"设(?:置|定|为|成)|置(?:于)?|修改|改(?:为)?|调(?:整|节|高|低|至|为)|"
+    r"打开|关(?:闭)?|开(?:启)?|启(?:用|动)|停(?:用|止)|升(?:高|至)|提(?:升|高)|"
+    r"降(?:低|至)|上调|下调|增(?:加|大)|减(?:少|小)|切换|写(?:入|回)|下发|执行|控制"
 )
 _CONTROL_TARGETS_ZH = (
     r"阀门?|泵|压力|流量|温度|液位|转速|功率|频率|电流|电压|扭矩|开度|"
@@ -449,6 +449,7 @@ def _unsafe_answer(answer: str) -> bool:
         if unicodedata.category(character) != "Cf"
         and not unicodedata.category(character).startswith("M")
     )
+    text_to_check = re.sub(r"\s+", " ", text_to_check)
     for safe_pattern in _SAFE_READ_ONLY_BOUNDARY_PATTERNS:
         text_to_check = safe_pattern.sub("", text_to_check)
     return any(pattern.search(text_to_check) for pattern in _UNSAFE_RESPONSE_PATTERNS)
