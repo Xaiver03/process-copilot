@@ -91,7 +91,7 @@ pnpm test:e2e:journeys
 - 专用目录：`/opt/process-copilot`
 - Compose project：`process-copilot`
 - 宿主高位端口：`18090`
-- 当前部署源：`main@5d04377`（应用代码）；本地与公网验收证据已进入 `main@8006d85`
+- 当前部署源：`main@261330f`（应用代码）；Playwright 契约与公网完整 11/11 证据提交：`92b4bf7`
 
 公网 HTTPS 入口已经通过宿主机 Caddy 反向代理接通：
 
@@ -127,7 +127,7 @@ docs/submission/          作品、数据与 Demo 材料
 ## 交付入口
 
 - [黑客松路演 PPTX / PDF](04_交付成品/README.md)
-- [黑客松易拉宝 CMYK REVIEW PDF](04_交付成品/序安_Process_Sentinel_黑客松易拉宝_v05_ZH_CMYK_REVIEW.pdf)
+- [黑客松易拉宝唯一 LaTeX 源与构建说明](../../04_品牌与市场资产/Wuno_WUWEI品牌市场/07_LaTeX文档工程/02_产品手册/2026-08_连续化工过程偏移副驾驶/易拉宝_2026-08_序安黑客松/README.md)
 - [黑客松易拉宝普通观众讲解逐字稿](docs/submission/序安黑客松易拉宝讲解逐字稿_v03_REVIEW.md)
 - [黑客松易拉宝观看距离与字高验收](docs/submission/序安黑客松易拉宝观看距离与字高验收_v01_REVIEW.md)
 - [序安现行标志应用审计](docs/submission/序安品牌标志应用审计_v01_REVIEW.md)

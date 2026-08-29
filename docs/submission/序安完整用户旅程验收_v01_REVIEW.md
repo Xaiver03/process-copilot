@@ -2,13 +2,13 @@
 
 状态：`REVIEW`
 
-验收日期：2026-08-29
+验收日期：2026-08-30
 
 公网入口：<https://huagong.finlaw.cloud>
 
-应用基线提交：`5d04377`
+应用基线提交：`261330f`
 
-用户旅程验收提交：`8006d85`
+用户旅程验收提交：`92b4bf7`
 
 ## 1. 验收结论
 
@@ -147,7 +147,7 @@ Demo 不提供自助注册。生产部署应替换为企业 SSO / IAM，并移�
 
 `GET /api/v1/admin/ai/status` → `GET /api/v1/admin/ai/config` → `PUT /api/v1/admin/ai/config` → `POST /api/v1/admin/ai/test`
 
-通过标准：推理模式为在线，Worker 和工业模型就绪，工业模型版本可识别；语言模型状态只允许就绪、降级、离线或未知，非就绪时必须给出原因；配置响应明确返回 `apiKeyConfigured=true`，不得含 `apiKey` 或疑似密钥；密码输入框加载后为空；公开环境的配置写入与管理员手动连接测试均返回 `403 admin_ai_read_only`，但已配置的运行探针和事件问答必须真实返回 `llm_enhanced / gpt-5.5`，两者不得混淆。
+通过标准：推理模式为在线，Worker 和工业模型就绪，工业模型版本可识别；语言模型状态只允许就绪、降级、离线或未知，非就绪时必须给出原因；配置响应明确返回 `apiKeyConfigured=true`，不得含 `apiKey` 或疑似密钥；密码输入框加载后为空；公开环境的配置写入与管理员手动连接测试均返回 `403 admin_ai_read_only`，但已配置的运行探针和事件问答必须真实返回 `llm_enhanced / deepseek-v4-flash`，两者不得混淆。
 
 证据状态：`UJ10-01_AI运行与降级状态透明`、`UJ10-02_AI配置密钥与只读边界`。
 
@@ -210,7 +210,7 @@ node tests/e2e/build-journey-manifest.mjs \
 ## 6. 已知边界
 
 - 数据来自 Tennessee Eastman Process 公开仿真，不是贵州真实企业生产数据。
-- 在线工业模型负责连续偏移检测和候选更新；当前公网自有 OpenAI-compatible 服务的 `gpt-5.5` 已产生真实 `llm_enhanced` 回答，若单次外部调用不可用则返回明确标记的模板/降级答案，不伪装成功。
+- 在线工业模型负责连续偏移检测和候选更新；当前公网通过 OpenAI-compatible DeepSeek 配置接入的 `deepseek-v4-flash` 已产生真实 `llm_enhanced` 回答，若单次外部调用不可用则返回明确标记的模板/降级答案，不伪装成功。
 - 当前 Demo 不向 APC、DCS、PLC 或 SIS 写回。页面和后端只持久化影子提案与门禁结果；生产版应在独立权限、约束、联锁、双人确认、受控网关、读回和回滚机制完成后再开放。
 - 本轮证明的是软件链路、角色边界、证据组织、可追溯性和 Demo 稳定性；不据此声称真实工厂误报率、漏报率、提前量或经济收益。
 
