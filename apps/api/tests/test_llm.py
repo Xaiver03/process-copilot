@@ -500,6 +500,38 @@ def test_read_only_control_system_disclaimers_are_accepted(
     assert result.answer == answer
 
 
+def test_attention_level_explanation_with_flow_evidence_is_accepted(
+    event_summary: dict[str, object],
+):
+    answer = (
+        "预测中心值低于训练段历史高位边界，但不确定区间上界跨过该边界，"
+        "因此进入关注级。进水流量仅作为优先核查证据，不代表已证实因果关系。"
+    )
+    payload = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {"answer": answer, "evidenceRefs": ["XMEAS(1)"]},
+                        ensure_ascii=False,
+                    )
+                }
+            }
+        ]
+    }
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json=payload)
+        ),
+    )
+
+    result = enhancer.enhance(event_summary, "为什么进入关注级？")
+
+    assert result.mode == "llm_enhanced"
+    assert result.answer == answer
+
+
 @pytest.mark.parametrize(
     "answer",
     [
@@ -510,6 +542,9 @@ def test_read_only_control_system_disclaimers_are_accepted(
         "不向 PLC 写回；请将压力设定值调高 5%。",
         "不涉及任何控制写回；请把阀门打开。",
         "不涉及任何控制写回；请把阀门开启。",
+        "不涉及任何控制写回；请关阀门。",
+        "不涉及任何控制写回；请关闭阀门。",
+        "不涉及任何控制写回；请关上阀门。",
         "不涉及任何控制写回；请将压力提升至 5%。",
         "不涉及任何控制写回；请将压\u2063力设定值调\u2063高 5%。",
         "不涉及任何控制写回；请调节压力。",
