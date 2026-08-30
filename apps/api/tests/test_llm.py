@@ -374,6 +374,90 @@ def test_provider_failures_return_template(
     assert "模板" in result.answer
 
 
+def test_invalid_provider_answer_is_retried_once(
+    event_summary: dict[str, object],
+):
+    responses = iter(
+        [
+            "请关闭进水阀门。",
+            "进入关注级是因为不确定区间上界跨过训练段历史高位边界；"
+            "进水流量仅作为优先核查证据，不代表已证实因果关系。",
+        ]
+    )
+    request_count = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal request_count
+        request_count += 1
+        answer = next(responses)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {"answer": answer, "evidenceRefs": ["XMEAS(1)"]},
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(respond),
+    )
+
+    result = enhancer.enhance(event_summary, "为什么进入关注级？")
+
+    assert request_count == 2
+    assert result.mode == "llm_enhanced"
+    assert result.answer.startswith("进入关注级是因为")
+
+
+def test_undecodable_provider_body_is_retried_once(
+    event_summary: dict[str, object],
+):
+    request_count = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal request_count
+        request_count += 1
+        if request_count == 1:
+            return httpx.Response(200, text="not-json")
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "answer": "进入关注级是因为不确定区间上界跨过历史边界。",
+                                    "evidenceRefs": ["XMEAS(1)"],
+                                },
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    enhancer = ExplanationEnhancer(
+        settings(),
+        transport=httpx.MockTransport(respond),
+    )
+
+    result = enhancer.enhance(event_summary, "为什么进入关注级？")
+
+    assert request_count == 2
+    assert result.mode == "llm_enhanced"
+
+
 def test_provider_timeout_returns_template(event_summary: dict[str, object]):
     def timeout(request: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("provider timed out", request=request)

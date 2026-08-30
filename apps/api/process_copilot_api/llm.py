@@ -36,6 +36,11 @@ interval, observed value, and historical operating boundary. Never describe a hi
 boundary as a regulatory limit or a prediction as a measured exceedance. Treat ranked
 process variables as check-priority evidence, not proven causation.
 """.strip()
+STRICT_RETRY_SUFFIX = """
+Strict retry: the previous response failed the local JSON or read-only safety contract.
+Return only the two allowed JSON fields, explain the evidence without control actions,
+and do not mention this retry.
+""".strip()
 
 _ALLOWED_RESPONSE_KEYS = frozenset({"answer", "narrative", "evidenceRefs"})
 _SAFE_READ_ONLY_BOUNDARY_PATTERNS = tuple(
@@ -232,19 +237,29 @@ class ExplanationEnhancer:
             return self._fallback(started, resolved_trace_id, refs, "provider_not_configured")
 
         try:
-            provider_payload = self._request(safe_summary, question.strip())
-            parsed = _parse_provider_result(provider_payload, refs)
-            if parsed is None:
-                return self._fallback(started, resolved_trace_id, refs, "invalid_provider_schema")
-            answer, evidence_refs = parsed
-            return ExplanationResult(
-                answer=answer,
-                mode="llm_enhanced",
-                model=self.settings.model,
-                evidence_refs=evidence_refs,
-                latency_ms=_latency_ms(started),
-                trace_id=resolved_trace_id,
-            )
+            for attempt in range(2):
+                try:
+                    provider_payload = self._request(
+                        safe_summary,
+                        question.strip(),
+                        strict_retry=attempt == 1,
+                    )
+                except json.JSONDecodeError:
+                    if attempt == 0:
+                        continue
+                    raise
+                parsed = _parse_provider_result(provider_payload, refs)
+                if parsed is not None:
+                    answer, evidence_refs = parsed
+                    return ExplanationResult(
+                        answer=answer,
+                        mode="llm_enhanced",
+                        model=self.settings.model,
+                        evidence_refs=evidence_refs,
+                        latency_ms=_latency_ms(started),
+                        trace_id=resolved_trace_id,
+                    )
+            return self._fallback(started, resolved_trace_id, refs, "invalid_provider_schema")
         except Exception as exc:
             # Never log the URL, request, response, exception text, or headers: any may
             # contain credentials supplied by a provider or an operator configuration.
@@ -260,8 +275,17 @@ class ExplanationEnhancer:
     ) -> ExplanationResult:
         return self.enhance(event_summary, question, trace_id=trace_id)
 
-    def _request(self, event_summary: dict[str, Any], question: str) -> Any:
+    def _request(
+        self,
+        event_summary: dict[str, Any],
+        question: str,
+        *,
+        strict_retry: bool = False,
+    ) -> Any:
         base_url = validate_provider_base_url(self.settings.base_url, enabled=True)
+        system_prompt = (
+            f"{SYSTEM_PROMPT}\n\n{STRICT_RETRY_SUFFIX}" if strict_retry else SYSTEM_PROMPT
+        )
         user_content = json.dumps(
             {"eventSummary": event_summary, "question": question},
             ensure_ascii=False,
@@ -270,7 +294,7 @@ class ExplanationEnhancer:
         request_payload = {
             "model": self.settings.model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ],
             "temperature": self.settings.temperature,
@@ -299,7 +323,7 @@ class ExplanationEnhancer:
                         "input": [
                             {
                                 "role": "system",
-                                "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+                                "content": [{"type": "input_text", "text": system_prompt}],
                             },
                             {
                                 "role": "user",
